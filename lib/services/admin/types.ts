@@ -678,3 +678,95 @@ export interface ListFCADocumentosParams {
   page?: number;
   page_size?: number;
 }
+
+// ----------------------------------------------------------------------------
+// Participantes do mercado — auditores, intermediarios, adm. de carteira
+// ----------------------------------------------------------------------------
+
+export interface AuditorRegistrySummary {
+  id: string;
+  cd_cvm: number;
+  tipo: string;
+  nome: string;
+  cnpj: string | null;
+  situacao: string;
+  dt_ini_sit: string | null;
+  municipio: string | null;
+  uf: string | null;
+  captured_at: string;
+}
+
+export interface IntermediarioRegistrySummary {
+  id: string;
+  cnpj: string;
+  cd_cvm: number | null;
+  tipo_participante: string;
+  denom_social: string;
+  denom_comerc: string | null;
+  situacao: string;
+  dt_reg: string | null;
+  dt_cancel: string | null;
+  motivo_cancel: string | null;
+  setor_ativ: string | null;
+  municipio: string | null;
+  uf: string | null;
+  captured_at: string;
+}
+
+export interface AdmCarteiraRegistrySummary {
+  id: string;
+  cnpj: string;
+  denom_social: string;
+  denom_comerc: string | null;
+  situacao: string;
+  categoria_registro: string;
+  subcategoria_registro: string | null;
+  dt_reg: string | null;
+  dt_cancel: string | null;
+  municipio: string | null;
+  uf: string | null;
+  captured_at: string;
+}
+
+export interface ParticipantesSyncStatusResponse {
+  auditor_total: number;
+  auditor_ativo: number;
+  auditor_suspenso: number;
+  auditor_cancelada: number;
+  auditor_last_captured_at: string | null;
+  intermediario_total: number;
+  intermediario_by_tipo: Record<string, number>;
+  intermediario_last_captured_at: string | null;
+  adm_carteira_total: number;
+  adm_carteira_by_categoria: Record<string, number>;
+  adm_carteira_last_captured_at: string | null;
+}
+
+export type ParticipantesSyncDataset = "auditor" | "intermed" | "adm_cart" | "all";
+
+export interface TriggerParticipantesSyncResponse {
+  task_id: string;
+  status: string;
+  dataset: string;
+}
+
+export interface ListAuditoresParams {
+  situacao?: string;
+  tipo?: "PJ" | "PF";
+  page?: number;
+  page_size?: number;
+}
+
+export interface ListIntermediariosParams {
+  situacao?: string;
+  tipo_participante?: string;
+  page?: number;
+  page_size?: number;
+}
+
+export interface ListAdmCarteiraParams {
+  situacao?: string;
+  categoria_registro?: string;
+  page?: number;
+  page_size?: number;
+}

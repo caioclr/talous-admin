@@ -126,4 +126,11 @@ export const CvmRoutes = {
   icbgcReportsList: /\/api\/v1\/admin\/cvm\/icbgc\/reports(\?.*)?$/,
   icbgcReportById: /\/api\/v1\/admin\/cvm\/icbgc\/reports\/\d+$/,
   icbgcByCompany: /\/api\/v1\/admin\/cvm\/icbgc\/by-company\/\d+(\?.*)?$/,
+  participantesSyncStatus: /\/api\/v1\/admin\/cvm\/participantes\/sync-status$/,
+  participantesSync: /\/api\/v1\/admin\/cvm\/participantes\/sync(\?.*)?$/,
+  participantesAuditoresList: /\/api\/v1\/admin\/cvm\/participantes\/auditores(\?.*)?$/,
+  participantesAuditorDetail: /\/api\/v1\/admin\/cvm\/participantes\/auditores\/\d+(\?.*)?$/,
+  participantesIntermediariosList: /\/api\/v1\/admin\/cvm\/participantes\/intermediarios(\?.*)?$/,
+  participantesIntermediarioDetail: /\/api\/v1\/admin\/cvm\/participantes\/intermediarios\/\d+$/,
+  participantesAdmCarteiraList: /\/api\/v1\/admin\/cvm\/participantes\/adm-carteira(\?.*)?$/,
 } as const;

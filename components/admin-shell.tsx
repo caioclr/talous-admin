@@ -92,9 +92,9 @@ const navigation: NavGroup[] = [
   {
     label: "Cadastros de Mercado",
     items: [
-      { label: "Auditores", href: "/cvm/participantes/auditores", icon: UserCheck, status: "soon" },
-      { label: "Intermediarios", href: "/cvm/participantes/intermediarios", icon: Briefcase, status: "soon" },
-      { label: "Admins de carteira", href: "/cvm/participantes/adm-carteira", icon: Wallet, status: "soon" },
+      { label: "Auditores", href: "/cvm/participantes/auditores", icon: UserCheck, status: "available" },
+      { label: "Intermediarios", href: "/cvm/participantes/intermediarios", icon: Briefcase, status: "available" },
+      { label: "Admins de carteira", href: "/cvm/participantes/adm-carteira", icon: Wallet, status: "available" },
     ],
   },
   {

@@ -1,7 +1,11 @@
 import type {
+  AdmCarteiraRegistrySummary,
   AdminCompanyDetail,
   AdminCompanySummary,
   AdminPagedResponse,
+  AuditorRegistrySummary,
+  IntermediarioRegistrySummary,
+  ParticipantesSyncStatusResponse,
   BuybackProgramDetail,
   BuybackProgramSummary,
   BuybackSyncStatusResponse,
@@ -759,6 +763,132 @@ export const FCA_BY_COMPANY_PETROBRAS: FCAByCompanyResponse = {
       captured_at: "2025-06-01T08:00:00Z",
     },
   ],
+};
+
+export const PARTICIPANTES_SYNC_STATUS: ParticipantesSyncStatusResponse = {
+  auditor_total: 387,
+  auditor_ativo: 301,
+  auditor_suspenso: 24,
+  auditor_cancelada: 62,
+  auditor_last_captured_at: "2026-06-08T08:00:00Z",
+  intermediario_total: 512,
+  intermediario_by_tipo: {
+    CORRETORA: 290,
+    DISTRIBUIDORA: 180,
+    "BANCO MULTIPLO": 42,
+  },
+  intermediario_last_captured_at: "2026-06-08T08:05:00Z",
+  adm_carteira_total: 778,
+  adm_carteira_by_categoria: {
+    "Pessoa Juridica": 690,
+    "Pessoa Fisica": 88,
+  },
+  adm_carteira_last_captured_at: "2026-06-08T08:10:00Z",
+};
+
+export const PARTICIPANTES_AUDITOR_PJ: AuditorRegistrySummary = {
+  id: "aaaa1111-aaaa-1111-aaaa-111111111111",
+  cd_cvm: 4189,
+  tipo: "PJ",
+  nome: "KPMG Auditores Independentes",
+  cnpj: "57755217000129",
+  situacao: "ATIVO",
+  dt_ini_sit: "1990-03-12",
+  municipio: "Sao Paulo",
+  uf: "SP",
+  captured_at: "2026-06-08T08:00:00Z",
+};
+
+export const PARTICIPANTES_AUDITOR_PF: AuditorRegistrySummary = {
+  id: "aaaa2222-aaaa-2222-aaaa-222222222222",
+  cd_cvm: 7712,
+  tipo: "PF",
+  nome: "Joao Carlos Auditor",
+  cnpj: null,
+  situacao: "Cancelada",
+  dt_ini_sit: "2021-09-30",
+  municipio: "Curitiba",
+  uf: "PR",
+  captured_at: "2026-06-08T08:00:00Z",
+};
+
+export const PARTICIPANTES_AUDITORES_LIST: AdminPagedResponse<AuditorRegistrySummary> = {
+  items: [PARTICIPANTES_AUDITOR_PJ, PARTICIPANTES_AUDITOR_PF],
+  pagination: { page: 1, page_size: 25, total: 2, total_pages: 1 },
+};
+
+export const PARTICIPANTES_INTERMEDIARIO_XP: IntermediarioRegistrySummary = {
+  id: "bbbb1111-bbbb-1111-bbbb-111111111111",
+  cnpj: "02332886000104",
+  cd_cvm: 3247,
+  tipo_participante: "CORRETORA",
+  denom_social: "XP Investimentos CCTVM S.A.",
+  denom_comerc: "XP Investimentos",
+  situacao: "EM FUNCIONAMENTO NORMAL",
+  dt_reg: "2008-04-15",
+  dt_cancel: null,
+  motivo_cancel: null,
+  setor_ativ: "Intermediacao de valores mobiliarios",
+  municipio: "Sao Paulo",
+  uf: "SP",
+  captured_at: "2026-06-08T08:05:00Z",
+};
+
+export const PARTICIPANTES_INTERMEDIARIO_MODAL: IntermediarioRegistrySummary = {
+  id: "bbbb2222-bbbb-2222-bbbb-222222222222",
+  cnpj: "30723886000162",
+  cd_cvm: null,
+  tipo_participante: "DISTRIBUIDORA",
+  denom_social: "Modal DTVM Ltda",
+  denom_comerc: null,
+  situacao: "CANCELADA",
+  dt_reg: "1995-08-21",
+  dt_cancel: "2023-02-10",
+  motivo_cancel: "Incorporacao",
+  setor_ativ: null,
+  municipio: "Rio de Janeiro",
+  uf: "RJ",
+  captured_at: "2026-06-08T08:05:00Z",
+};
+
+export const PARTICIPANTES_INTERMEDIARIOS_LIST: AdminPagedResponse<IntermediarioRegistrySummary> = {
+  items: [PARTICIPANTES_INTERMEDIARIO_XP, PARTICIPANTES_INTERMEDIARIO_MODAL],
+  pagination: { page: 1, page_size: 25, total: 2, total_pages: 1 },
+};
+
+export const PARTICIPANTES_ADM_CARTEIRA_PJ: AdmCarteiraRegistrySummary = {
+  id: "cccc1111-cccc-1111-cccc-111111111111",
+  cnpj: "11699657000186",
+  denom_social: "Verde Asset Management S.A.",
+  denom_comerc: "Verde Asset",
+  situacao: "ATIVO",
+  categoria_registro: "Pessoa Juridica",
+  subcategoria_registro: "Gestor de Recursos",
+  dt_reg: "2014-12-01",
+  dt_cancel: null,
+  municipio: "Sao Paulo",
+  uf: "SP",
+  captured_at: "2026-06-08T08:10:00Z",
+};
+
+export const PARTICIPANTES_ADM_CARTEIRA_PF: AdmCarteiraRegistrySummary = {
+  id: "cccc2222-cccc-2222-cccc-222222222222",
+  cnpj: "00000000000191",
+  denom_social: "Maria Gestora da Silva",
+  denom_comerc: null,
+  situacao: "Suspenso",
+  categoria_registro: "Pessoa Fisica",
+  subcategoria_registro: null,
+  dt_reg: "2019-06-20",
+  dt_cancel: null,
+  municipio: "Belo Horizonte",
+  uf: "MG",
+  captured_at: "2026-06-08T08:10:00Z",
+};
+
+export const PARTICIPANTES_ADM_CARTEIRA_LIST: AdminPagedResponse<AdmCarteiraRegistrySummary> = {
+  items: [PARTICIPANTES_ADM_CARTEIRA_PJ, PARTICIPANTES_ADM_CARTEIRA_PF],
+  pagination: { page: 1, page_size: 25, total: 2, total_pages: 1 },
 };
 
 export const UNMAPPED_SECTORS: UnmappedSectorResponse[] = [
