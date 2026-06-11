@@ -116,4 +116,9 @@ export const CvmRoutes = {
   freFilingsList: /\/api\/v1\/admin\/cvm\/fre\/filings(\?.*)?$/,
   freFilingById: /\/api\/v1\/admin\/cvm\/fre\/filings\/[^/?]+$/,
   freByCompany: /\/api\/v1\/admin\/cvm\/fre\/by-company\/\d+(\?.*)?$/,
+  icbgcSyncStatus: /\/api\/v1\/admin\/cvm\/icbgc\/sync-status$/,
+  icbgcSync: /\/api\/v1\/admin\/cvm\/icbgc\/sync(\?.*)?$/,
+  icbgcReportsList: /\/api\/v1\/admin\/cvm\/icbgc\/reports(\?.*)?$/,
+  icbgcReportById: /\/api\/v1\/admin\/cvm\/icbgc\/reports\/\d+$/,
+  icbgcByCompany: /\/api\/v1\/admin\/cvm\/icbgc\/by-company\/\d+(\?.*)?$/,
 } as const;

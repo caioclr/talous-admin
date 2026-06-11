@@ -87,7 +87,7 @@ const navigation: NavGroup[] = [
   },
   {
     label: "Governanca",
-    items: [{ label: "ICBGC", href: "/cvm/icbgc", icon: ShieldCheck, status: "soon" }],
+    items: [{ label: "ICBGC", href: "/cvm/icbgc", icon: ShieldCheck, status: "available" }],
   },
   {
     label: "Cadastros de Mercado",

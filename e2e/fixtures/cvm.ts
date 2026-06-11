@@ -19,6 +19,10 @@ import type {
   FREFilingDetail,
   FREFilingSummary,
   FRESyncStatusResponse,
+  GovernanceByCompanyResponse,
+  GovernanceReportDetail,
+  GovernanceReportSummary,
+  GovernanceSyncStatusResponse,
 } from "@/lib/services/admin/types";
 
 export const SYNC_STATUS_DEFAULT: SyncStatusResponse = {
@@ -502,6 +506,130 @@ export const FRE_FILING_PETROBRAS_DETAIL: FREFilingDetail = {
       relacao: "Subsidiaria",
       valor: 2500000000,
       data_transacao: "2025-08-15",
+    },
+  ],
+};
+
+export const ICBGC_SYNC_STATUS: GovernanceSyncStatusResponse = {
+  last_captured_at: "2026-05-30T08:00:00Z",
+  last_file_hash: "icbgc111ddddccccbbbbaaaa9999888877776666",
+  total_reports: 318,
+  distinct_companies: 295,
+  distinct_years: 3,
+  total_items: 17172,
+  items_by_normalized: {
+    yes: 11420,
+    partial: 2105,
+    no: 2890,
+    not_applicable: 757,
+  },
+};
+
+export const ICBGC_REPORT_PETROBRAS_SUMMARY: GovernanceReportSummary = {
+  id: "gggg1111-1111-1111-1111-111111111111",
+  id_documento: 123456,
+  cnpj_companhia: "33000167000101",
+  cd_cvm: 9512,
+  nome_empresarial: "Petroleo Brasileiro S.A. - Petrobras",
+  data_referencia: "2025-12-31",
+  versao: 2,
+  motivo_reapresentacao: "Correcao de item do capitulo de fiscalizacao",
+  data_entrega: "2026-05-28",
+  captured_at: "2026-05-30T08:00:00Z",
+};
+
+export const ICBGC_REPORT_VALE_SUMMARY: GovernanceReportSummary = {
+  id: "gggg2222-2222-2222-2222-222222222222",
+  id_documento: 654321,
+  cnpj_companhia: "33592510000154",
+  cd_cvm: 4170,
+  nome_empresarial: "Vale S.A.",
+  data_referencia: "2025-12-31",
+  versao: 1,
+  motivo_reapresentacao: null,
+  data_entrega: "2026-05-20",
+  captured_at: "2026-05-30T08:00:00Z",
+};
+
+export const ICBGC_REPORTS_LIST = {
+  items: [ICBGC_REPORT_PETROBRAS_SUMMARY, ICBGC_REPORT_VALE_SUMMARY],
+  pagination: { page: 1, page_size: 25, total: 2, total_pages: 1 },
+};
+
+export const ICBGC_REPORT_PETROBRAS_DETAIL: GovernanceReportDetail = {
+  ...ICBGC_REPORT_PETROBRAS_SUMMARY,
+  data_inicio_exercicio_social: "2025-01-01",
+  data_fim_exercicio_social: "2025-12-31",
+  link_download: "https://www.rad.cvm.gov.br/exemplo/icbgc-petr-2025",
+  file_version_hash: "icbgcversionhashpetr2025aaaaaaaaaaaaaaaaaaaa",
+  raw_data: {
+    ID_Documento: 123456,
+    CNPJ_Companhia: "33.000.167/0001-01",
+    Versao: 2,
+  },
+  items: [
+    {
+      id_item: "1.1.1",
+      capitulo: "Acionistas",
+      principio: "Cada acao deve corresponder a um voto",
+      pratica_recomendada: "O capital social da companhia deve ser composto apenas por acoes ordinarias.",
+      pratica_adotada_raw: "Sim",
+      pratica_adotada_normalized: "yes",
+      explicacao: null,
+    },
+    {
+      id_item: "1.2.1",
+      capitulo: "Acionistas",
+      principio: "Acordos de acionistas transparentes",
+      pratica_recomendada: "Acordos de acionistas nao devem vincular voto de administradores.",
+      pratica_adotada_raw: "Parcialmente",
+      pratica_adotada_normalized: "partial",
+      explicacao: "Acordo vigente preve indicacao de conselheiros pelo controlador.",
+    },
+    {
+      id_item: "2.1.1",
+      capitulo: "Conselho de Administracao",
+      principio: "Composicao diversa e independente",
+      pratica_recomendada: "O conselho deve ser composto em sua maioria por membros externos.",
+      pratica_adotada_raw: "Nao",
+      pratica_adotada_normalized: "no",
+      explicacao: "A maioria dos conselheiros e indicada pelo acionista controlador.",
+    },
+    {
+      id_item: "3.1.1",
+      capitulo: "Diretoria",
+      principio: "Avaliacao da diretoria",
+      pratica_recomendada: "O diretor-presidente deve ser avaliado anualmente por processo formal.",
+      pratica_adotada_raw: "Nao se aplica",
+      pratica_adotada_normalized: "not_applicable",
+      explicacao: "Mandato iniciado ha menos de um ano.",
+    },
+    {
+      id_item: "5.1.1",
+      capitulo: "Etica e Conflito de Interesses",
+      principio: "Codigo de conduta efetivo",
+      pratica_recomendada: "A companhia deve ter comite de conduta dotado de independencia.",
+      pratica_adotada_raw: "Sim",
+      pratica_adotada_normalized: "yes",
+      explicacao: null,
+    },
+  ],
+};
+
+export const ICBGC_BY_COMPANY_PETROBRAS: GovernanceByCompanyResponse = {
+  cd_cvm: 9512,
+  company_name: "Petroleo Brasileiro S.A. - Petrobras",
+  reports: [
+    ICBGC_REPORT_PETROBRAS_SUMMARY,
+    {
+      ...ICBGC_REPORT_PETROBRAS_SUMMARY,
+      id: "gggg3333-3333-3333-3333-333333333333",
+      id_documento: 111222,
+      data_referencia: "2024-12-31",
+      versao: 1,
+      motivo_reapresentacao: null,
+      data_entrega: "2025-05-30",
+      captured_at: "2025-06-01T08:00:00Z",
     },
   ],
 };

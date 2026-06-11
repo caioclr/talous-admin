@@ -522,3 +522,68 @@ export interface ListFREFilingsParams {
   page?: number;
   page_size?: number;
 }
+
+// ----------------------------------------------------------------------------
+// ICBGC — Informe do Codigo Brasileiro de Governanca Corporativa
+// ----------------------------------------------------------------------------
+
+export interface GovernanceReportSummary {
+  id: string;
+  id_documento: number;
+  cnpj_companhia: string;
+  cd_cvm: number | null;
+  nome_empresarial: string;
+  data_referencia: string;
+  versao: number;
+  motivo_reapresentacao: string | null;
+  data_entrega: string | null;
+  captured_at: string;
+}
+
+export interface GovernanceComplianceItemSummary {
+  id_item: string;
+  capitulo: string;
+  principio: string;
+  pratica_recomendada: string;
+  pratica_adotada_raw: string | null;
+  pratica_adotada_normalized: string;
+  explicacao: string | null;
+}
+
+export interface GovernanceReportDetail extends GovernanceReportSummary {
+  data_inicio_exercicio_social: string | null;
+  data_fim_exercicio_social: string | null;
+  link_download: string | null;
+  file_version_hash: string;
+  raw_data: Record<string, unknown>;
+  items: GovernanceComplianceItemSummary[];
+}
+
+export interface GovernanceByCompanyResponse {
+  cd_cvm: number;
+  company_name: string;
+  reports: GovernanceReportSummary[];
+}
+
+export interface GovernanceSyncStatusResponse {
+  last_captured_at: string | null;
+  last_file_hash: string | null;
+  total_reports: number;
+  distinct_companies: number;
+  distinct_years: number;
+  total_items: number;
+  items_by_normalized: Record<string, number>;
+}
+
+export interface TriggerICBGCSyncResponse {
+  task_id: string;
+  status: string;
+}
+
+export interface ListICBGCReportsParams {
+  cd_cvm?: number;
+  cnpj?: string;
+  year?: number;
+  page?: number;
+  page_size?: number;
+}
