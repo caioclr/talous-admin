@@ -77,7 +77,7 @@ test.describe("Buybacks — detail", () => {
 
   test("renders program data, quantities and intermediaries", async ({ page }) => {
     await page.goto(
-      `/cvm/buybacks/programs/${encodeURIComponent(BUYBACK_PROGRAM_DETAIL.id_programa)}`,
+      `/cvm/buybacks/programs/detail?id_programa=${encodeURIComponent(BUYBACK_PROGRAM_DETAIL.id_programa)}`,
     );
 
     await expect(

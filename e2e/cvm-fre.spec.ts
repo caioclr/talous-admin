@@ -78,7 +78,7 @@ test.describe("FRE — filing detail", () => {
 
   test("renders identification + capital tab by default", async ({ page }) => {
     await page.goto(
-      `/cvm/fre/filings/${encodeURIComponent(FRE_FILING_PETROBRAS_DETAIL.id_documento)}`,
+      `/cvm/fre/filings/detail?id_documento=${encodeURIComponent(FRE_FILING_PETROBRAS_DETAIL.id_documento)}`,
     );
 
     await expect(
@@ -99,7 +99,7 @@ test.describe("FRE — filing detail", () => {
 
   test("Auditores tab lists typed columns", async ({ page }) => {
     await page.goto(
-      `/cvm/fre/filings/${encodeURIComponent(FRE_FILING_PETROBRAS_DETAIL.id_documento)}`,
+      `/cvm/fre/filings/detail?id_documento=${encodeURIComponent(FRE_FILING_PETROBRAS_DETAIL.id_documento)}`,
     );
 
     await page.getByRole("tab", { name: "Auditores" }).click();
@@ -110,7 +110,7 @@ test.describe("FRE — filing detail", () => {
 
   test("Valores mobiliarios tab shows typed table", async ({ page }) => {
     await page.goto(
-      `/cvm/fre/filings/${encodeURIComponent(FRE_FILING_PETROBRAS_DETAIL.id_documento)}`,
+      `/cvm/fre/filings/detail?id_documento=${encodeURIComponent(FRE_FILING_PETROBRAS_DETAIL.id_documento)}`,
     );
 
     await page.getByRole("tab", { name: "Valores mobiliarios" }).click();
@@ -122,7 +122,7 @@ test.describe("FRE — filing detail", () => {
 
   test("Outros tab shows the dynamic sub-tables", async ({ page }) => {
     await page.goto(
-      `/cvm/fre/filings/${encodeURIComponent(FRE_FILING_PETROBRAS_DETAIL.id_documento)}`,
+      `/cvm/fre/filings/detail?id_documento=${encodeURIComponent(FRE_FILING_PETROBRAS_DETAIL.id_documento)}`,
     );
 
     await page.getByRole("tab", { name: "Outros" }).click();

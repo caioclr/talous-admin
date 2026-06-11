@@ -82,7 +82,7 @@ test.describe("CVM companies — list", () => {
 
     await page.getByRole("row", { name: /Petroleo Brasileiro/ }).click();
 
-    await page.waitForURL("**/cvm/companies/9512");
+    await page.waitForURL(/\/cvm\/companies\/detail\?cd_cvm=9512/);
     await expect(
       page.getByRole("heading", { name: COMPANY_DETAIL_PETROBRAS.name }),
     ).toBeVisible();
@@ -113,7 +113,7 @@ test.describe("CVM companies — detail", () => {
   });
 
   test("Info tab shows denormalized company fields", async ({ page }) => {
-    await page.goto("/cvm/companies/9512");
+    await page.goto("/cvm/companies/detail?cd_cvm=9512");
 
     await expect(page.getByText("CNPJ")).toBeVisible();
     await expect(page.getByText(COMPANY_DETAIL_PETROBRAS.cnpj!)).toBeVisible();
@@ -122,7 +122,7 @@ test.describe("CVM companies — detail", () => {
   });
 
   test("Historico tab lists snapshots and links to detail", async ({ page }) => {
-    await page.goto("/cvm/companies/9512");
+    await page.goto("/cvm/companies/detail?cd_cvm=9512");
     await page.getByRole("tab", { name: "Historico" }).click();
 
     await expect(page.getByRole("link", { name: "Abrir detalhe" }).first()).toBeVisible();
@@ -131,7 +131,7 @@ test.describe("CVM companies — detail", () => {
   });
 
   test("Mudancas tab renders field-level diff between snapshots", async ({ page }) => {
-    await page.goto("/cvm/companies/9512");
+    await page.goto("/cvm/companies/detail?cd_cvm=9512");
     await page.getByRole("tab", { name: "Mudancas" }).click();
 
     await expect(page.getByText("controle_acionario")).toBeVisible();
@@ -146,7 +146,7 @@ test.describe("CVM companies — detail", () => {
     await page.unroute(CvmRoutes.companyChanges);
     mockGet(page, CvmRoutes.companyChanges, []);
 
-    await page.goto("/cvm/companies/9512");
+    await page.goto("/cvm/companies/detail?cd_cvm=9512");
     await page.getByRole("tab", { name: "Mudancas" }).click();
 
     await expect(

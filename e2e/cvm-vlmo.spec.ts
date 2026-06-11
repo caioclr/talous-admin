@@ -83,7 +83,7 @@ test.describe("VLMO — company page", () => {
   });
 
   test("renders aggregates header, chart and detail table", async ({ page }) => {
-    await page.goto("/cvm/vlmo/companies/9512");
+    await page.goto("/cvm/vlmo/companies/detail?cd_cvm=9512");
 
     await expect(
       page.getByRole("heading", { name: VLMO_AGGREGATES_PETROBRAS.company_name }),
@@ -105,7 +105,7 @@ test.describe("VLMO — company page", () => {
       });
     });
 
-    await page.goto("/cvm/vlmo/companies/9512");
+    await page.goto("/cvm/vlmo/companies/detail?cd_cvm=9512");
     await expect.poll(() => aggregateRequests.length).toBeGreaterThanOrEqual(1);
 
     await page.getByLabel("Ano").selectOption(String(new Date().getUTCFullYear()));

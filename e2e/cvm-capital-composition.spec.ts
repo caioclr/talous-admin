@@ -94,7 +94,7 @@ test.describe("Capital composition — detail", () => {
   test("renders ON/PN breakdown + raw_data", async ({ page }) => {
     mockGet(page, CvmRoutes.capitalCompositionSnapshotById, CAPITAL_COMPOSITION_DETAIL);
 
-    await page.goto(`/cvm/capital-composition/snapshots/${CAPITAL_COMPOSITION_DETAIL.id}`);
+    await page.goto(`/cvm/capital-composition/snapshots/detail?id=${CAPITAL_COMPOSITION_DETAIL.id}`);
 
     await expect(
       page.getByRole("heading", { name: CAPITAL_COMPOSITION_DETAIL.denom_cia }),
