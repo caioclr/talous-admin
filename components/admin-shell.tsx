@@ -74,7 +74,7 @@ const navigation: NavGroup[] = [
       { label: "IPE", href: "/cvm/ipe", icon: BellRing, status: "available" },
       { label: "ITR/DFP", href: "/cvm/itr-dfp", icon: FileStack, status: "available" },
       { label: "FRE", href: "/cvm/fre", icon: FileText, status: "available" },
-      { label: "FCA", href: "/cvm/fca", icon: FileSpreadsheet, status: "soon" },
+      { label: "FCA", href: "/cvm/fca", icon: FileSpreadsheet, status: "available" },
     ],
   },
   {

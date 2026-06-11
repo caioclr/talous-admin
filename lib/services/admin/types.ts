@@ -587,3 +587,94 @@ export interface ListICBGCReportsParams {
   page?: number;
   page_size?: number;
 }
+
+// ----------------------------------------------------------------------------
+// FCA — Formulario Cadastral
+// ----------------------------------------------------------------------------
+
+export interface FCADocumentoSummary {
+  id: string;
+  id_documento: number;
+  cnpj_companhia: string;
+  cd_cvm: number | null;
+  nome_empresarial: string;
+  data_referencia: string;
+  versao: number;
+  categoria_documento: string | null;
+  data_recebimento: string | null;
+  captured_at: string;
+}
+
+export interface FCAGeralSummary {
+  setor_atividade: string | null;
+  descricao_atividade: string | null;
+  situacao_emissor: string | null;
+  pais_origem: string | null;
+  pagina_web: string | null;
+  nome_empresarial_anterior: string | null;
+  data_constituicao: string | null;
+}
+
+export interface FCADriSummary {
+  tipo_responsavel: string;
+  responsavel: string;
+  email: string | null;
+  cidade: string | null;
+  sigla_uf: string | null;
+  data_inicio_atuacao: string | null;
+  data_fim_atuacao: string | null;
+}
+
+export interface FCAValorMobiliarioSummary {
+  valor_mobiliario: string;
+  codigo_negociacao: string | null;
+  mercado: string | null;
+  sigla_entidade_administradora: string | null;
+  segmento: string | null;
+  data_inicio_listagem: string | null;
+  data_fim_listagem: string | null;
+}
+
+export interface FCAAuditorSummary {
+  auditor: string;
+  codigo_cvm_auditor: string | null;
+  responsavel_tecnico: string | null;
+  data_inicio_atuacao_auditor: string | null;
+  data_fim_atuacao_auditor: string | null;
+}
+
+export interface FCADocumentoDetail extends FCADocumentoSummary {
+  file_version_hash: string;
+  geral: FCAGeralSummary | null;
+  dri: FCADriSummary[];
+  valores_mobiliarios: FCAValorMobiliarioSummary[];
+  auditores: FCAAuditorSummary[];
+}
+
+export interface FCAByCompanyResponse {
+  cd_cvm: number;
+  company_name: string;
+  documentos: FCADocumentoSummary[];
+}
+
+export interface FCASyncStatusResponse {
+  last_captured_at: string | null;
+  last_file_hash: string | null;
+  total_documentos: number;
+  distinct_companies: number;
+  distinct_years: number;
+  rows_by_section: Record<string, number>;
+}
+
+export interface TriggerFCASyncResponse {
+  task_id: string;
+  status: string;
+}
+
+export interface ListFCADocumentosParams {
+  cd_cvm?: number;
+  cnpj?: string;
+  year?: number;
+  page?: number;
+  page_size?: number;
+}

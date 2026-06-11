@@ -16,6 +16,10 @@ import type {
   VLMOAggregatesResponse,
   VLMOMovimentacaoSummary,
   VLMOSyncStatusResponse,
+  FCAByCompanyResponse,
+  FCADocumentoDetail,
+  FCADocumentoSummary,
+  FCASyncStatusResponse,
   FREFilingDetail,
   FREFilingSummary,
   FRESyncStatusResponse,
@@ -629,6 +633,129 @@ export const ICBGC_BY_COMPANY_PETROBRAS: GovernanceByCompanyResponse = {
       versao: 1,
       motivo_reapresentacao: null,
       data_entrega: "2025-05-30",
+      captured_at: "2025-06-01T08:00:00Z",
+    },
+  ],
+};
+
+export const FCA_SYNC_STATUS: FCASyncStatusResponse = {
+  last_captured_at: "2026-06-01T08:00:00Z",
+  last_file_hash: "fca9999aaaabbbbccccdddd1111222233334444",
+  total_documentos: 642,
+  distinct_companies: 410,
+  distinct_years: 2,
+  rows_by_section: {
+    geral: 642,
+    dri: 815,
+    valor_mobiliario: 1530,
+    auditor: 705,
+  },
+};
+
+export const FCA_DOCUMENTO_PETROBRAS_SUMMARY: FCADocumentoSummary = {
+  id: "ffff1111-1111-1111-1111-111111111111",
+  id_documento: 778899,
+  cnpj_companhia: "33000167000101",
+  cd_cvm: 9512,
+  nome_empresarial: "Petroleo Brasileiro S.A. - Petrobras",
+  data_referencia: "2025-12-31",
+  versao: 2,
+  categoria_documento: "FCA",
+  data_recebimento: "2026-05-25",
+  captured_at: "2026-06-01T08:00:00Z",
+};
+
+export const FCA_DOCUMENTO_VALE_SUMMARY: FCADocumentoSummary = {
+  id: "ffff2222-2222-2222-2222-222222222222",
+  id_documento: 998877,
+  cnpj_companhia: "33592510000154",
+  cd_cvm: 4170,
+  nome_empresarial: "Vale S.A.",
+  data_referencia: "2025-12-31",
+  versao: 1,
+  categoria_documento: "FCA",
+  data_recebimento: "2026-05-18",
+  captured_at: "2026-06-01T08:00:00Z",
+};
+
+export const FCA_DOCUMENTOS_LIST = {
+  items: [FCA_DOCUMENTO_PETROBRAS_SUMMARY, FCA_DOCUMENTO_VALE_SUMMARY],
+  pagination: { page: 1, page_size: 25, total: 2, total_pages: 1 },
+};
+
+export const FCA_DOCUMENTO_PETROBRAS_DETAIL: FCADocumentoDetail = {
+  ...FCA_DOCUMENTO_PETROBRAS_SUMMARY,
+  file_version_hash: "fcaversionhashpetr2025aaaaaaaaaaaaaaaaaaaa",
+  geral: {
+    setor_atividade: "Petroleo e Gas",
+    descricao_atividade: "Exploracao, producao e refino de petroleo e gas natural.",
+    situacao_emissor: "Fase Operacional",
+    pais_origem: "Brasil",
+    pagina_web: "https://www.petrobras.com.br",
+    nome_empresarial_anterior: null,
+    data_constituicao: "1953-10-03",
+  },
+  dri: [
+    {
+      tipo_responsavel: "Diretor de Relacoes com Investidores",
+      responsavel: "Fernando Sabbi Melgarejo",
+      email: "ri@petrobras.com.br",
+      cidade: "Rio de Janeiro",
+      sigla_uf: "RJ",
+      data_inicio_atuacao: "2023-07-01",
+      data_fim_atuacao: null,
+    },
+  ],
+  valores_mobiliarios: [
+    {
+      valor_mobiliario: "Acoes Ordinarias",
+      codigo_negociacao: "PETR3",
+      mercado: "Bolsa",
+      sigla_entidade_administradora: "B3",
+      segmento: "Novo Mercado",
+      data_inicio_listagem: "1977-01-05",
+      data_fim_listagem: null,
+    },
+    {
+      valor_mobiliario: "Acoes Preferenciais",
+      codigo_negociacao: "PETR4",
+      mercado: "Bolsa",
+      sigla_entidade_administradora: "B3",
+      segmento: "Tradicional",
+      data_inicio_listagem: "1977-01-05",
+      data_fim_listagem: null,
+    },
+  ],
+  auditores: [
+    {
+      auditor: "KPMG Auditores Independentes",
+      codigo_cvm_auditor: "418-9",
+      responsavel_tecnico: "Carlos Augusto Pires",
+      data_inicio_atuacao_auditor: "2019-01-01",
+      data_fim_atuacao_auditor: "2023-12-31",
+    },
+    {
+      auditor: "PricewaterhouseCoopers Auditores Independentes",
+      codigo_cvm_auditor: "287-9",
+      responsavel_tecnico: "Mariana Lima Souza",
+      data_inicio_atuacao_auditor: "2024-01-01",
+      data_fim_atuacao_auditor: null,
+    },
+  ],
+};
+
+export const FCA_BY_COMPANY_PETROBRAS: FCAByCompanyResponse = {
+  cd_cvm: 9512,
+  company_name: "Petroleo Brasileiro S.A. - Petrobras",
+  documentos: [
+    FCA_DOCUMENTO_PETROBRAS_SUMMARY,
+    {
+      ...FCA_DOCUMENTO_PETROBRAS_SUMMARY,
+      id: "ffff3333-3333-3333-3333-333333333333",
+      id_documento: 556677,
+      data_referencia: "2024-12-31",
+      versao: 1,
+      data_recebimento: "2025-05-28",
       captured_at: "2025-06-01T08:00:00Z",
     },
   ],
