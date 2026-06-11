@@ -1,0 +1,524 @@
+export interface PaginationMeta {
+  page: number;
+  page_size: number;
+  total: number;
+  total_pages: number;
+}
+
+export interface AdminPagedResponse<T> {
+  items: T[];
+  pagination: PaginationMeta;
+}
+
+export interface SyncStatusResponse {
+  last_captured_at: string | null;
+  last_file_hash: string | null;
+  total_snapshots: number;
+  situation_counts: Record<string, number>;
+  unmapped_sectors_count: number;
+}
+
+export interface TriggerSyncResponse {
+  task_id: string;
+  status: string;
+}
+
+export interface CVMSnapshotSummary {
+  id: string;
+  captured_at: string;
+  cd_cvm: number;
+  denom_social: string;
+  situacao: string;
+  categoria_registro: string;
+  tipo_mercado: string;
+  file_version_hash: string;
+}
+
+export interface CVMSnapshotDetail extends CVMSnapshotSummary {
+  cnpj_cia: string;
+  denom_comercial: string | null;
+  situacao_emissor: string | null;
+  dt_ini_situacao: string | null;
+  dt_ini_sit_emissor: string | null;
+  dt_cancel: string | null;
+  motivo_cancel: string | null;
+  dt_ini_categoria: string | null;
+  dt_registro: string | null;
+  dt_constituicao: string | null;
+  controle_acionario: string | null;
+  setor_atividade: string | null;
+  auditor: string | null;
+  cnpj_auditor: string | null;
+  addr_logradouro: string | null;
+  addr_compl: string | null;
+  addr_bairro: string | null;
+  addr_municipio: string | null;
+  addr_uf: string | null;
+  addr_cep: string | null;
+  addr_pais: string | null;
+  addr_telefone: string | null;
+  addr_email: string | null;
+  addr_tipo: string | null;
+  resp_nome: string | null;
+  resp_tipo: string | null;
+  resp_dt_inicio: string | null;
+  resp_logradouro: string | null;
+  resp_municipio: string | null;
+  resp_uf: string | null;
+  resp_cep: string | null;
+  resp_email: string | null;
+  raw_data: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface AdminCompanySummary {
+  id: string;
+  cd_cvm: number | null;
+  name: string;
+  cnpj: string | null;
+  sector_slug: string | null;
+  cvm_situation: string | null;
+  cvm_category: string | null;
+  cvm_market_type: string | null;
+  is_active: boolean;
+  primary_ticker: string | null;
+  cvm_last_synced_at: string | null;
+}
+
+export interface AdminCompanyDetail extends AdminCompanySummary {
+  cvm_situation_started_at: string | null;
+  cvm_registration_date: string | null;
+  cvm_constitution_date: string | null;
+  cvm_cancellation_date: string | null;
+  cvm_cancellation_reason: string | null;
+  cvm_controlling_shareholder: string | null;
+  cvm_setor_atividade: string | null;
+  tickers: string[];
+}
+
+export interface RegistryChangeEventResponse {
+  cd_cvm: number;
+  field: string;
+  old: unknown;
+  new: unknown;
+  captured_at: string;
+}
+
+export interface CVMSectorMappingRequest {
+  cvm_setor_atividade: string;
+  internal_sector_slug: string;
+  notes?: string;
+}
+
+export interface CVMSectorMappingResponse {
+  cvm_setor_atividade: string;
+  internal_sector_id: string;
+  internal_sector_slug: string;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UnmappedSectorResponse {
+  cvm_setor_atividade: string;
+  company_count: number;
+  sample_company_names: string[];
+}
+
+export interface ListCompaniesParams {
+  situation?: string;
+  category?: string;
+  market_type?: string;
+  sector_slug?: string;
+  is_active?: boolean;
+  search?: string;
+  page?: number;
+  page_size?: number;
+}
+
+export interface ListSnapshotsParams {
+  cd_cvm?: number;
+  captured_at_from?: string;
+  captured_at_to?: string;
+  page?: number;
+  page_size?: number;
+}
+
+export interface IPEDisclosureSummary {
+  id: string;
+  cd_cvm: number;
+  nome_companhia: string;
+  categoria: string;
+  assunto: string;
+  data_entrega: string | null;
+  data_referencia: string | null;
+  protocolo_entrega: string;
+  versao: number;
+  tipo_apresentacao: string | null;
+  signal_classification: string | null;
+  notification_dispatched: boolean;
+}
+
+export interface IPEDisclosureDetail extends IPEDisclosureSummary {
+  cnpj_cia: string;
+  tipo: string | null;
+  especie: string | null;
+  link_download: string | null;
+  captured_at: string;
+  file_version_hash: string;
+  processed_at: string | null;
+  raw_data: Record<string, unknown>;
+}
+
+export interface IPECategoryCount {
+  categoria: string;
+  count: number;
+}
+
+export interface IPESyncStatusResponse {
+  last_captured_at: string | null;
+  total_disclosures: number;
+  pending_notification_count: number;
+  by_signal_classification: Record<string, number>;
+  last_30_days_count: number;
+}
+
+export interface TriggerIPESyncResponse {
+  task_id: string;
+  status: string;
+}
+
+export interface ListIPEDisclosuresParams {
+  cd_cvm?: number;
+  categoria?: string;
+  tipo_apresentacao?: string;
+  delivered_at_from?: string;
+  delivered_at_to?: string;
+  signal?: string;
+  notified?: boolean;
+  search?: string;
+  page?: number;
+  page_size?: number;
+}
+
+export interface FilingSummary {
+  cd_cvm: number;
+  denom_cia: string;
+  doc_type: string;
+  reference_date: string;
+  grupo_dfr: string;
+  version: number;
+  statement_types: string[];
+}
+
+export interface AccountLineResponse {
+  id: string;
+  cd_cvm: number;
+  statement_type: string;
+  grupo_dfr: string;
+  ordem_exerc: string;
+  version: number;
+  reference_date: string;
+  cd_conta: string;
+  ds_conta: string;
+  vl_conta: string | number;
+  escala_moeda: string;
+}
+
+export interface AccountLinesTreeResponse {
+  cd_cvm: number;
+  statement_type: string;
+  reference_date: string;
+  grupo_dfr: string;
+  items: AccountLineResponse[];
+}
+
+export interface FundamentalSourceValue {
+  source: string;
+  value: number | null;
+}
+
+export interface ReconciliationField {
+  field: string;
+  sources: FundamentalSourceValue[];
+  max_divergence_pct: number | null;
+}
+
+export interface ReconciliationReport {
+  cd_cvm: number;
+  reference_date: string;
+  period_type: string;
+  fields: ReconciliationField[];
+}
+
+export interface TriggerITRDFPSyncResponse {
+  task_id: string;
+  status: string;
+}
+
+export interface ListFilingsParams {
+  cd_cvm?: number;
+  doc_type?: string;
+  ref_date_from?: string;
+  ref_date_to?: string;
+  grupo_dfr?: string;
+  limit?: number;
+}
+
+// ----------------------------------------------------------------------------
+// Capital composition (Sprint 4)
+// ----------------------------------------------------------------------------
+
+export interface CapitalCompositionSnapshotSummary {
+  id: string;
+  captured_at: string;
+  cnpj_cia: string;
+  cd_cvm: number;
+  denom_cia: string;
+  reference_date: string;
+  versao: number;
+  source: string; // "itr" | "dfp"
+  period_type: string;
+  qt_total_integralized: string | number | null;
+  qt_total_treasury: string | number | null;
+  file_version_hash: string;
+}
+
+export interface CapitalCompositionSnapshotDetail extends CapitalCompositionSnapshotSummary {
+  qt_on_integralized: string | number | null;
+  qt_pn_integralized: string | number | null;
+  qt_on_treasury: string | number | null;
+  qt_pn_treasury: string | number | null;
+  raw_data: Record<string, unknown>;
+}
+
+export interface CapitalCompositionSyncStatusResponse {
+  last_captured_at: string | null;
+  last_file_hash: string | null;
+  total_snapshots: number;
+  distinct_companies: number;
+  companies_with_data: number;
+  companies_missing_data: number;
+  snapshots_by_source: Record<string, number>;
+}
+
+export interface TriggerCapitalCompositionSyncResponse {
+  task_id: string;
+  status: string;
+}
+
+export interface ListCapitalCompositionParams {
+  cd_cvm?: number;
+  cnpj?: string;
+  source?: string;
+  period_type?: string;
+  page?: number;
+  page_size?: number;
+}
+
+// ----------------------------------------------------------------------------
+// Buybacks (Sprint 5)
+// ----------------------------------------------------------------------------
+
+export interface BuybackProgramSummary {
+  id: string;
+  id_programa: string;
+  cnpj_companhia: string;
+  cd_cvm: number | null;
+  nome_companhia: string;
+  data_deliberacao: string | null;
+  data_final_prazo: string | null;
+  situacao: string | null;
+  tipo_operacao: string | null;
+  finalidade_compra: string | null;
+  qt_acoes_ordinarias: string | number | null;
+  qt_acoes_preferenciais: string | number | null;
+  captured_at: string;
+}
+
+export interface BuybackQuantitySummary {
+  tipo_acao: string | null;
+  classe_acao: string | null;
+  quantidade_circulacao: string | number | null;
+  quantidade_operacao: string | number | null;
+}
+
+export interface BuybackIntermediarySummary {
+  cnpj_intermediario: string;
+  nome_intermediario: string;
+}
+
+export interface BuybackProgramDetail extends BuybackProgramSummary {
+  motivo: string | null;
+  file_version_hash: string;
+  raw_data: Record<string, unknown>;
+  quantities: BuybackQuantitySummary[];
+  intermediaries: BuybackIntermediarySummary[];
+}
+
+export interface BuybackSyncStatusResponse {
+  total_programs: number;
+  active_programs: number;
+  closed_programs: number;
+  total_quantities: number;
+  total_intermediaries: number;
+  distinct_companies: number;
+  last_captured_at: string | null;
+  last_file_hash: string | null;
+}
+
+export interface TriggerBuybackSyncResponse {
+  task_id: string;
+  status: string;
+}
+
+export interface ListBuybackProgramsParams {
+  cd_cvm?: number;
+  cnpj?: string;
+  situacao?: string;
+  tipo_operacao?: string;
+  page?: number;
+  page_size?: number;
+}
+
+// ----------------------------------------------------------------------------
+// VLMO insider trading (Sprint 8)
+// ----------------------------------------------------------------------------
+
+export interface VLMOMovimentacaoSummary {
+  id: string;
+  cnpj_companhia: string;
+  nome_companhia: string;
+  data_referencia: string;
+  versao: number;
+  tipo_empresa: string | null;
+  empresa: string | null;
+  tipo_cargo: string | null;
+  tipo_movimentacao: string | null;
+  tipo_operacao: string | null;
+  tipo_ativo: string | null;
+  caracteristica_valor_mobiliario: string | null;
+  data_movimentacao: string | null;
+  quantidade: string | number | null;
+  preco_unitario: string | number | null;
+  volume: string | number | null;
+  is_position_snapshot: boolean;
+}
+
+export interface VLMOAggregateRow {
+  reference_month: string;
+  tipo_cargo: string;
+  total_credit_quantity: string | number | null;
+  total_debit_quantity: string | number | null;
+  net_flow_quantity: string | number | null;
+  total_volume: string | number | null;
+}
+
+export interface VLMOAggregatesResponse {
+  cd_cvm: number;
+  company_name: string;
+  rows: VLMOAggregateRow[];
+}
+
+export interface VLMOSyncStatusResponse {
+  last_captured_at: string | null;
+  last_file_hash: string | null;
+  total_filings: number;
+  total_movimentacoes: number;
+  distinct_companies: number;
+  distinct_years: number;
+  movimentacoes_by_cargo: Record<string, number>;
+  movimentacoes_by_movimentacao: Record<string, number>;
+}
+
+export interface TriggerVLMOSyncResponse {
+  task_id: string;
+  status: string;
+}
+
+export interface ListVLMOMovimentacoesParams {
+  cnpj?: string;
+  tipo_cargo?: string;
+  tipo_movimentacao?: string;
+  is_position_snapshot?: boolean;
+  year?: number;
+  page?: number;
+  page_size?: number;
+}
+
+// ----------------------------------------------------------------------------
+// FRE — Formulário de Referência (Sprint 7)
+// ----------------------------------------------------------------------------
+
+export interface FREFilingSummary {
+  id: string;
+  id_documento: string;
+  cnpj_companhia: string;
+  cd_cvm: number | null;
+  nome_companhia: string;
+  data_referencia: string;
+  versao: number;
+  categoria_documento: string | null;
+  data_recebimento: string | null;
+  captured_at: string;
+}
+
+export interface FREAuditorSummary {
+  id_auditor: string | null;
+  auditor: string | null;
+  cnpj_auditor: string | null;
+  tipo_origem_auditor: string | null;
+  data_inicio_contratacao: string | null;
+  data_fim_contratacao: string | null;
+  remuneracao_auditor: string | number | null;
+}
+
+export interface FREValorMobiliarioSummary {
+  valor_mobiliario: string | null;
+  identificacao_valor_mobiliario: string | null;
+  data_emissao: string | null;
+  data_vencimento: string | null;
+  quantidade: string | number | null;
+  saldo_devedor: string | number | null;
+  origem: string | null;
+}
+
+export interface FREFilingDetail extends FREFilingSummary {
+  data_inicio_exercicio_social: string | null;
+  data_fim_exercicio_social: string | null;
+  link_documento: string | null;
+  file_version_hash: string;
+  capital_social: Record<string, unknown>[];
+  distribuicao_capital: Record<string, unknown> | null;
+  posicao_acionaria: Record<string, unknown>[];
+  auditores: FREAuditorSummary[];
+  responsaveis: Record<string, unknown>[];
+  participacoes: Record<string, unknown>[];
+  remuneracao_orgao: Record<string, unknown>[];
+  remuneracao_max_min_media: Record<string, unknown>[];
+  valores_mobiliarios: FREValorMobiliarioSummary[];
+  mercado_estrangeiro: Record<string, unknown>[];
+  transacoes_parte_relacionada: Record<string, unknown>[];
+}
+
+export interface FRESyncStatusResponse {
+  last_captured_at: string | null;
+  last_file_hash: string | null;
+  total_filings: number;
+  distinct_companies: number;
+  distinct_years: number;
+  rows_by_section: Record<string, number>;
+}
+
+export interface TriggerFRESyncResponse {
+  task_id: string;
+  status: string;
+}
+
+export interface ListFREFilingsParams {
+  cd_cvm?: number;
+  cnpj?: string;
+  year?: number;
+  page?: number;
+  page_size?: number;
+}

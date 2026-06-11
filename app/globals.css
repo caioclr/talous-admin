@@ -1,0 +1,116 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f2ede6;
+  --foreground: #1a2833;
+  --card: rgba(255, 250, 244, 0.88);
+  --muted: #ebe3d8;
+  --muted-foreground: #5f6f79;
+  --border: rgba(26, 40, 51, 0.12);
+  --primary: #0f766e;
+  --primary-foreground: #f4fcfa;
+  --secondary: #d6ebe7;
+  --secondary-foreground: #17443f;
+  --destructive: #c2410c;
+  --app-font-sans: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
+  --app-font-mono: "SFMono-Regular", "Menlo", "Monaco", monospace;
+}
+
+.dark {
+  --background: #16202b;
+  --foreground: #eef3f6;
+  --card: rgba(26, 38, 50, 0.84);
+  --muted: #223140;
+  --muted-foreground: #9dafbb;
+  --border: rgba(238, 243, 246, 0.12);
+  --primary: #7ed4c9;
+  --primary-foreground: #0f2e2a;
+  --secondary: #203946;
+  --secondary-foreground: #d7efea;
+  --destructive: #fb923c;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-destructive: var(--destructive);
+  --font-sans: var(--app-font-sans);
+  --font-mono: var(--app-font-mono);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+  background:
+    radial-gradient(circle at top left, rgba(126, 212, 201, 0.16), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(251, 146, 60, 0.14), transparent 20%),
+    var(--background);
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  color: var(--foreground);
+  font-family: var(--app-font-sans);
+  background:
+    radial-gradient(circle at top left, rgba(126, 212, 201, 0.14), transparent 24%),
+    radial-gradient(circle at bottom right, rgba(251, 146, 60, 0.08), transparent 20%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 28%),
+    var(--background);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--primary) 28%, transparent);
+}
+
+.panel-surface {
+  border: 1px solid color-mix(in srgb, var(--border) 100%, transparent);
+  background: color-mix(in srgb, var(--card) 94%, transparent);
+  box-shadow:
+    0 14px 40px rgba(7, 12, 18, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(18px);
+  border-radius: 30px;
+}
+
+.shadow-soft {
+  box-shadow: 0 16px 36px rgba(14, 23, 33, 0.18);
+}
+
+.metric-tile {
+  position: relative;
+  overflow: hidden;
+}
+
+.metric-tile::after {
+  content: "";
+  position: absolute;
+  inset: auto -10% -20% auto;
+  width: 120px;
+  height: 120px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(126, 212, 201, 0.18), transparent 65%);
+}
