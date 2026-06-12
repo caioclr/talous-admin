@@ -770,3 +770,35 @@ export interface ListAdmCarteiraParams {
   page?: number;
   page_size?: number;
 }
+
+// ----------------------------------------------------------------------------
+// Alertas operacionais CVM
+// ----------------------------------------------------------------------------
+
+export type AlertSeverity = "alta" | "media" | "baixa";
+
+export interface OperationalAlert {
+  alert_type: string;
+  severity: AlertSeverity;
+  cd_cvm: number | null;
+  cnpj: string | null;
+  nome_empresarial: string | null;
+  message: string;
+  payload: Record<string, unknown>;
+  reference_date: string | null;
+  detected_at: string;
+}
+
+export interface AlertsSummaryResponse {
+  total: number;
+  by_severity: Record<string, number>;
+  by_type: Record<string, number>;
+}
+
+export interface ListAlertsParams {
+  severity?: string;
+  alert_type?: string;
+  cd_cvm?: number;
+  page?: number;
+  page_size?: number;
+}
