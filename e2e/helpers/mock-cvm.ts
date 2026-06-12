@@ -133,4 +133,6 @@ export const CvmRoutes = {
   participantesIntermediariosList: /\/api\/v1\/admin\/cvm\/participantes\/intermediarios(\?.*)?$/,
   participantesIntermediarioDetail: /\/api\/v1\/admin\/cvm\/participantes\/intermediarios\/\d+$/,
   participantesAdmCarteiraList: /\/api\/v1\/admin\/cvm\/participantes\/adm-carteira(\?.*)?$/,
+  alertsList: /\/api\/v1\/admin\/cvm\/alerts(\?.*)?$/,
+  alertsSummary: /\/api\/v1\/admin\/cvm\/alerts\/summary$/,
 } as const;

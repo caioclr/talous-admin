@@ -3,6 +3,8 @@ import type {
   AdminCompanyDetail,
   AdminCompanySummary,
   AdminPagedResponse,
+  AlertsSummaryResponse,
+  OperationalAlert,
   AuditorRegistrySummary,
   IntermediarioRegistrySummary,
   ParticipantesSyncStatusResponse,
@@ -889,6 +891,79 @@ export const PARTICIPANTES_ADM_CARTEIRA_PF: AdmCarteiraRegistrySummary = {
 export const PARTICIPANTES_ADM_CARTEIRA_LIST: AdminPagedResponse<AdmCarteiraRegistrySummary> = {
   items: [PARTICIPANTES_ADM_CARTEIRA_PJ, PARTICIPANTES_ADM_CARTEIRA_PF],
   pagination: { page: 1, page_size: 25, total: 2, total_pages: 1 },
+};
+
+export const ALERTS_SUMMARY: AlertsSummaryResponse = {
+  total: 42,
+  by_severity: { alta: 12, media: 19, baixa: 11 },
+  by_type: {
+    fre_stale: 7,
+    fca_stale: 5,
+    needs_data_refresh: 3,
+    icbgc_stale: 9,
+    registry_inactive_with_active_data: 4,
+    buyback_expired_open: 6,
+    vlmo_heavy_selling: 5,
+    auditor_change: 3,
+  },
+};
+
+export const ALERT_FRE_STALE_PETROBRAS: OperationalAlert = {
+  alert_type: "fre_stale",
+  severity: "alta",
+  cd_cvm: 9512,
+  cnpj: "33000167000101",
+  nome_empresarial: "Petroleo Brasileiro S.A. - Petrobras",
+  message: "FRE mais recente esta desatualizado ha mais de 12 meses.",
+  payload: { last_fre_reference: "2024-12-31", months_stale: 18 },
+  reference_date: "2024-12-31",
+  detected_at: "2026-06-09T03:00:00Z",
+};
+
+export const ALERT_BUYBACK_EXPIRED_VALE: OperationalAlert = {
+  alert_type: "buyback_expired_open",
+  severity: "media",
+  cd_cvm: 4170,
+  cnpj: "33592510000154",
+  nome_empresarial: "Vale S.A.",
+  message: "Programa de recompra vencido continua marcado como aberto.",
+  payload: { program_id: "rb-2024-07", data_termino: "2025-12-20" },
+  reference_date: "2025-12-20",
+  detected_at: "2026-06-09T03:00:00Z",
+};
+
+export const ALERT_VLMO_HEAVY_SELLING_PETROBRAS: OperationalAlert = {
+  alert_type: "vlmo_heavy_selling",
+  severity: "baixa",
+  cd_cvm: 9512,
+  cnpj: "33000167000101",
+  nome_empresarial: "Petroleo Brasileiro S.A. - Petrobras",
+  message: "Vendas de insiders superaram compras nos ultimos 3 meses.",
+  payload: { net_volume: -1250000, window_months: 3 },
+  reference_date: "2026-05-31",
+  detected_at: "2026-06-09T03:00:00Z",
+};
+
+export const ALERT_AUDITOR_CHANGE_SEM_CADASTRO: OperationalAlert = {
+  alert_type: "auditor_change",
+  severity: "baixa",
+  cd_cvm: null,
+  cnpj: "11222333000144",
+  nome_empresarial: "Companhia Sem Cadastro S.A.",
+  message: "Troca de auditor identificada no FCA mais recente.",
+  payload: { auditor_anterior: "KPMG", auditor_atual: "EY" },
+  reference_date: null,
+  detected_at: "2026-06-09T03:05:00Z",
+};
+
+export const ALERTS_LIST: AdminPagedResponse<OperationalAlert> = {
+  items: [
+    ALERT_FRE_STALE_PETROBRAS,
+    ALERT_BUYBACK_EXPIRED_VALE,
+    ALERT_VLMO_HEAVY_SELLING_PETROBRAS,
+    ALERT_AUDITOR_CHANGE_SEM_CADASTRO,
+  ],
+  pagination: { page: 1, page_size: 25, total: 4, total_pages: 1 },
 };
 
 export const UNMAPPED_SECTORS: UnmappedSectorResponse[] = [

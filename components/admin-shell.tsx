@@ -58,7 +58,7 @@ const navigation: NavGroup[] = [
     label: "Visao Geral",
     items: [
       { label: "Dashboard CVM", href: "/cvm", icon: LayoutDashboard, status: "available" },
-      { label: "Alertas operacionais", href: "/cvm/alerts", icon: AlertTriangle, status: "soon" },
+      { label: "Alertas operacionais", href: "/cvm/alerts", icon: AlertTriangle, status: "available" },
     ],
   },
   {
