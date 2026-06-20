@@ -1,4 +1,4 @@
-# talous-admin — Contexto para Claude Code
+# talous-admin — Contexto para Agentes
 
 ## Visão geral
 
@@ -6,7 +6,11 @@ Painel administrativo interno do Talous AI para operadores.
 
 Acesso restrito a usuários com `users.is_admin = true` (validado no backend em cada requisição).
 
-Leia [PROJECT_CONTEXT.md](../PROJECT_CONTEXT.md) e [DEVELOPMENT_GUIDELINES.md](../DEVELOPMENT_GUIDELINES.md) antes de gerar código.
+Se este repo estiver dentro do workspace `talous-ai`, leia tambem
+[AGENTS.md](../AGENTS.md).
+
+Leia [PROJECT_CONTEXT.md](../PROJECT_CONTEXT.md) e
+[DEVELOPMENT_GUIDELINES.md](../DEVELOPMENT_GUIDELINES.md) antes de gerar codigo.
 
 ---
 
@@ -53,11 +57,24 @@ Leia [PROJECT_CONTEXT.md](../PROJECT_CONTEXT.md) e [DEVELOPMENT_GUIDELINES.md](.
 
 ## Stack
 
-A definir. Opções em avaliação:
-1. Rotas `/admin` dentro do `talous-frontend` (mesmo projeto Next.js)
-2. Aplicação separada (Next.js standalone ou outra stack leve)
+O admin e uma aplicacao separada em `talous-admin/`.
 
-Ver decisão em [open_points.md](../docs/Decisions/open_points.md).
+- Next.js 16
+- React 19
+- TypeScript strict
+- Tailwind CSS 4
+- shadcn/Radix UI
+- TanStack Query
+- Zustand
+- React Hook Form + Zod
+- Recharts
+- Vitest + Testing Library
+- Playwright
+
+Porta local: `6001`.
+
+Rotas seguem o padrao atual do repo: sem route groups `(...)` e sem segmentos
+dinamicos `[...]`; paginas de detalhe usam `/detail/page.tsx` com query string.
 
 ---
 
