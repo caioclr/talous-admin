@@ -1,47 +1,53 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f2ede6;
-  --foreground: #1a2833;
-  --card: rgba(255, 250, 244, 0.88);
-  --muted: #ebe3d8;
-  --muted-foreground: #5f6f79;
-  --border: rgba(26, 40, 51, 0.12);
-  --primary: #0f766e;
-  --primary-foreground: #f4fcfa;
-  --secondary: #d6ebe7;
-  --secondary-foreground: #17443f;
-  --destructive: #c2410c;
-  --app-font-sans: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
-  --app-font-mono: "SFMono-Regular", "Menlo", "Monaco", monospace;
-}
-
-.dark {
-  --background: #16202b;
-  --foreground: #eef3f6;
-  --card: rgba(26, 38, 50, 0.84);
-  --muted: #223140;
-  --muted-foreground: #9dafbb;
-  --border: rgba(238, 243, 246, 0.12);
-  --primary: #7ed4c9;
-  --primary-foreground: #0f2e2a;
-  --secondary: #203946;
-  --secondary-foreground: #d7efea;
-  --destructive: #fb923c;
+  --background: oklch(15% 0.01 250);
+  --foreground: oklch(93% 0.005 250);
+  --card: oklch(19% 0.012 250);
+  --card-raised: oklch(22% 0.014 250);
+  --muted: oklch(22% 0.014 250);
+  --muted-foreground: oklch(55% 0.015 250);
+  --border: oklch(28% 0.012 250);
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --primary: oklch(72% 0.16 175);
+  --primary-foreground: oklch(15% 0.02 175);
+  --secondary: oklch(22% 0.014 250);
+  --secondary-foreground: oklch(85% 0.01 175);
+  --destructive: oklch(65% 0.20 25);
+  --success: oklch(72% 0.17 155);
+  --warning: oklch(78% 0.14 80);
+  --info: oklch(68% 0.14 240);
+  --accent-dim: oklch(72% 0.16 175 / 0.12);
+  --success-dim: oklch(72% 0.17 155 / 0.1);
+  --warning-dim: oklch(78% 0.14 80 / 0.1);
+  --danger-dim: oklch(65% 0.20 25 / 0.1);
+  --info-dim: oklch(68% 0.14 240 / 0.1);
+  --app-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --app-font-mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
+  --color-card-raised: var(--card-raised);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+  --color-accent-dim: var(--accent-dim);
+  --color-success-dim: var(--success-dim);
+  --color-warning-dim: var(--warning-dim);
+  --color-danger-dim: var(--danger-dim);
+  --color-info-dim: var(--info-dim);
   --font-sans: var(--app-font-sans);
   --font-mono: var(--app-font-mono);
 }
@@ -52,10 +58,7 @@
 
 html {
   color-scheme: dark;
-  background:
-    radial-gradient(circle at top left, rgba(126, 212, 201, 0.16), transparent 28%),
-    radial-gradient(circle at bottom right, rgba(251, 146, 60, 0.14), transparent 20%),
-    var(--background);
+  background: var(--background);
 }
 
 body {
@@ -63,11 +66,9 @@ body {
   margin: 0;
   color: var(--foreground);
   font-family: var(--app-font-sans);
-  background:
-    radial-gradient(circle at top left, rgba(126, 212, 201, 0.14), transparent 24%),
-    radial-gradient(circle at bottom right, rgba(251, 146, 60, 0.08), transparent 20%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 28%),
-    var(--background);
+  background: var(--background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 a {
@@ -83,21 +84,23 @@ textarea {
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--primary) 28%, transparent);
+  background: var(--accent-dim);
+  color: var(--foreground);
 }
 
+/*
+ * Helpers de superficie usados pelas paginas do painel. Mantidos para
+ * compatibilidade visual com as telas existentes, re-afinados para o tema
+ * escuro e plano do restyle (sem blur/gradiente da versao anterior).
+ */
 .panel-surface {
-  border: 1px solid color-mix(in srgb, var(--border) 100%, transparent);
-  background: color-mix(in srgb, var(--card) 94%, transparent);
-  box-shadow:
-    0 14px 40px rgba(7, 12, 18, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(18px);
-  border-radius: 30px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  border-radius: 8px;
 }
 
 .shadow-soft {
-  box-shadow: 0 16px 36px rgba(14, 23, 33, 0.18);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .metric-tile {
@@ -112,5 +115,5 @@ textarea {
   width: 120px;
   height: 120px;
   border-radius: 999px;
-  background: radial-gradient(circle, rgba(126, 212, 201, 0.18), transparent 65%);
+  background: radial-gradient(circle, var(--accent-dim), transparent 65%);
 }

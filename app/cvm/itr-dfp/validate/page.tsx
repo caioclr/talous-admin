@@ -3,14 +3,20 @@
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Check, ChevronRight, Undo2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ChevronRight, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { formatDate, formatDateTime, formatDecimal, formatValidatedBy } from "@/lib/formatters";
+import {
+  formatDateTime,
+  formatDecimal,
+  formatFilingPeriodLabel,
+  formatValidatedBy,
+  priorYearReferenceDate,
+} from "@/lib/formatters";
 import {
   getITRDFPAccountLines,
   invalidateITRDFPFiling,
@@ -35,45 +41,114 @@ function getAccountLevel(cdConta: string): number {
   return Math.min(cdConta.split(".").length - 1, 4);
 }
 
-function AccountRow({ item }: { item: AccountLineResponse }) {
-  const level = getAccountLevel(item.cd_conta);
-  const isTitle = level === 0;
+/**
+ * Linha de comparacao: conta + valor atual (ULTIMO) e valor do mesmo periodo
+ * do ano anterior (PENULTIMO). A juncao e por `cd_conta`.
+ */
+interface ComparisonRow {
+  cd_conta: string;
+  ds_conta: string;
+  current: number | null;
+  prior: number | null;
+}
+
+function toNumber(value: string | number | null | undefined): number | null {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+  const parsed = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+/**
+ * VAR% e APENAS exibicao: delta percentual entre dois valores ja mostrados.
+ * Nao e calculo de dominio. Retorna null quando nao ha base valida.
+ */
+function variationPct(current: number | null, prior: number | null): number | null {
+  if (current === null || prior === null || prior === 0) {
+    return null;
+  }
+  return ((current - prior) / Math.abs(prior)) * 100;
+}
+
+/**
+ * Junta as linhas de ULTIMO e PENULTIMO por `cd_conta`, preservando a ordem do
+ * periodo atual. Contas que so existem no periodo anterior entram no fim.
+ */
+function buildComparisonRows(
+  current: AccountLineResponse[],
+  prior: AccountLineResponse[],
+): ComparisonRow[] {
+  const priorByConta = new Map<string, AccountLineResponse>();
+  for (const line of prior) {
+    priorByConta.set(line.cd_conta, line);
+  }
+
+  const seen = new Set<string>();
+  const rows: ComparisonRow[] = [];
+
+  for (const line of current) {
+    seen.add(line.cd_conta);
+    const priorLine = priorByConta.get(line.cd_conta);
+    rows.push({
+      cd_conta: line.cd_conta,
+      ds_conta: line.ds_conta,
+      current: toNumber(line.vl_conta),
+      prior: priorLine ? toNumber(priorLine.vl_conta) : null,
+    });
+  }
+
+  for (const line of prior) {
+    if (seen.has(line.cd_conta)) {
+      continue;
+    }
+    rows.push({
+      cd_conta: line.cd_conta,
+      ds_conta: line.ds_conta,
+      current: null,
+      prior: toNumber(line.vl_conta),
+    });
+  }
+
+  return rows;
+}
+
+function ComparisonCell({ value }: { value: number | null }) {
+  return (
+    <span className="font-mono text-sm tabular-nums text-foreground/80">
+      {formatDecimal(value, { maximumFractionDigits: 2 })}
+    </span>
+  );
+}
+
+function VariationCell({ value }: { value: number | null }) {
+  if (value === null) {
+    return <span className="font-mono text-sm tabular-nums text-muted-foreground">—</span>;
+  }
+
+  const tone = value > 0 ? "text-success" : value < 0 ? "text-destructive" : "text-muted-foreground";
+  const sign = value > 0 ? "+" : "";
 
   return (
-    <tr className="border-b border-border/50 transition-colors hover:bg-muted/30">
-      <td className="py-2 pr-3" style={{ paddingLeft: `${level * 18 + 12}px` }}>
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-[11px] text-muted-foreground">{item.cd_conta}</span>
-          <span
-            className={cn(
-              "text-sm",
-              isTitle ? "font-semibold text-foreground" : "text-foreground/90",
-            )}
-          >
-            {item.ds_conta}
-          </span>
-        </div>
-      </td>
-      <td className="py-2 pl-3 text-right">
-        <span
-          className={cn(
-            "font-mono text-sm tabular-nums",
-            isTitle ? "font-semibold text-foreground" : "text-foreground/80",
-          )}
-        >
-          {formatDecimal(item.vl_conta, { maximumFractionDigits: 2 })}
-        </span>
-      </td>
-    </tr>
+    <span className={cn("font-mono text-sm tabular-nums", tone)}>
+      {sign}
+      {formatDecimal(value, { maximumFractionDigits: 1 })}%
+    </span>
   );
 }
 
 function StatementTable({
-  items,
+  rows,
   loading,
+  currentLabel,
+  priorLabel,
+  showComparison,
 }: {
-  items: AccountLineResponse[];
+  rows: ComparisonRow[];
   loading: boolean;
+  currentLabel: string;
+  priorLabel: string;
+  showComparison: boolean;
 }) {
   if (loading) {
     return (
@@ -85,7 +160,7 @@ function StatementTable({
     );
   }
 
-  if (items.length === 0) {
+  if (rows.length === 0) {
     return (
       <div className="py-12 text-center">
         <p className="text-sm text-muted-foreground">
@@ -95,8 +170,6 @@ function StatementTable({
     );
   }
 
-  const escala = items[0]?.escala_moeda;
-
   return (
     <div className="overflow-x-auto">
       <table className="w-full">
@@ -105,15 +178,61 @@ function StatementTable({
             <th className="py-2 pl-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               Conta
             </th>
-            <th className="py-2 pr-3 text-right text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Valor{escala ? ` (escala: ${escala})` : ""}
+            <th className="py-2 pl-3 text-right text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              {currentLabel}
             </th>
+            {showComparison ? (
+              <>
+                <th className="py-2 pl-3 text-right text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {priorLabel}
+                </th>
+                <th className="py-2 pr-3 pl-3 text-right text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Var%
+                </th>
+              </>
+            ) : null}
           </tr>
         </thead>
         <tbody>
-          {items.map((item) => (
-            <AccountRow key={item.id} item={item} />
-          ))}
+          {rows.map((row) => {
+            const level = getAccountLevel(row.cd_conta);
+            const isTitle = level === 0;
+            return (
+              <tr
+                key={row.cd_conta}
+                className="border-b border-border/50 transition-colors hover:bg-muted/30"
+              >
+                <td className="py-2 pr-3" style={{ paddingLeft: `${level * 18 + 12}px` }}>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-[11px] text-muted-foreground">
+                      {row.cd_conta}
+                    </span>
+                    <span
+                      className={cn(
+                        "text-sm",
+                        isTitle ? "font-semibold text-foreground" : "text-foreground/90",
+                      )}
+                    >
+                      {row.ds_conta}
+                    </span>
+                  </div>
+                </td>
+                <td className="py-2 pl-3 text-right">
+                  <ComparisonCell value={row.current} />
+                </td>
+                {showComparison ? (
+                  <>
+                    <td className="py-2 pl-3 text-right">
+                      <ComparisonCell value={row.prior} />
+                    </td>
+                    <td className="py-2 pr-3 pl-3 text-right">
+                      <VariationCell value={variationPct(row.current, row.prior)} />
+                    </td>
+                  </>
+                ) : null}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
@@ -141,21 +260,39 @@ export default function ValidateFilingPage() {
     enabled: Boolean(cdCvm),
   });
 
-  const currentFiling = useMemo(() => {
-    return (filingsQuery.data ?? []).find(
+  // Filings da MESMA empresa e MESMO grupo_dfr, ordenados por reference_date,
+  // misturando doc_types (ITR e DFP). Base da faixa de navegacao.
+  const sameGroupFilings = useMemo(() => {
+    return (filingsQuery.data ?? [])
+      .filter((filing) => filing.grupo_dfr === grupoDfr)
+      .slice()
+      .sort(
+        (a, b) =>
+          new Date(a.reference_date).getTime() - new Date(b.reference_date).getTime(),
+      );
+  }, [filingsQuery.data, grupoDfr]);
+
+  const currentIndex = useMemo(() => {
+    return sameGroupFilings.findIndex(
       (filing) =>
         filing.doc_type === docType &&
         filing.reference_date === referenceDate &&
-        filing.grupo_dfr === grupoDfr &&
         filing.version === Number(version),
     );
-  }, [filingsQuery.data, docType, referenceDate, grupoDfr, version]);
+  }, [sameGroupFilings, docType, referenceDate, version]);
+
+  const currentFiling = currentIndex >= 0 ? sameGroupFilings[currentIndex] : undefined;
+  const prevFiling = currentIndex > 0 ? sameGroupFilings[currentIndex - 1] : null;
+  const nextFiling =
+    currentIndex >= 0 && currentIndex < sameGroupFilings.length - 1
+      ? sameGroupFilings[currentIndex + 1]
+      : null;
 
   const statementTypes = currentFiling?.statement_types ?? [];
   const [activeStatement, setActiveStatement] = useState(0);
   const selectedStatement = statementTypes[activeStatement] ?? statementTypes[0] ?? "";
 
-  const accountLinesQuery = useQuery({
+  const currentLinesQuery = useQuery({
     queryKey: [
       "cvm",
       "itr-dfp",
@@ -164,6 +301,7 @@ export default function ValidateFilingPage() {
       selectedStatement,
       referenceDate,
       grupoDfr,
+      "ULTIMO",
     ],
     queryFn: () =>
       getITRDFPAccountLines(cdCvm, {
@@ -174,6 +312,41 @@ export default function ValidateFilingPage() {
       }),
     enabled: Boolean(cdCvm && selectedStatement && referenceDate),
   });
+
+  // PENULTIMO = mesmo periodo do ano anterior, conforme contrato do endpoint.
+  // So exibimos a comparacao se o backend devolver dados; nada e fabricado.
+  const priorLinesQuery = useQuery({
+    queryKey: [
+      "cvm",
+      "itr-dfp",
+      "account-lines",
+      cdCvm,
+      selectedStatement,
+      referenceDate,
+      grupoDfr,
+      "PENULTIMO",
+    ],
+    queryFn: () =>
+      getITRDFPAccountLines(cdCvm, {
+        statement_type: selectedStatement,
+        reference_date: referenceDate,
+        grupo_dfr: grupoDfr,
+        ordem_exerc: "PENULTIMO",
+      }),
+    enabled: Boolean(cdCvm && selectedStatement && referenceDate),
+  });
+
+  const priorLines = priorLinesQuery.data?.items ?? [];
+  const hasComparison = priorLines.length > 0;
+
+  const comparisonRows = useMemo(
+    () =>
+      buildComparisonRows(
+        currentLinesQuery.data?.items ?? [],
+        priorLinesQuery.data?.items ?? [],
+      ),
+    [currentLinesQuery.data, priorLinesQuery.data],
+  );
 
   const validationParams: ValidateFilingParams = {
     cd_cvm: Number(cdCvm),
@@ -210,6 +383,20 @@ export default function ValidateFilingPage() {
       toast.error(error.message);
     },
   });
+
+  function navigateTo(filing: FilingSummaryWithValidation | null) {
+    if (!filing) {
+      return;
+    }
+    const query = new URLSearchParams({
+      cd_cvm: String(filing.cd_cvm),
+      doc_type: filing.doc_type,
+      reference_date: filing.reference_date,
+      grupo_dfr: filing.grupo_dfr,
+      version: String(filing.version),
+    });
+    router.push(`/cvm/itr-dfp/validate?${query.toString()}`);
+  }
 
   if (filingsQuery.isLoading) {
     return (
@@ -262,6 +449,14 @@ export default function ValidateFilingPage() {
   }
 
   const isValidated = currentFiling.validation.status === "valid";
+  const currentPeriodLabel = formatFilingPeriodLabel(
+    currentFiling.doc_type,
+    currentFiling.reference_date,
+  );
+  const priorPeriodLabel = formatFilingPeriodLabel(
+    currentFiling.doc_type,
+    priorYearReferenceDate(currentFiling.reference_date),
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -276,15 +471,18 @@ export default function ValidateFilingPage() {
             <ArrowLeft className="size-4" />
           </Button>
           <div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>ITR/DFP</span>
+            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <span>Validacao de filing</span>
               <ChevronRight className="size-3" />
-              <span className="text-foreground">{currentFiling.denom_cia}</span>
+              <span>{currentPeriodLabel}</span>
             </div>
             <h2 className="mt-1 text-xl font-semibold tracking-tight text-foreground">
-              {currentFiling.doc_type.toUpperCase()} · {formatDate(currentFiling.reference_date)} ·{" "}
-              {currentFiling.grupo_dfr}
+              {currentFiling.denom_cia}
             </h2>
+            <p className="mt-1 max-w-xl text-xs text-muted-foreground">
+              Conferencia por amostragem. Marcar como valido nao altera o dado nem o resultado da
+              analise — e metadado interno de QA.
+            </p>
           </div>
         </div>
 
@@ -313,6 +511,54 @@ export default function ValidateFilingPage() {
         </div>
       </div>
 
+      {/* Navegacao entre filings da mesma empresa/grupo (ITR + DFP por data) */}
+      <Card>
+        <CardContent className="flex items-center gap-2 p-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Filing anterior"
+            disabled={!prevFiling}
+            onClick={() => navigateTo(prevFiling)}
+          >
+            <ArrowLeft className="size-3.5" />
+          </Button>
+          <div className="flex flex-1 items-center gap-1 overflow-x-auto">
+            {sameGroupFilings.map((filing, index) => {
+              const isActive = index === currentIndex;
+              return (
+                <button
+                  key={`${filing.doc_type}-${filing.reference_date}-${filing.version}`}
+                  type="button"
+                  aria-current={isActive ? "true" : undefined}
+                  onClick={() => navigateTo(filing)}
+                  className={cn(
+                    "whitespace-nowrap rounded-sm px-2 py-1 text-[11px] font-medium transition",
+                    isActive
+                      ? "bg-accent-dim text-primary"
+                      : "text-muted-foreground hover:bg-muted/30 hover:text-foreground",
+                  )}
+                >
+                  {formatFilingPeriodLabel(filing.doc_type, filing.reference_date)}
+                </button>
+              );
+            })}
+          </div>
+          <span className="whitespace-nowrap text-[11px] text-muted-foreground">
+            {currentIndex + 1} de {sameGroupFilings.length}
+          </span>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Proximo filing"
+            disabled={!nextFiling}
+            onClick={() => navigateTo(nextFiling)}
+          >
+            <ArrowRight className="size-3.5" />
+          </Button>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardContent className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
           <span>
@@ -337,8 +583,9 @@ export default function ValidateFilingPage() {
         <CardHeader>
           <CardTitle>Demonstrativos</CardTitle>
           <CardDescription>
-            Hierarquia de contas por demonstrativo. Numeros sao exibidos formatados; o valor original
-            permanece intacto no backend.
+            Hierarquia de contas por demonstrativo, comparando {currentPeriodLabel} com{" "}
+            {priorPeriodLabel}. Numeros sao exibidos formatados; o valor original permanece intacto
+            no backend. A coluna Var% e apenas o delta entre os dois valores exibidos.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -363,8 +610,11 @@ export default function ValidateFilingPage() {
               {statementTypes.map((type, index) => (
                 <TabsContent key={type} value={String(index)}>
                   <StatementTable
-                    items={accountLinesQuery.data?.items ?? []}
-                    loading={accountLinesQuery.isLoading}
+                    rows={comparisonRows}
+                    loading={currentLinesQuery.isLoading || priorLinesQuery.isLoading}
+                    currentLabel={currentPeriodLabel}
+                    priorLabel={priorPeriodLabel}
+                    showComparison={hasComparison}
                   />
                 </TabsContent>
               ))}
@@ -382,7 +632,7 @@ function FilingStatus({ filing }: { filing: FilingSummaryWithValidation }) {
   }
 
   return (
-    <div className="flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-emerald-700 dark:text-emerald-300">
+    <div className="flex items-center gap-2 rounded-sm border border-success/20 bg-success-dim px-3 py-1 text-success">
       <Check className="size-3.5" />
       <span className="text-xs font-medium">
         Validado por {formatValidatedBy(filing.validation.validated_by)}
