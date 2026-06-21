@@ -3,7 +3,9 @@ import { mockAuth } from "./helpers/mock-api";
 import { CvmRoutes, mockGet, mockMethod } from "./helpers/mock-cvm";
 import {
   PARTICIPANTES_ADM_CARTEIRA_LIST,
+  PARTICIPANTES_ADM_CARTEIRA_PJ,
   PARTICIPANTES_AUDITOR_PF,
+  PARTICIPANTES_AUDITOR_PJ,
   PARTICIPANTES_AUDITORES_LIST,
   PARTICIPANTES_INTERMEDIARIO_XP,
   PARTICIPANTES_INTERMEDIARIOS_LIST,
@@ -225,5 +227,169 @@ test.describe("Participantes — administradores de carteira", () => {
     await expect
       .poll(() => captured.at(-1)?.query.categoria_registro)
       .toBe("Pessoa Fisica");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// S02 T04 — validacao de participantes (API generica report_type/ref)
+// ---------------------------------------------------------------------------
+
+test.describe("Participantes — validacao na lista (badge + filtro + link)", () => {
+  test.beforeEach(async ({ page }) => {
+    await mockAuth(page, { authenticated: true });
+    mockGet(page, CvmRoutes.participantesSyncStatus, PARTICIPANTES_SYNC_STATUS);
+  });
+
+  test("auditores: badges, filtro envia validation_status e link de validacao", async ({ page }) => {
+    const captured = mockGet(
+      page,
+      CvmRoutes.participantesAuditoresList,
+      PARTICIPANTES_AUDITORES_LIST,
+    );
+
+    await page.goto("/cvm/participantes/auditores");
+
+    const table = page.getByRole("table");
+    await expect(table.getByText("Pendente", { exact: true }).first()).toBeVisible();
+    await expect(table.getByText("Validado", { exact: true })).toBeVisible();
+
+    const link = page.locator(
+      `a[href^="/cvm/participantes/auditores/validate?id=${encodeURIComponent(PARTICIPANTES_AUDITOR_PJ.id)}"]`,
+    );
+    await expect(link.first()).toBeVisible();
+
+    await page.getByLabel("Status de validacao").selectOption("valid");
+    await expect.poll(() => captured.at(-1)?.query.validation_status).toBe("valid");
+  });
+
+  test("intermediarios: badges, filtro envia validation_status e link de validacao", async ({ page }) => {
+    const captured = mockGet(
+      page,
+      CvmRoutes.participantesIntermediariosList,
+      PARTICIPANTES_INTERMEDIARIOS_LIST,
+    );
+
+    await page.goto("/cvm/participantes/intermediarios");
+
+    const table = page.getByRole("table");
+    await expect(table.getByText("Pendente", { exact: true }).first()).toBeVisible();
+    await expect(table.getByText("Validado", { exact: true })).toBeVisible();
+
+    const link = page.locator(
+      `a[href^="/cvm/participantes/intermediarios/validate?id=${encodeURIComponent(PARTICIPANTES_INTERMEDIARIO_XP.id)}"]`,
+    );
+    await expect(link.first()).toBeVisible();
+
+    await page.getByLabel("Status de validacao").selectOption("pending");
+    await expect.poll(() => captured.at(-1)?.query.validation_status).toBe("pending");
+  });
+
+  test("adm-carteira: badges, filtro envia validation_status e link de validacao", async ({ page }) => {
+    const captured = mockGet(
+      page,
+      CvmRoutes.participantesAdmCarteiraList,
+      PARTICIPANTES_ADM_CARTEIRA_LIST,
+    );
+
+    await page.goto("/cvm/participantes/adm-carteira");
+
+    const table = page.getByRole("table");
+    await expect(table.getByText("Pendente", { exact: true }).first()).toBeVisible();
+    await expect(table.getByText("Validado", { exact: true })).toBeVisible();
+
+    const link = page.locator(
+      `a[href^="/cvm/participantes/adm-carteira/validate?id=${encodeURIComponent(PARTICIPANTES_ADM_CARTEIRA_PJ.id)}"]`,
+    );
+    await expect(link.first()).toBeVisible();
+
+    await page.getByLabel("Status de validacao").selectOption("valid");
+    await expect.poll(() => captured.at(-1)?.query.validation_status).toBe("valid");
+  });
+});
+
+test.describe("Participantes — tela de validacao (marcar + reverter)", () => {
+  test.beforeEach(async ({ page }) => {
+    await mockAuth(page, { authenticated: true });
+  });
+
+  test("auditores: header legivel, marca como valido (POST generico) e reverte", async ({ page }) => {
+    // A tela de validacao le a LISTA (estreitada por situacao/tipo) e acha por id.
+    mockGet(page, CvmRoutes.participantesAuditoresList, PARTICIPANTES_AUDITORES_LIST);
+
+    const validateCalls: Array<unknown> = [];
+    await page.route(CvmRoutes.validationsValidate, async (route) => {
+      if (route.request().method() !== "POST") {
+        await route.fallback();
+        return;
+      }
+      validateCalls.push(JSON.parse(route.request().postData() ?? "null"));
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          report_type: "participante_auditor",
+          ref: PARTICIPANTES_AUDITOR_PJ.id,
+          cd_cvm: PARTICIPANTES_AUDITOR_PJ.cd_cvm,
+          validation: {
+            status: "valid",
+            validated_by: {
+              id: "00000000-0000-0000-0000-000000000001",
+              name: "Caio Moderador",
+              email: "caio@talous.ai",
+            },
+            validated_at: "2026-06-09T13:45:00Z",
+          },
+        }),
+      });
+    });
+
+    const invalidateCalls: Array<unknown> = [];
+    await page.route(CvmRoutes.validationsInvalidate, async (route) => {
+      if (route.request().method() !== "POST") {
+        await route.fallback();
+        return;
+      }
+      invalidateCalls.push(JSON.parse(route.request().postData() ?? "null"));
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          report_type: "participante_auditor",
+          ref: PARTICIPANTES_AUDITOR_PJ.id,
+          cd_cvm: PARTICIPANTES_AUDITOR_PJ.cd_cvm,
+          validation: { status: "pending", validated_by: null, validated_at: null },
+        }),
+      });
+    });
+
+    await page.goto(
+      `/cvm/participantes/auditores/validate?id=${encodeURIComponent(PARTICIPANTES_AUDITOR_PJ.id)}&situacao=ATIVO&tipo=PJ`,
+    );
+
+    // Header legivel + campos cadastrais.
+    await expect(
+      page.getByRole("heading", { name: PARTICIPANTES_AUDITOR_PJ.nome }),
+    ).toBeVisible();
+    await expect(page.getByText("Validacao de auditor independente", { exact: true })).toBeVisible();
+    await expect(page.getByText("Dados cadastrais", { exact: true })).toBeVisible();
+
+    // O PJ comeca pendente.
+    await expect(page.getByText("Pendente de validacao")).toBeVisible();
+
+    await page.getByRole("button", { name: "Marcar como valido" }).click();
+    await expect.poll(() => validateCalls.length).toBe(1);
+    expect(validateCalls[0]).toEqual({
+      report_type: "participante_auditor",
+      ref: String(PARTICIPANTES_AUDITOR_PJ.id),
+    });
+    await expect(page.getByText(/Validado por Caio Moderador em/)).toBeVisible();
+
+    await page.getByRole("button", { name: "Reverter validacao" }).click();
+    await expect.poll(() => invalidateCalls.length).toBe(1);
+    expect(invalidateCalls[0]).toEqual({
+      report_type: "participante_auditor",
+      ref: String(PARTICIPANTES_AUDITOR_PJ.id),
+    });
+    await expect(page.getByText("Pendente de validacao")).toBeVisible();
   });
 });
