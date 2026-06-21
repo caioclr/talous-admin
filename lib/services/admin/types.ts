@@ -157,6 +157,10 @@ export interface IPEDisclosureSummary {
   tipo_apresentacao: string | null;
   signal_classification: string | null;
   notification_dispatched: boolean;
+  // S02 T03: selo de validacao embutido por item (API generica, report_type="ipe").
+  // O backend pode ainda nao materializar `validation` na lista — tratamos
+  // ausencia como pendente na UI (defensivo, igual aos demais tipos).
+  validation?: ReportValidation | null;
 }
 
 export interface IPEDisclosureDetail extends IPEDisclosureSummary {
@@ -197,6 +201,7 @@ export interface ListIPEDisclosuresParams {
   signal?: string;
   notified?: boolean;
   search?: string;
+  validation_status?: ValidationStatus;
   page?: number;
   page_size?: number;
 }
@@ -313,7 +318,14 @@ export interface ListFilingsWithValidationParams extends ListFilingsParams {
 // item das listagens FRE/FCA/ICBGC, e o filtro `validation_status` ja existe.
 // ----------------------------------------------------------------------------
 
-export type ReportType = "fre" | "fca" | "icbgc" | "capital" | "buyback";
+export type ReportType =
+  | "fre"
+  | "fca"
+  | "icbgc"
+  | "capital"
+  | "buyback"
+  | "vlmo"
+  | "ipe";
 
 /**
  * Bloco de validacao generico, reutilizado pelos tipos com id_documento.
@@ -491,6 +503,44 @@ export interface VLMOMovimentacaoSummary {
   preco_unitario: string | number | null;
   volume: string | number | null;
   is_position_snapshot: boolean;
+}
+
+/**
+ * Filing VLMO — a *unidade de validacao* do VLMO (S02 T03). O selo vive aqui,
+ * no header/protocolo, NAO nas movimentacoes individuais. `id` e UUID e e o
+ * `ref` da API generica (report_type="vlmo").
+ */
+export interface VLMOFilingSummary {
+  id: string;
+  protocolo_entrega: string;
+  cnpj_companhia: string;
+  cd_cvm: number | null;
+  nome_companhia: string;
+  data_referencia: string;
+  versao: number;
+  categoria: string | null;
+  tipo: string | null;
+  data_entrega: string | null;
+  tipo_apresentacao: string | null;
+  link_download: string | null;
+  captured_at: string;
+  // Selo de validacao embutido por item (API generica). Pode vir ausente do
+  // backend — tratamos como pendente na UI.
+  validation?: ReportValidation | null;
+}
+
+export interface VLMOFilingDetail extends VLMOFilingSummary {
+  file_version_hash: string;
+  raw_data: Record<string, unknown>;
+}
+
+export interface ListVLMOFilingsParams {
+  cnpj?: string;
+  cd_cvm?: number;
+  year?: number;
+  validation_status?: ValidationStatus;
+  page?: number;
+  page_size?: number;
 }
 
 export interface VLMOAggregateRow {

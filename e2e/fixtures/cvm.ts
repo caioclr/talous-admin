@@ -20,8 +20,14 @@ import type {
   SyncStatusResponse,
   UnmappedSectorResponse,
   VLMOAggregatesResponse,
+  VLMOFilingDetail,
+  VLMOFilingSummary,
   VLMOMovimentacaoSummary,
   VLMOSyncStatusResponse,
+  IPEDisclosureDetail,
+  IPEDisclosureSummary,
+  IPECategoryCount,
+  IPESyncStatusResponse,
   FCAByCompanyResponse,
   FCADocumentoDetail,
   FCADocumentoSummary,
@@ -426,6 +432,163 @@ export const VLMO_AGGREGATES_PETROBRAS: VLMOAggregatesResponse = {
       total_volume: "65000",
     },
   ],
+};
+
+// ---------------------------------------------------------------------------
+// VLMO filings — superficie de validacao do VLMO (S02 T03).
+// ---------------------------------------------------------------------------
+
+export const VLMO_FILING_PETROBRAS: VLMOFilingSummary = {
+  id: "vfil0001-0000-0000-0000-000000000001",
+  protocolo_entrega: "VLMO-2026-PETR-001",
+  cnpj_companhia: "33000167000101",
+  cd_cvm: 9512,
+  nome_companhia: "Petroleo Brasileiro S.A. - Petrobras",
+  data_referencia: "2026-03-31",
+  versao: 1,
+  categoria: "Valores Mobiliarios",
+  tipo: "Movimentacao",
+  data_entrega: "2026-04-10",
+  tipo_apresentacao: "AP",
+  link_download: "https://www.rad.cvm.gov.br/vlmo/petr-2026-03.zip",
+  captured_at: "2026-04-29T08:00:00Z",
+  // S02 T03: filing pendente — exercita o badge "Pendente" + selo na tela.
+  validation: {
+    status: "pending",
+    validated_by: null,
+    validated_at: null,
+  },
+};
+
+export const VLMO_FILING_VALE_VALID: VLMOFilingSummary = {
+  id: "vfil0002-0000-0000-0000-000000000002",
+  protocolo_entrega: "VLMO-2026-VALE-002",
+  cnpj_companhia: "33592510000154",
+  cd_cvm: 4170,
+  nome_companhia: "Vale S.A.",
+  data_referencia: "2026-02-28",
+  versao: 2,
+  categoria: "Valores Mobiliarios",
+  tipo: "Movimentacao",
+  data_entrega: "2026-03-12",
+  tipo_apresentacao: "RE",
+  link_download: null,
+  captured_at: "2026-04-29T08:00:00Z",
+  // S02 T03: filing ja validado — exercita o badge "Validado" na lista.
+  validation: {
+    status: "valid",
+    validated_by: {
+      id: "00000000-0000-0000-0000-000000000001",
+      name: "Caio Moderador",
+      email: "caio@talous.ai",
+    },
+    validated_at: "2026-05-02T13:45:00Z",
+  },
+};
+
+export const VLMO_FILINGS_LIST: AdminPagedResponse<VLMOFilingSummary> = {
+  items: [VLMO_FILING_PETROBRAS, VLMO_FILING_VALE_VALID],
+  pagination: { page: 1, page_size: 25, total: 2, total_pages: 1 },
+};
+
+export const VLMO_FILING_PETROBRAS_DETAIL: VLMOFilingDetail = {
+  ...VLMO_FILING_PETROBRAS,
+  file_version_hash: "hash-vlmo-petr-2026-03",
+  raw_data: {
+    PROTOCOLO_ENTREGA: "VLMO-2026-PETR-001",
+    CNPJ_COMPANHIA: "33000167000101",
+    DATA_REFERENCIA: "2026-03-31",
+    VERSAO: 1,
+  },
+};
+
+// ---------------------------------------------------------------------------
+// IPE disclosures — fatos relevantes / comunicados (S02 T03).
+// ---------------------------------------------------------------------------
+
+export const IPE_SYNC_STATUS: IPESyncStatusResponse = {
+  last_captured_at: "2026-04-29T08:00:00Z",
+  total_disclosures: 5821,
+  pending_notification_count: 12,
+  by_signal_classification: {
+    material_fact: 1840,
+    communication_critical: 620,
+    general: 3361,
+  },
+  last_30_days_count: 240,
+};
+
+export const IPE_CATEGORIES: IPECategoryCount[] = [
+  { categoria: "Fato Relevante", count: 320 },
+  { categoria: "Comunicado ao Mercado", count: 210 },
+  { categoria: "Aviso aos Acionistas", count: 95 },
+];
+
+export const IPE_DISCLOSURE_PETROBRAS: IPEDisclosureSummary = {
+  id: "ipe00001-0000-0000-0000-000000000001",
+  cd_cvm: 9512,
+  nome_companhia: "Petroleo Brasileiro S.A. - Petrobras",
+  categoria: "Fato Relevante",
+  assunto: "Aprovacao de novo plano estrategico 2026-2030",
+  data_entrega: "2026-04-15",
+  data_referencia: "2026-04-15",
+  protocolo_entrega: "IPE-2026-PETR-FR-001",
+  versao: 1,
+  tipo_apresentacao: "AP",
+  signal_classification: "material_fact",
+  notification_dispatched: true,
+  // S02 T03: disclosure pendente — exercita o badge "Pendente" + selo na tela.
+  validation: {
+    status: "pending",
+    validated_by: null,
+    validated_at: null,
+  },
+};
+
+export const IPE_DISCLOSURE_VALE_VALID: IPEDisclosureSummary = {
+  id: "ipe00002-0000-0000-0000-000000000002",
+  cd_cvm: 4170,
+  nome_companhia: "Vale S.A.",
+  categoria: "Comunicado ao Mercado",
+  assunto: "Esclarecimentos sobre noticia veiculada na imprensa",
+  data_entrega: "2026-03-20",
+  data_referencia: "2026-03-20",
+  protocolo_entrega: "IPE-2026-VALE-CM-002",
+  versao: 1,
+  tipo_apresentacao: "RE",
+  signal_classification: "general",
+  notification_dispatched: false,
+  // S02 T03: disclosure ja validado — exercita o badge "Validado" na lista.
+  validation: {
+    status: "valid",
+    validated_by: {
+      id: "00000000-0000-0000-0000-000000000001",
+      name: "Caio Moderador",
+      email: "caio@talous.ai",
+    },
+    validated_at: "2026-05-02T13:45:00Z",
+  },
+};
+
+export const IPE_DISCLOSURES_LIST: AdminPagedResponse<IPEDisclosureSummary> = {
+  items: [IPE_DISCLOSURE_PETROBRAS, IPE_DISCLOSURE_VALE_VALID],
+  pagination: { page: 1, page_size: 20, total: 2, total_pages: 1 },
+};
+
+export const IPE_DISCLOSURE_PETROBRAS_DETAIL: IPEDisclosureDetail = {
+  ...IPE_DISCLOSURE_PETROBRAS,
+  cnpj_cia: "33000167000101",
+  tipo: "Fato Relevante",
+  especie: null,
+  link_download: "https://www.rad.cvm.gov.br/ipe/petr-fr-001.pdf",
+  captured_at: "2026-04-29T08:00:00Z",
+  file_version_hash: "hash-ipe-petr-fr-001",
+  processed_at: "2026-04-29T08:05:00Z",
+  raw_data: {
+    PROTOCOLO_ENTREGA: "IPE-2026-PETR-FR-001",
+    CD_CVM: 9512,
+    ASSUNTO: "Aprovacao de novo plano estrategico 2026-2030",
+  },
 };
 
 export const FRE_SYNC_STATUS: FRESyncStatusResponse = {
