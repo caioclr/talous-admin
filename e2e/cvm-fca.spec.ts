@@ -94,6 +94,141 @@ test.describe("FCA — list", () => {
     expect(triggered[0]?.query.force).toBe("true");
     expect(triggered[0]?.query.year).toBeDefined();
   });
+
+  test("mostra badges de status e linka para a tela de validacao", async ({ page }) => {
+    mockGet(page, CvmRoutes.fcaDocumentosList, FCA_DOCUMENTOS_LIST);
+
+    await page.goto("/cvm/fca");
+
+    const table = page.getByRole("table");
+    await expect(table.getByText("Pendente", { exact: true }).first()).toBeVisible();
+    await expect(table.getByText("Validado", { exact: true })).toBeVisible();
+
+    // Link de validacao aponta para a rota /cvm/fca/validate por id_documento.
+    const link = page.locator(
+      `a[href="/cvm/fca/validate?id_documento=${FCA_DOCUMENTO_PETROBRAS_DETAIL.id_documento}"]`,
+    );
+    await expect(link).toBeVisible();
+  });
+
+  test("filtro de status envia validation_status ao backend", async ({ page }) => {
+    const captured = mockGet(page, CvmRoutes.fcaDocumentosList, FCA_DOCUMENTOS_LIST);
+
+    await page.goto("/cvm/fca");
+    await expect.poll(() => captured.length).toBeGreaterThanOrEqual(1);
+
+    await page.getByLabel("Status de validacao").selectOption("pending");
+
+    await expect.poll(() => captured.at(-1)?.query.validation_status).toBe("pending");
+  });
+});
+
+test.describe("FCA — tela de validacao", () => {
+  const FCA_VALIDATE_URL = `/cvm/fca/validate?id_documento=${FCA_DOCUMENTO_PETROBRAS_DETAIL.id_documento}`;
+
+  test.beforeEach(async ({ page }) => {
+    await mockAuth(page, { authenticated: true });
+  });
+
+  test("renderiza header, secoes legiveis e selo pendente", async ({ page }) => {
+    mockGet(page, CvmRoutes.fcaDocumentoById, FCA_DOCUMENTO_PETROBRAS_DETAIL);
+
+    await page.goto(FCA_VALIDATE_URL);
+
+    await expect(
+      page.getByRole("heading", { name: FCA_DOCUMENTO_PETROBRAS_DETAIL.nome_empresarial }),
+    ).toBeVisible();
+    await expect(page.getByText("Validacao de FCA", { exact: true })).toBeVisible();
+    await expect(page.getByText(/metadado interno de QA/)).toBeVisible();
+
+    // Comeca pendente.
+    await expect(page.getByText("Pendente de validacao")).toBeVisible();
+
+    // Card geral legivel.
+    await expect(page.getByRole("heading", { name: "Geral" })).toBeVisible();
+    await expect(page.getByText("Petroleo e Gas", { exact: true })).toBeVisible();
+
+    // Aba default (DRI) legivel.
+    await expect(page.getByText("Fernando Sabbi Melgarejo")).toBeVisible();
+
+    // Outra secao por aba (auditores).
+    await page.getByRole("tab", { name: "Auditores" }).click();
+    await expect(page.getByText("KPMG Auditores Independentes")).toBeVisible();
+  });
+
+  test("marca como valido (POST generico), exibe selo e permite reverter", async ({ page }) => {
+    const state = { validated: false };
+
+    await page.route(CvmRoutes.fcaDocumentoById, async (route) => {
+      if (route.request().method() !== "GET") {
+        await route.fallback();
+        return;
+      }
+      const validation = state.validated
+        ? {
+            status: "valid",
+            validated_by: {
+              id: "00000000-0000-0000-0000-000000000001",
+              name: "Caio Moderador",
+              email: "caio@talous.ai",
+            },
+            validated_at: "2026-05-30T13:45:00Z",
+          }
+        : FCA_DOCUMENTO_PETROBRAS_DETAIL.validation;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ ...FCA_DOCUMENTO_PETROBRAS_DETAIL, validation }),
+      });
+    });
+
+    const validateCalls: Array<unknown> = [];
+    await page.route(CvmRoutes.validationsValidate, async (route) => {
+      if (route.request().method() !== "POST") {
+        await route.fallback();
+        return;
+      }
+      validateCalls.push(JSON.parse(route.request().postData() ?? "null"));
+      state.validated = true;
+      await route.fulfill({ status: 200, contentType: "application/json", body: "{}" });
+    });
+
+    const invalidateCalls: Array<unknown> = [];
+    await page.route(CvmRoutes.validationsInvalidate, async (route) => {
+      if (route.request().method() !== "POST") {
+        await route.fallback();
+        return;
+      }
+      invalidateCalls.push(JSON.parse(route.request().postData() ?? "null"));
+      state.validated = false;
+      await route.fulfill({ status: 200, contentType: "application/json", body: "{}" });
+    });
+
+    await page.goto(FCA_VALIDATE_URL);
+
+    await expect(page.getByText("Pendente de validacao")).toBeVisible();
+
+    await page.getByRole("button", { name: "Marcar como valido" }).click();
+
+    // Body do POST generico carrega { report_type, ref } — ref e o id_documento como string.
+    await expect.poll(() => validateCalls.length).toBe(1);
+    expect(validateCalls[0]).toEqual({
+      report_type: "fca",
+      ref: String(FCA_DOCUMENTO_PETROBRAS_DETAIL.id_documento),
+    });
+
+    // Selo "Validado por X em ..." aparece apos refetch.
+    await expect(page.getByText(/Validado por Caio Moderador em/)).toBeVisible();
+
+    // Reverter volta a pendente.
+    await page.getByRole("button", { name: "Reverter validacao" }).click();
+    await expect.poll(() => invalidateCalls.length).toBe(1);
+    expect(invalidateCalls[0]).toEqual({
+      report_type: "fca",
+      ref: String(FCA_DOCUMENTO_PETROBRAS_DETAIL.id_documento),
+    });
+    await expect(page.getByText("Pendente de validacao")).toBeVisible();
+  });
 });
 
 test.describe("FCA — documento detail", () => {
