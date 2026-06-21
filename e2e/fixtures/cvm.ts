@@ -33,6 +33,8 @@ import type {
   GovernanceReportDetail,
   GovernanceReportSummary,
   GovernanceSyncStatusResponse,
+  AccountLinesTreeResponse,
+  FilingSummaryWithValidation,
 } from "@/lib/services/admin/types";
 
 export const SYNC_STATUS_DEFAULT: SyncStatusResponse = {
@@ -978,3 +980,94 @@ export const UNMAPPED_SECTORS: UnmappedSectorResponse[] = [
     sample_company_names: ["SLC Agricola", "BrasilAgro"],
   },
 ];
+
+// ----------------------------------------------------------------------------
+// S01 — Moderacao CVM: validacao de filings ITR/DFP
+// ----------------------------------------------------------------------------
+
+export const ITR_DFP_FILING_PETROBRAS_PENDING: FilingSummaryWithValidation = {
+  cd_cvm: 9512,
+  denom_cia: "Petroleo Brasileiro S.A. - Petrobras",
+  doc_type: "itr",
+  reference_date: "2025-03-31",
+  grupo_dfr: "consolidado",
+  version: 1,
+  statement_types: ["DRE", "DFC", "BP"],
+  validation: {
+    status: "pending",
+    validated_by: null,
+    validated_at: null,
+  },
+};
+
+export const ITR_DFP_FILING_PETROBRAS_INDIVIDUAL: FilingSummaryWithValidation = {
+  cd_cvm: 9512,
+  denom_cia: "Petroleo Brasileiro S.A. - Petrobras",
+  doc_type: "itr",
+  reference_date: "2025-03-31",
+  grupo_dfr: "individual",
+  version: 1,
+  statement_types: ["DRE", "BP"],
+  validation: {
+    status: "valid",
+    validated_by: {
+      id: "00000000-0000-0000-0000-000000000001",
+      name: "Caio Moderador",
+      email: "caio@talous.ai",
+    },
+    validated_at: "2026-05-02T13:45:00Z",
+  },
+};
+
+export const ITR_DFP_FILINGS_WITH_VALIDATION: FilingSummaryWithValidation[] = [
+  ITR_DFP_FILING_PETROBRAS_PENDING,
+  ITR_DFP_FILING_PETROBRAS_INDIVIDUAL,
+];
+
+export const ITR_DFP_ACCOUNT_LINES_DRE: AccountLinesTreeResponse = {
+  cd_cvm: 9512,
+  statement_type: "DRE",
+  reference_date: "2025-03-31",
+  grupo_dfr: "consolidado",
+  items: [
+    {
+      id: "acc-1",
+      cd_cvm: 9512,
+      statement_type: "DRE",
+      grupo_dfr: "consolidado",
+      ordem_exerc: "ULTIMO",
+      version: 1,
+      reference_date: "2025-03-31",
+      cd_conta: "3",
+      ds_conta: "Receita de Venda de Bens e/ou Servicos",
+      vl_conta: 123456789,
+      escala_moeda: "MILHAR",
+    },
+    {
+      id: "acc-2",
+      cd_cvm: 9512,
+      statement_type: "DRE",
+      grupo_dfr: "consolidado",
+      ordem_exerc: "ULTIMO",
+      version: 1,
+      reference_date: "2025-03-31",
+      cd_conta: "3.01",
+      ds_conta: "Custo dos Bens e/ou Servicos Vendidos",
+      vl_conta: -50000000,
+      escala_moeda: "MILHAR",
+    },
+    {
+      id: "acc-3",
+      cd_cvm: 9512,
+      statement_type: "DRE",
+      grupo_dfr: "consolidado",
+      ordem_exerc: "ULTIMO",
+      version: 1,
+      reference_date: "2025-03-31",
+      cd_conta: "3.01.01",
+      ds_conta: "Custo de Materias-primas",
+      vl_conta: -22000000,
+      escala_moeda: "MILHAR",
+    },
+  ],
+};
