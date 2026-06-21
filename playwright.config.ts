@@ -29,6 +29,12 @@ export default defineConfig({
     {
       name: "real",
       testDir: "./e2e-real",
+      // A suite real bate no backend real: /cvm dispara queries pesadas do
+      // dashboard e a navegacao/asserts ocasionalmente passam dos 30s globais.
+      // Damos folga (60s) e 1 retry SOMENTE neste projeto — o `mock` segue
+      // determinista nos 30s e sem retry local.
+      timeout: 60_000,
+      retries: process.env.CI ? 2 : 1,
       use: {
         ...devices["Desktop Chrome"],
         baseURL: process.env.E2E_REAL_BASE_URL ?? BASE_URL,

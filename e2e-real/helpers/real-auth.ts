@@ -13,6 +13,16 @@ export const REAL_ADMIN_EMAIL = process.env.E2E_REAL_ADMIN_EMAIL ?? "dev@talous.
  * credenciais e o token ficou em memoria para o resto do contexto da pagina.
  *
  * Resiliente a mudanca de classe: seleciona por label/role e pelo texto do toast.
+ *
+ * ESTABILIDADE (anti-flake): NAO esperamos o evento `load` de /cvm. O dashboard
+ * dispara queries pesadas contra o backend real e o `load` completo pode passar
+ * de 30s, estourando o timeout do `waitForURL` padrao (que espera `load`). Aqui:
+ *   1. `waitForURL("**\/cvm", { waitUntil: "commit" })` resolve assim que o
+ *      `router.replace("/cvm")` aplica a navegacao — sem aguardar a rede do
+ *      dashboard, que e a parte lenta;
+ *   2. assercoes em elementos ESTAVEIS com timeout proprio: o toast de sucesso
+ *      (prova que o dev-login retornou 200) e o brand do shell autenticado.
+ * Assim o login deixa de depender do tempo de carregamento do dashboard.
  */
 export async function realLogin(page: Page, email: string = REAL_ADMIN_EMAIL) {
   await page.goto("/login");
@@ -23,9 +33,32 @@ export async function realLogin(page: Page, email: string = REAL_ADMIN_EMAIL) {
 
   await page.getByRole("button", { name: "Entrar no admin" }).click();
 
-  // Redirect para /cvm so acontece quando o dev-login real retorna 200.
-  await page.waitForURL("**/cvm");
-  await expect(page.getByText("Sessao administrativa iniciada.")).toBeVisible();
+  // O sucesso do login se prova por sinais PERSISTENTES, nao pela navegacao:
+  //
+  // 1) URL muda para /cvm. O redirect e client-side (router.replace), entao
+  //    usamos expect.toHaveURL (polling de URL) em vez de page.waitForURL — este
+  //    ultimo herda o navigationTimeout global (30s, atrelado ao evento de
+  //    navegacao) e estourava de forma intermitente quando o dashboard pesado
+  //    segurava o commit. O polling de URL nao depende do `load` da pagina.
+  await expect(page).toHaveURL(/\/cvm(\?|$|\/)/, { timeout: 30_000 });
+
+  // 2) Shell autenticado renderizou: brand "Talous Admin" e estavel, persistente
+  //    e independe das queries do dashboard. E a prova mais robusta de que
+  //    estamos de fato na area logada.
+  await expect(page.getByText("Talous Admin", { exact: true })).toBeVisible({
+    timeout: 20_000,
+  });
+
+  // 3) (Best-effort) O toast "Sessao administrativa iniciada." confirma o 200 do
+  //    dev-login, mas e EFEMERO (sonner auto-dismiss ~4s): em runs lentas ele
+  //    pode sumir antes da assercao. Tratamos como sinal informativo e nao
+  //    bloqueante — os asserts duros acima ja garantem a sessao autenticada.
+  await page
+    .getByText("Sessao administrativa iniciada.")
+    .waitFor({ state: "visible", timeout: 2_000 })
+    .catch(() => {
+      /* toast ja dispensado: ok, a sessao ja foi confirmada pela URL + shell */
+    });
 }
 
 /**
