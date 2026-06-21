@@ -23,6 +23,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
+import {
+  ValidationBadge,
+  ValidationStatusFilter,
+  asValidationStatus,
+} from "@/components/validation";
 import { formatDate, formatDateTime, formatDecimal, truncateHash } from "@/lib/formatters";
 import {
   getBuybacksSyncStatus,
@@ -34,6 +39,10 @@ import type { BuybackProgramSummary } from "@/lib/services/admin/types";
 
 function programDetailHref(row: BuybackProgramSummary) {
   return `/cvm/buybacks/programs/detail?id_programa=${encodeURIComponent(row.id_programa)}`;
+}
+
+function programValidateHref(row: BuybackProgramSummary) {
+  return `/cvm/buybacks/validate?id_programa=${encodeURIComponent(String(row.id_programa))}`;
 }
 
 const baseColumns: DataTableColumn<BuybackProgramSummary>[] = [
@@ -82,10 +91,26 @@ const baseColumns: DataTableColumn<BuybackProgramSummary>[] = [
     ),
   },
   {
+    key: "validation",
+    header: "Validacao",
+    // O backend pode ainda nao materializar `validation` na lista (T01 Onda 2 nao
+    // mergeado) — tratamos ausencia como pendente para nao quebrar a tela.
+    render: (row) => <ValidationBadge status={row.validation?.status ?? "pending"} />,
+  },
+  {
     key: "detail",
     header: "Programa",
     render: (row) => (
       <Link className="text-primary underline-offset-4 hover:underline" href={programDetailHref(row)}>
+        Abrir
+      </Link>
+    ),
+  },
+  {
+    key: "validate",
+    header: "Conferir",
+    render: (row) => (
+      <Link className="text-primary underline-offset-4 hover:underline" href={programValidateHref(row)}>
         Abrir
       </Link>
     ),
@@ -98,6 +123,7 @@ export default function BuybacksPage() {
   const [cdCvm, setCdCvm] = useState("");
   const [situacao, setSituacao] = useState("");
   const [tipoOperacao, setTipoOperacao] = useState("");
+  const [validationStatus, setValidationStatus] = useState("");
   const [forceSync, setForceSync] = useState(false);
 
   const cdCvmNumber = Number(cdCvm) || undefined;
@@ -113,7 +139,12 @@ export default function BuybacksPage() {
   });
 
   const programsQuery = useQuery({
-    queryKey: ["cvm", "buybacks", "programs", { page, cdCvmNumber, situacao, tipoOperacao }],
+    queryKey: [
+      "cvm",
+      "buybacks",
+      "programs",
+      { page, cdCvmNumber, situacao, tipoOperacao, validationStatus },
+    ],
     queryFn: () =>
       listBuybackPrograms({
         page,
@@ -121,6 +152,7 @@ export default function BuybacksPage() {
         cd_cvm: cdCvmNumber,
         situacao: situacao || undefined,
         tipo_operacao: tipoOperacao || undefined,
+        validation_status: asValidationStatus(validationStatus),
       }),
   });
 
@@ -280,6 +312,17 @@ export default function BuybacksPage() {
               onChange={(event) => {
                 setPage(1);
                 setTipoOperacao(event.target.value);
+              }}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="filter-validation-status">Status de validacao</Label>
+            <ValidationStatusFilter
+              id="filter-validation-status"
+              value={validationStatus}
+              onChange={(value) => {
+                setPage(1);
+                setValidationStatus(value);
               }}
             />
           </div>

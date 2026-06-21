@@ -24,6 +24,11 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { CapitalCompositionChart } from "@/components/charts/capital-composition-chart";
+import {
+  ValidationBadge,
+  ValidationStatusFilter,
+  asValidationStatus,
+} from "@/components/validation";
 import { formatDate, formatDateTime, formatDecimal, truncateHash } from "@/lib/formatters";
 import {
   getCapitalCompositionSyncStatus,
@@ -73,12 +78,31 @@ const columns: DataTableColumn<CapitalCompositionSnapshotSummary>[] = [
     render: (row) => formatDateTime(row.captured_at),
   },
   {
+    key: "status",
+    header: "Status",
+    // O backend pode ainda nao materializar `validation` na lista (T01 Onda 2 nao
+    // mergeado) — tratamos ausencia como pendente para nao quebrar a tela.
+    render: (row) => <ValidationBadge status={row.validation?.status ?? "pending"} />,
+  },
+  {
     key: "detail",
     header: "Snapshot",
     render: (row) => (
       <Link
         className="text-primary underline-offset-4 hover:underline"
         href={`/cvm/capital-composition/snapshots/detail?id=${row.id}`}
+      >
+        Abrir
+      </Link>
+    ),
+  },
+  {
+    key: "validate",
+    header: "Validacao",
+    render: (row) => (
+      <Link
+        className="text-primary underline-offset-4 hover:underline"
+        href={`/cvm/capital-composition/validate?id=${encodeURIComponent(row.id)}`}
       >
         Abrir
       </Link>
@@ -93,6 +117,7 @@ export default function CapitalCompositionPage() {
   const [cnpj, setCnpj] = useState("");
   const [source, setSource] = useState("");
   const [periodType, setPeriodType] = useState("");
+  const [validationStatus, setValidationStatus] = useState("");
   const [forceSync, setForceSync] = useState(false);
   const [syncSource, setSyncSource] = useState("itr");
 
@@ -111,7 +136,7 @@ export default function CapitalCompositionPage() {
       "cvm",
       "capital-composition",
       "snapshots",
-      { page, cdCvm, cnpj, source, periodType },
+      { page, cdCvm, cnpj, source, periodType, validationStatus },
     ],
     queryFn: () =>
       listCapitalCompositionSnapshots({
@@ -121,6 +146,7 @@ export default function CapitalCompositionPage() {
         cnpj: cnpj || undefined,
         source: source || undefined,
         period_type: periodType || undefined,
+        validation_status: asValidationStatus(validationStatus),
       }),
   });
 
@@ -313,6 +339,17 @@ export default function CapitalCompositionPage() {
               <option value="quarterly">quarterly</option>
               <option value="annual">annual</option>
             </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="filter-validation-status">Status de validacao</Label>
+            <ValidationStatusFilter
+              id="filter-validation-status"
+              value={validationStatus}
+              onChange={(value) => {
+                setPage(1);
+                setValidationStatus(value);
+              }}
+            />
           </div>
         </CardContent>
       </Card>

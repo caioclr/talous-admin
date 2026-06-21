@@ -48,6 +48,24 @@ describe("cvm-capital-composition service", () => {
     );
   });
 
+  it("forwards validation_status filter (S02 T02)", async () => {
+    const fetchMock = mockOk({
+      items: [],
+      pagination: { page: 1, page_size: 20, total: 0, total_pages: 0 },
+    });
+
+    await listCapitalCompositionSnapshots({
+      validation_status: "pending",
+      page: 1,
+      page_size: 20,
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://localhost:8001/api/v1/admin/cvm/capital-composition/snapshots?validation_status=pending&page=1&page_size=20",
+      expect.objectContaining({ credentials: "include" }),
+    );
+  });
+
   it("builds detail URL using snapshot id", async () => {
     const fetchMock = mockOk({});
 

@@ -1,8 +1,9 @@
 import { expect, test, type Page, type Locator } from "@playwright/test";
-import { realLogin } from "./helpers/real-auth";
+import { realLogin, reportTypeSupported } from "./helpers/real-auth";
 
 /**
- * E2E REAL — fluxo de validacao das 4 telas CVM (ITR/DFP, FRE, FCA, ICBGC).
+ * E2E REAL — fluxo de validacao das 6 telas CVM
+ * (ITR/DFP, FRE, FCA, ICBGC, Capital, Recompras).
  *
  * Bate no backend real (8001, dev-login) — NAO ha `page.route`/mock. Cada teste:
  *   1. login real (dev-login com admin conhecido);
@@ -18,12 +19,19 @@ import { realLogin } from "./helpers/real-auth";
  * Skip com mensagem clara quando o tipo nao tem dado no banco.
  */
 
-type Tipo = "itr-dfp" | "fre" | "fca" | "icbgc";
+type Tipo = "itr-dfp" | "fre" | "fca" | "icbgc" | "capital-composition" | "buybacks";
 
 interface TipoConfig {
   tipo: Tipo;
+  /** `report_type` enviado a API generica de validacao (T01). */
+  reportType: string;
   /** Path da lista. */
   listPath: string;
+  /**
+   * Fragmento de path da tela de validacao (sem query), usado no waitForURL.
+   * Por padrao coincide com `tipo`, mas Capital/Recompras tem path proprio.
+   */
+  validatePath?: string;
   /** Heading que prova que a lista renderizou. */
   listHeading: RegExp;
   /**
@@ -38,6 +46,7 @@ interface TipoConfig {
 const CONFIGS: TipoConfig[] = [
   {
     tipo: "itr-dfp",
+    reportType: "itr-dfp",
     listPath: "/cvm/itr-dfp",
     listHeading: /Validacao de filings ITR\/DFP/,
     // ITR/DFP tem uma unica coluna-link "Validacao" -> "Abrir".
@@ -47,6 +56,7 @@ const CONFIGS: TipoConfig[] = [
   },
   {
     tipo: "fre",
+    reportType: "fre",
     listPath: "/cvm/fre",
     listHeading: /Formulario de Referencia/,
     openValidateLink: (row) => row.getByRole("link", { name: "Abrir" }),
@@ -55,6 +65,7 @@ const CONFIGS: TipoConfig[] = [
   },
   {
     tipo: "fca",
+    reportType: "fca",
     listPath: "/cvm/fca",
     listHeading: /Formulario Cadastral/,
     // FCA tem DUAS colunas "Abrir" (Documento + Validacao). A ultima e a de validacao.
@@ -63,11 +74,34 @@ const CONFIGS: TipoConfig[] = [
   },
   {
     tipo: "icbgc",
+    reportType: "icbgc",
     listPath: "/cvm/icbgc",
     listHeading: /Governanca corporativa/,
     // ICBGC tambem tem duas "Abrir" (Informe + Validacao). A ultima e a de validacao.
     openValidateLink: (row) => row.getByRole("link", { name: "Abrir" }).last(),
     validateContent: /Identificacao do informe/,
+  },
+  {
+    tipo: "capital-composition",
+    reportType: "capital",
+    listPath: "/cvm/capital-composition",
+    validatePath: "capital-composition",
+    listHeading: /Composicao de capital/,
+    // Capital tem DUAS "Abrir" (Snapshot + Validacao). A ultima e a de validacao.
+    openValidateLink: (row) => row.getByRole("link", { name: "Abrir" }).last(),
+    // A tela de capital tem o card "Quantidades".
+    validateContent: /Quantidades/,
+  },
+  {
+    tipo: "buybacks",
+    reportType: "buyback",
+    listPath: "/cvm/buybacks",
+    validatePath: "buybacks",
+    listHeading: /Recompras de acoes/,
+    // A lista de recompras tem duas "Abrir" (Programa + Conferir). A ultima valida.
+    openValidateLink: (row) => row.getByRole("link", { name: "Abrir" }).last(),
+    // A tela de recompra tem o card "Programa".
+    validateContent: /Programa/,
   },
 ];
 
@@ -150,12 +184,26 @@ for (const config of CONFIGS) {
 
       // --- 3. Abre a tela de validacao do 1o item ---
       await config.openValidateLink(rowForOpen).click();
-      await page.waitForURL(`**/cvm/${config.tipo}/validate**`);
+      await page.waitForURL(`**/cvm/${config.validatePath ?? config.tipo}/validate**`);
 
       // Renderiza as secoes/demonstrativos do tipo.
       await expect(page.getByText(config.validateContent).first()).toBeVisible();
       // O selo (validado ou pendente) sempre aparece.
       await expect(seloValidado(page).or(seloPendente(page)).first()).toBeVisible();
+
+      // Skip do fluxo validar/reverter quando o backend real ainda NAO aceita
+      // esse report_type na API generica de validacao (T01 Onda 2 nao mergeado).
+      // A UI ja foi exercitada acima (lista, badge, filtro, tela, selo pendente);
+      // so a mutation depende do backend. Mantemos o teste re-rodavel e honesto.
+      // ITR/DFP usa o endpoint bespoke /itr-dfp/filings/validate (nao a API
+      // generica), entao nao passa pelo probe.
+      if (config.reportType !== "itr-dfp") {
+        const supported = await reportTypeSupported(config.reportType);
+        test.skip(
+          !supported,
+          `Backend real ainda nao aceita report_type="${config.reportType}" na API generica de validacao (T01 Onda 2 nao mergeado).`,
+        );
+      }
 
       // Captura o estado ORIGINAL para restaurar no fim (auto-limpeza).
       const eraValidado = await estaValidado(page);

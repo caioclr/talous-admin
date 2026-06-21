@@ -66,4 +66,40 @@ describe("cvm-validations service (API generica T01)", () => {
       ref: "123456",
     });
   });
+
+  it("aceita report_type=capital com ref UUID do snapshot (S02 T02)", async () => {
+    const fetchMock = mockOk({
+      report_type: "capital",
+      ref: "cccc1111-1111-1111-1111-111111111111",
+      cd_cvm: 9512,
+      validation: { status: "valid", validated_by: null, validated_at: null },
+    });
+
+    await validateReport("capital", "cccc1111-1111-1111-1111-111111111111");
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("http://localhost:8001/api/v1/admin/cvm/validations/validate");
+    expect(JSON.parse(init.body as string)).toEqual({
+      report_type: "capital",
+      ref: "cccc1111-1111-1111-1111-111111111111",
+    });
+  });
+
+  it("aceita report_type=buyback com ref id_programa (S02 T02)", async () => {
+    const fetchMock = mockOk({
+      report_type: "buyback",
+      ref: "PETR-2026-01",
+      cd_cvm: 9512,
+      validation: { status: "pending", validated_by: null, validated_at: null },
+    });
+
+    await invalidateReport("buyback", "PETR-2026-01");
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("http://localhost:8001/api/v1/admin/cvm/validations/invalidate");
+    expect(JSON.parse(init.body as string)).toEqual({
+      report_type: "buyback",
+      ref: "PETR-2026-01",
+    });
+  });
 });
