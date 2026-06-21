@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { RefreshCcw, Search } from "lucide-react";
+import { Check, RefreshCcw, Search } from "lucide-react";
 import { toast } from "sonner";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import {
@@ -23,10 +23,29 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { formatDate, formatList, truncateHash } from "@/lib/formatters";
-import { listITRDFPFilings, triggerITRDFPSync } from "@/lib/services/admin/cvm-itr-dfp";
-import type { FilingSummary } from "@/lib/services/admin/types";
+import {
+  listITRDFPFilingsWithValidation,
+  triggerITRDFPSync,
+} from "@/lib/services/admin/cvm-itr-dfp";
+import type {
+  FilingSummaryWithValidation,
+  ValidationStatus,
+} from "@/lib/services/admin/types";
 
-const columns: DataTableColumn<FilingSummary>[] = [
+function ValidationBadge({ status }: { status: ValidationStatus }) {
+  if (status === "valid") {
+    return (
+      <Badge variant="success" className="gap-1">
+        <Check className="size-3" />
+        Validado
+      </Badge>
+    );
+  }
+
+  return <Badge variant="warning">Pendente</Badge>;
+}
+
+const columns: DataTableColumn<FilingSummaryWithValidation>[] = [
   {
     key: "empresa",
     header: "Empresa",
@@ -65,12 +84,17 @@ const columns: DataTableColumn<FilingSummary>[] = [
     ),
   },
   {
+    key: "status",
+    header: "Status",
+    render: (row) => <ValidationBadge status={row.validation.status} />,
+  },
+  {
     key: "detail",
-    header: "Explorer",
+    header: "Validacao",
     render: (row) => (
       <Link
         className="text-primary underline-offset-4 hover:underline"
-        href={`/cvm/itr-dfp/companies/detail?cd_cvm=${row.cd_cvm}`}
+        href={`/cvm/itr-dfp/validate?cd_cvm=${row.cd_cvm}&doc_type=${row.doc_type}&reference_date=${row.reference_date}&grupo_dfr=${row.grupo_dfr}&version=${row.version}`}
       >
         Abrir
       </Link>
@@ -86,19 +110,26 @@ export default function ITRDFPPage() {
   const [cdCvm, setCdCvm] = useState("");
   const [docType, setDocType] = useState("");
   const [grupoDfr, setGrupoDfr] = useState("");
+  const [validationStatus, setValidationStatus] = useState("");
   const [refDateFrom, setRefDateFrom] = useState("");
   const [refDateTo, setRefDateTo] = useState("");
-  const [limit, setLimit] = useState("100");
+  const limit = "100";
   const [syncDocType, setSyncDocType] = useState("itr");
   const [syncYear, setSyncYear] = useState(new Date().getFullYear().toString());
 
   const filingsQuery = useQuery({
-    queryKey: ["cvm", "itr-dfp", "filings", { cdCvm, docType, grupoDfr, refDateFrom, refDateTo, limit }],
+    queryKey: [
+      "cvm",
+      "itr-dfp",
+      "filings",
+      { cdCvm, docType, grupoDfr, validationStatus, refDateFrom, refDateTo, limit },
+    ],
     queryFn: () =>
-      listITRDFPFilings({
+      listITRDFPFilingsWithValidation({
         cd_cvm: cdCvm ? Number(cdCvm) : undefined,
         doc_type: docType || undefined,
         grupo_dfr: grupoDfr || undefined,
+        validation_status: (validationStatus || undefined) as ValidationStatus | undefined,
         ref_date_from: toIsoDate(refDateFrom),
         ref_date_to: toIsoDate(refDateTo),
         limit: limit ? Number(limit) : 100,
@@ -120,8 +151,8 @@ export default function ITRDFPPage() {
     return {
       total: filings.length,
       companies: new Set(filings.map((item) => item.cd_cvm)).size,
-      itr: filings.filter((item) => item.doc_type === "itr").length,
-      dfp: filings.filter((item) => item.doc_type === "dfp").length,
+      valid: filings.filter((item) => item.validation.status === "valid").length,
+      pending: filings.filter((item) => item.validation.status === "pending").length,
     };
   }, [filingsQuery.data]);
 
@@ -131,13 +162,15 @@ export default function ITRDFPPage() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary">
-              Sprint 3 · ITR/DFP
+              S01 · Moderacao CVM
             </p>
             <h2 className="text-2xl font-semibold text-foreground">
-              Explorer de filings estruturados e reconciliação
+              Validacao de filings ITR/DFP
             </h2>
             <p className="max-w-3xl text-sm text-muted-foreground">
-              Consulta filings disponíveis, árvore contábil por demonstrativo e diff entre `cvm_official`, `cvm_document` e `api_provider`.
+              Conferencia interna por amostragem. Abra o demonstrativo de uma empresa/periodo, leia
+              DRE/DFC/BP e marque como valido. O selo e consultivo: nao altera o dado nem o app do
+              usuario final.
             </p>
           </div>
 
@@ -150,7 +183,7 @@ export default function ITRDFPPage() {
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Disparar sincronização manual?</AlertDialogTitle>
+                <AlertDialogTitle>Disparar sincronizacao manual?</AlertDialogTitle>
                 <AlertDialogDescription>
                   O backend usa `POST /admin/cvm/itr-dfp/sync` com `doc_type` e `year`.
                 </AlertDialogDescription>
@@ -186,7 +219,10 @@ export default function ITRDFPPage() {
 
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={() => syncMutation.mutate()} disabled={syncMutation.isPending}>
+                <AlertDialogAction
+                  onClick={() => syncMutation.mutate()}
+                  disabled={syncMutation.isPending}
+                >
                   {syncMutation.isPending ? "Enfileirando..." : "Confirmar sync"}
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -197,16 +233,16 @@ export default function ITRDFPPage() {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <MetricCard label="Filings carregados" value={String(summary.total)} />
           <MetricCard label="Empresas distintas" value={String(summary.companies)} />
-          <MetricCard label="ITR" value={String(summary.itr)} />
-          <MetricCard label="DFP" value={String(summary.dfp)} />
+          <MetricCard label="Validados" value={String(summary.valid)} />
+          <MetricCard label="Pendentes" value={String(summary.pending)} />
         </div>
       </section>
 
       <Card>
         <CardHeader>
-          <CardTitle>Filtros de filings</CardTitle>
+          <CardTitle>Filtros de conferencia</CardTitle>
           <CardDescription>
-            O endpoint atual retorna lista simples com `limit`, então a navegação aqui é focada em busca e corte do dataset.
+            Filtre por status de validacao para amostrar pendentes ou revisar validados por periodo.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
@@ -216,40 +252,50 @@ export default function ITRDFPPage() {
               className="pl-10"
               type="number"
               placeholder="cd_cvm"
+              aria-label="cd_cvm"
               value={cdCvm}
               onChange={(event) => setCdCvm(event.target.value)}
             />
           </div>
 
-          <Select value={docType} onChange={(event) => setDocType(event.target.value)}>
+          <Select
+            aria-label="Status de validacao"
+            value={validationStatus}
+            onChange={(event) => setValidationStatus(event.target.value)}
+          >
+            <option value="">Todos status</option>
+            <option value="pending">Pendente</option>
+            <option value="valid">Validado</option>
+          </Select>
+
+          <Select aria-label="Doc type" value={docType} onChange={(event) => setDocType(event.target.value)}>
             <option value="">Doc type</option>
             <option value="itr">ITR</option>
             <option value="dfp">DFP</option>
           </Select>
 
-          <Select value={grupoDfr} onChange={(event) => setGrupoDfr(event.target.value)}>
+          <Select
+            aria-label="Grupo DFR"
+            value={grupoDfr}
+            onChange={(event) => setGrupoDfr(event.target.value)}
+          >
             <option value="">Grupo DFR</option>
             <option value="consolidado">consolidado</option>
             <option value="individual">individual</option>
           </Select>
 
-          <Input type="date" value={refDateFrom} onChange={(event) => setRefDateFrom(event.target.value)} />
-          <Input type="date" value={refDateTo} onChange={(event) => setRefDateTo(event.target.value)} />
-          <Input type="number" placeholder="limit" value={limit} onChange={(event) => setLimit(event.target.value)} />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Leitura rápida</CardTitle>
-          <CardDescription>
-            Abra o explorer por empresa para escolher filing, statement e visualizar reconciliação.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-2">
-          <Badge variant="secondary">/filings</Badge>
-          <Badge variant="secondary">/account-lines/{`{cd_cvm}`}</Badge>
-          <Badge variant="secondary">/reconciliation/{`{cd_cvm}`}/{`{reference_date}`}</Badge>
+          <Input
+            type="date"
+            aria-label="Referencia de"
+            value={refDateFrom}
+            onChange={(event) => setRefDateFrom(event.target.value)}
+          />
+          <Input
+            type="date"
+            aria-label="Referencia ate"
+            value={refDateTo}
+            onChange={(event) => setRefDateTo(event.target.value)}
+          />
         </CardContent>
       </Card>
 
@@ -257,7 +303,9 @@ export default function ITRDFPPage() {
         columns={columns}
         data={filingsQuery.data ?? []}
         loading={filingsQuery.isLoading}
-        getRowKey={(row, index) => `${row.cd_cvm}-${row.doc_type}-${row.reference_date}-${row.version}-${index}`}
+        getRowKey={(row, index) =>
+          `${row.cd_cvm}-${row.doc_type}-${row.reference_date}-${row.grupo_dfr}-${row.version}-${index}`
+        }
         emptyMessage="Nenhum filing encontrado para os filtros informados."
       />
     </div>

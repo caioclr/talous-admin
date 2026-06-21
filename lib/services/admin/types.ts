@@ -266,6 +266,43 @@ export interface ListFilingsParams {
 }
 
 // ----------------------------------------------------------------------------
+// S01 — Moderacao CVM: validacao de filings ITR/DFP
+//
+// Shapes alinhados ao contrato do backend (T02). O status e metadado interno
+// de moderacao (flag consultiva); nao toca cvm_account_lines nem o app final.
+// ----------------------------------------------------------------------------
+
+export type ValidationStatus = "pending" | "valid";
+
+export interface ValidatedBy {
+  id: string;
+  name: string | null;
+  email: string | null;
+}
+
+export interface FilingValidation {
+  status: ValidationStatus;
+  validated_by: ValidatedBy | null;
+  validated_at: string | null;
+}
+
+export interface FilingSummaryWithValidation extends FilingSummary {
+  validation: FilingValidation;
+}
+
+export interface ValidateFilingParams {
+  cd_cvm: number;
+  doc_type: string;
+  reference_date: string;
+  grupo_dfr: string;
+  version: number;
+}
+
+export interface ListFilingsWithValidationParams extends ListFilingsParams {
+  validation_status?: ValidationStatus;
+}
+
+// ----------------------------------------------------------------------------
 // Capital composition (Sprint 4)
 // ----------------------------------------------------------------------------
 

@@ -43,6 +43,16 @@ export function formatList(values: string[]) {
   return values.length ? values.join(", ") : "—";
 }
 
+export function formatValidatedBy(
+  validatedBy: { name: string | null; email: string | null } | null | undefined,
+) {
+  if (!validatedBy) {
+    return "—";
+  }
+
+  return validatedBy.name ?? validatedBy.email ?? "—";
+}
+
 export function formatDecimal(
   value: string | number | null | undefined,
   options: Intl.NumberFormatOptions = { minimumFractionDigits: 2, maximumFractionDigits: 2 },
