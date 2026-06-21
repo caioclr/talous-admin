@@ -609,6 +609,8 @@ export interface GovernanceReportSummary {
   motivo_reapresentacao: string | null;
   data_entrega: string | null;
   captured_at: string;
+  // S02 T04: bloco de validacao embutido por item (API generica, report_type=icbgc).
+  validation: ReportValidation;
 }
 
 export interface GovernanceComplianceItemSummary {
@@ -655,6 +657,8 @@ export interface ListICBGCReportsParams {
   cd_cvm?: number;
   cnpj?: string;
   year?: number;
+  // S02 T04: filtro de amostragem pendente/validado (resolvido em lote no backend).
+  validation_status?: ValidationStatus;
   page?: number;
   page_size?: number;
 }

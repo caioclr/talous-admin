@@ -93,6 +93,143 @@ test.describe("ICBGC — list", () => {
     expect(triggered[0]?.query.force).toBe("true");
     expect(triggered[0]?.query.year).toBeDefined();
   });
+
+  test("mostra badges de status e linka para a tela de validacao", async ({ page }) => {
+    mockGet(page, CvmRoutes.icbgcReportsList, ICBGC_REPORTS_LIST);
+
+    await page.goto("/cvm/icbgc");
+
+    const table = page.getByRole("table");
+    await expect(table.getByText("Pendente", { exact: true }).first()).toBeVisible();
+    await expect(table.getByText("Validado", { exact: true })).toBeVisible();
+
+    // Link de validacao aponta para a rota /cvm/icbgc/validate por id_documento.
+    const link = page.locator(
+      `a[href="/cvm/icbgc/validate?id_documento=${ICBGC_REPORT_PETROBRAS_DETAIL.id_documento}"]`,
+    );
+    await expect(link).toBeVisible();
+  });
+
+  test("filtro de status envia validation_status ao backend", async ({ page }) => {
+    const captured = mockGet(page, CvmRoutes.icbgcReportsList, ICBGC_REPORTS_LIST);
+
+    await page.goto("/cvm/icbgc");
+    await expect.poll(() => captured.length).toBeGreaterThanOrEqual(1);
+
+    await page.getByLabel("Status de validacao").selectOption("pending");
+
+    await expect.poll(() => captured.at(-1)?.query.validation_status).toBe("pending");
+  });
+});
+
+test.describe("ICBGC — tela de validacao", () => {
+  const ICBGC_VALIDATE_URL = `/cvm/icbgc/validate?id_documento=${ICBGC_REPORT_PETROBRAS_DETAIL.id_documento}`;
+
+  test.beforeEach(async ({ page }) => {
+    await mockAuth(page, { authenticated: true });
+  });
+
+  test("renderiza header, itens de conformidade legiveis e selo pendente", async ({ page }) => {
+    mockGet(page, CvmRoutes.icbgcReportById, ICBGC_REPORT_PETROBRAS_DETAIL);
+
+    await page.goto(ICBGC_VALIDATE_URL);
+
+    await expect(
+      page.getByRole("heading", { name: ICBGC_REPORT_PETROBRAS_DETAIL.nome_empresarial }),
+    ).toBeVisible();
+    await expect(page.getByText("Validacao de ICBGC", { exact: true })).toBeVisible();
+    await expect(page.getByText(/metadado interno de QA/)).toBeVisible();
+
+    // Comeca pendente.
+    await expect(page.getByText("Pendente de validacao")).toBeVisible();
+
+    // Itens de conformidade legiveis: principio + pratica recomendada + explicacao.
+    await expect(page.getByText("Cada acao deve corresponder a um voto")).toBeVisible();
+    await expect(
+      page.getByText("A maioria dos conselheiros e indicada pelo acionista controlador."),
+    ).toBeVisible();
+
+    // Badges de adocao Sim/Parcial/Nao/N.A.
+    await expect(page.getByText("Parcial", { exact: true })).toBeVisible();
+    await expect(page.getByText("N.A.", { exact: true })).toBeVisible();
+
+    // Agrupamento por capitulo.
+    await expect(page.getByRole("heading", { name: "Conselho de Administracao" })).toBeVisible();
+  });
+
+  test("marca como valido (POST generico), exibe selo e permite reverter", async ({ page }) => {
+    const state = { validated: false };
+
+    await page.route(CvmRoutes.icbgcReportById, async (route) => {
+      if (route.request().method() !== "GET") {
+        await route.fallback();
+        return;
+      }
+      const validation = state.validated
+        ? {
+            status: "valid",
+            validated_by: {
+              id: "00000000-0000-0000-0000-000000000001",
+              name: "Caio Moderador",
+              email: "caio@talous.ai",
+            },
+            validated_at: "2026-05-30T13:45:00Z",
+          }
+        : ICBGC_REPORT_PETROBRAS_DETAIL.validation;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ ...ICBGC_REPORT_PETROBRAS_DETAIL, validation }),
+      });
+    });
+
+    const validateCalls: Array<unknown> = [];
+    await page.route(CvmRoutes.validationsValidate, async (route) => {
+      if (route.request().method() !== "POST") {
+        await route.fallback();
+        return;
+      }
+      validateCalls.push(JSON.parse(route.request().postData() ?? "null"));
+      state.validated = true;
+      await route.fulfill({ status: 200, contentType: "application/json", body: "{}" });
+    });
+
+    const invalidateCalls: Array<unknown> = [];
+    await page.route(CvmRoutes.validationsInvalidate, async (route) => {
+      if (route.request().method() !== "POST") {
+        await route.fallback();
+        return;
+      }
+      invalidateCalls.push(JSON.parse(route.request().postData() ?? "null"));
+      state.validated = false;
+      await route.fulfill({ status: 200, contentType: "application/json", body: "{}" });
+    });
+
+    await page.goto(ICBGC_VALIDATE_URL);
+
+    await expect(page.getByText("Pendente de validacao")).toBeVisible();
+
+    await page.getByRole("button", { name: "Marcar como valido" }).click();
+
+    // Body do POST generico carrega { report_type, ref } — ref e o id_documento como string.
+    await expect.poll(() => validateCalls.length).toBe(1);
+    expect(validateCalls[0]).toEqual({
+      report_type: "icbgc",
+      ref: String(ICBGC_REPORT_PETROBRAS_DETAIL.id_documento),
+    });
+
+    // Selo "Validado por X em ..." aparece apos refetch.
+    await expect(page.getByText(/Validado por Caio Moderador em/)).toBeVisible();
+
+    // Reverter volta a pendente.
+    await page.getByRole("button", { name: "Reverter validacao" }).click();
+    await expect.poll(() => invalidateCalls.length).toBe(1);
+    expect(invalidateCalls[0]).toEqual({
+      report_type: "icbgc",
+      ref: String(ICBGC_REPORT_PETROBRAS_DETAIL.id_documento),
+    });
+    await expect(page.getByText("Pendente de validacao")).toBeVisible();
+  });
 });
 
 test.describe("ICBGC — report detail", () => {
