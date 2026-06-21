@@ -42,6 +42,20 @@ describe("cvm-fre service", () => {
     );
   });
 
+  it("forwards validation_status filter on filings list", async () => {
+    const fetchMock = mockOk({
+      items: [],
+      pagination: { page: 1, page_size: 25, total: 0, total_pages: 0 },
+    });
+
+    await listFREFilings({ validation_status: "pending", page: 1, page_size: 25 });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://localhost:8001/api/v1/admin/cvm/fre/filings?validation_status=pending&page=1&page_size=25",
+      expect.objectContaining({ credentials: "include" }),
+    );
+  });
+
   it("URL-encodes id_documento on detail", async () => {
     const fetchMock = mockOk({});
 

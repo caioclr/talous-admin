@@ -114,6 +114,8 @@ export const CvmRoutes = {
   vlmoMovimentacoes: /\/api\/v1\/admin\/cvm\/vlmo\/movimentacoes(\?.*)?$/,
   vlmoByCompany: /\/api\/v1\/admin\/cvm\/vlmo\/by-company\/\d+(\?.*)?$/,
   vlmoAggregates: /\/api\/v1\/admin\/cvm\/vlmo\/aggregates\/\d+(\?.*)?$/,
+  validationsValidate: /\/api\/v1\/admin\/cvm\/validations\/validate$/,
+  validationsInvalidate: /\/api\/v1\/admin\/cvm\/validations\/invalidate$/,
   freSyncStatus: /\/api\/v1\/admin\/cvm\/fre\/sync-status$/,
   freSync: /\/api\/v1\/admin\/cvm\/fre\/sync(\?.*)?$/,
   freFilingsList: /\/api\/v1\/admin\/cvm\/fre\/filings(\?.*)?$/,

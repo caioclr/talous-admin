@@ -422,11 +422,39 @@ export const FRE_FILING_PETROBRAS_SUMMARY: FREFilingSummary = {
   categoria_documento: "Formulario de Referencia",
   data_recebimento: "2026-04-29",
   captured_at: "2026-04-29T08:00:00Z",
+  validation: {
+    status: "pending",
+    validated_by: null,
+    validated_at: null,
+  },
+};
+
+// Segundo FRE ja validado — exercita o badge de "Validado" na lista + o selo.
+export const FRE_FILING_VALE_SUMMARY_VALID: FREFilingSummary = {
+  id: "fff2222-2222-2222-2222-222222222222",
+  id_documento: "FRE-VALE-2025",
+  cnpj_companhia: "33592510000154",
+  cd_cvm: 4170,
+  nome_companhia: "Vale S.A.",
+  data_referencia: "2025-12-31",
+  versao: 1,
+  categoria_documento: "Formulario de Referencia",
+  data_recebimento: "2026-04-20",
+  captured_at: "2026-04-20T08:00:00Z",
+  validation: {
+    status: "valid",
+    validated_by: {
+      id: "00000000-0000-0000-0000-000000000001",
+      name: "Caio Moderador",
+      email: "caio@talous.ai",
+    },
+    validated_at: "2026-05-02T13:45:00Z",
+  },
 };
 
 export const FRE_FILINGS_LIST = {
-  items: [FRE_FILING_PETROBRAS_SUMMARY],
-  pagination: { page: 1, page_size: 25, total: 1, total_pages: 1 },
+  items: [FRE_FILING_PETROBRAS_SUMMARY, FRE_FILING_VALE_SUMMARY_VALID],
+  pagination: { page: 1, page_size: 25, total: 2, total_pages: 1 },
 };
 
 export const FRE_FILING_PETROBRAS_DETAIL: FREFilingDetail = {
