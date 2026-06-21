@@ -1,8 +1,8 @@
 import { apiClient } from "@/lib/services/client";
 import type {
   ReportType,
-  ReportValidation,
   ReportValidationParams,
+  ReportValidationResult,
 } from "./types";
 
 /**
@@ -20,7 +20,7 @@ import type {
 /** Marca o relatorio como valido (idempotente; registra admin atual + timestamp). */
 export function validateReport(reportType: ReportType, ref: string) {
   const params: ReportValidationParams = { report_type: reportType, ref };
-  return apiClient<ReportValidation>("/admin/cvm/validations/validate", {
+  return apiClient<ReportValidationResult>("/admin/cvm/validations/validate", {
     method: "POST",
     body: JSON.stringify(params),
   });
@@ -29,7 +29,7 @@ export function validateReport(reportType: ReportType, ref: string) {
 /** Reverte o relatorio para pendente (limpa quem/quando). */
 export function invalidateReport(reportType: ReportType, ref: string) {
   const params: ReportValidationParams = { report_type: reportType, ref };
-  return apiClient<ReportValidation>("/admin/cvm/validations/invalidate", {
+  return apiClient<ReportValidationResult>("/admin/cvm/validations/invalidate", {
     method: "POST",
     body: JSON.stringify(params),
   });

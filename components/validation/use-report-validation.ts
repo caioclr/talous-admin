@@ -6,7 +6,10 @@ import {
   invalidateReport,
   validateReport,
 } from "@/lib/services/admin/cvm-validations";
-import type { ReportType } from "@/lib/services/admin/types";
+import type {
+  ReportType,
+  ReportValidation,
+} from "@/lib/services/admin/types";
 
 interface UseReportValidationOptions {
   reportType: ReportType;
@@ -16,6 +19,12 @@ interface UseReportValidationOptions {
    * tipo). Recebe o array bruto que vai para `invalidateQueries`.
    */
   invalidateKeys?: unknown[][];
+  /**
+   * Recebe o bloco `validation` atualizado retornado pelo POST. Permite refletir
+   * o selo na hora, mesmo quando o endpoint de detalhe nao materializa
+   * `validation` (caso de FRE/FCA/ICBGC).
+   */
+  onValidationChange?: (validation: ReportValidation) => void;
   onSettled?: () => void;
 }
 
@@ -28,6 +37,7 @@ export function useReportValidation({
   reportType,
   reportRef,
   invalidateKeys = [],
+  onValidationChange,
   onSettled,
 }: UseReportValidationOptions) {
   const queryClient = useQueryClient();
@@ -41,8 +51,13 @@ export function useReportValidation({
 
   const validateMutation = useMutation({
     mutationFn: () => validateReport(reportType, reportRef),
-    onSuccess: () => {
+    onSuccess: (result) => {
       toast.success("Relatorio marcado como valido.");
+      // So reflete localmente se o POST devolveu o bloco `validation` (backend
+      // real). Sem isso, deixamos o refetch da lista/detalhe atualizar o selo.
+      if (result?.validation) {
+        onValidationChange?.(result.validation);
+      }
       refresh();
     },
     onError: (error) => toast.error(error.message),
@@ -50,8 +65,11 @@ export function useReportValidation({
 
   const invalidateMutation = useMutation({
     mutationFn: () => invalidateReport(reportType, reportRef),
-    onSuccess: () => {
+    onSuccess: (result) => {
       toast.success("Validacao revertida. Relatorio voltou a pendente.");
+      if (result?.validation) {
+        onValidationChange?.(result.validation);
+      }
       refresh();
     },
     onError: (error) => toast.error(error.message),
