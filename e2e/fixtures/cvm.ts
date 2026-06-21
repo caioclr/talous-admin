@@ -1019,7 +1019,41 @@ export const ITR_DFP_FILING_PETROBRAS_INDIVIDUAL: FilingSummaryWithValidation = 
   },
 };
 
+// Mais filings consolidados da MESMA empresa, misturando ITR e DFP em datas
+// distintas — cobre a faixa de navegacao entre periodos.
+export const ITR_DFP_FILING_PETROBRAS_DFP_2024: FilingSummaryWithValidation = {
+  cd_cvm: 9512,
+  denom_cia: "Petroleo Brasileiro S.A. - Petrobras",
+  doc_type: "dfp",
+  reference_date: "2024-12-31",
+  grupo_dfr: "consolidado",
+  version: 1,
+  statement_types: ["DRE", "DFC", "BP"],
+  validation: {
+    status: "pending",
+    validated_by: null,
+    validated_at: null,
+  },
+};
+
+export const ITR_DFP_FILING_PETROBRAS_ITR_2024Q1: FilingSummaryWithValidation = {
+  cd_cvm: 9512,
+  denom_cia: "Petroleo Brasileiro S.A. - Petrobras",
+  doc_type: "itr",
+  reference_date: "2024-03-31",
+  grupo_dfr: "consolidado",
+  version: 1,
+  statement_types: ["DRE", "DFC", "BP"],
+  validation: {
+    status: "pending",
+    validated_by: null,
+    validated_at: null,
+  },
+};
+
 export const ITR_DFP_FILINGS_WITH_VALIDATION: FilingSummaryWithValidation[] = [
+  ITR_DFP_FILING_PETROBRAS_ITR_2024Q1,
+  ITR_DFP_FILING_PETROBRAS_DFP_2024,
   ITR_DFP_FILING_PETROBRAS_PENDING,
   ITR_DFP_FILING_PETROBRAS_INDIVIDUAL,
 ];
@@ -1070,4 +1104,64 @@ export const ITR_DFP_ACCOUNT_LINES_DRE: AccountLinesTreeResponse = {
       escala_moeda: "MILHAR",
     },
   ],
+};
+
+// PENULTIMO = mesmo trimestre do ano anterior. Mesmas contas (cd_conta) com
+// valores menores — alimenta a coluna de comparacao e a Var%.
+export const ITR_DFP_ACCOUNT_LINES_DRE_PRIOR: AccountLinesTreeResponse = {
+  cd_cvm: 9512,
+  statement_type: "DRE",
+  reference_date: "2025-03-31",
+  grupo_dfr: "consolidado",
+  items: [
+    {
+      id: "acc-prior-1",
+      cd_cvm: 9512,
+      statement_type: "DRE",
+      grupo_dfr: "consolidado",
+      ordem_exerc: "PENULTIMO",
+      version: 1,
+      reference_date: "2024-03-31",
+      cd_conta: "3",
+      ds_conta: "Receita de Venda de Bens e/ou Servicos",
+      vl_conta: 100000000,
+      escala_moeda: "MILHAR",
+    },
+    {
+      id: "acc-prior-2",
+      cd_cvm: 9512,
+      statement_type: "DRE",
+      grupo_dfr: "consolidado",
+      ordem_exerc: "PENULTIMO",
+      version: 1,
+      reference_date: "2024-03-31",
+      cd_conta: "3.01",
+      ds_conta: "Custo dos Bens e/ou Servicos Vendidos",
+      vl_conta: -40000000,
+      escala_moeda: "MILHAR",
+    },
+    {
+      id: "acc-prior-3",
+      cd_cvm: 9512,
+      statement_type: "DRE",
+      grupo_dfr: "consolidado",
+      ordem_exerc: "PENULTIMO",
+      version: 1,
+      reference_date: "2024-03-31",
+      cd_conta: "3.01.01",
+      ds_conta: "Custo de Materias-primas",
+      vl_conta: -20000000,
+      escala_moeda: "MILHAR",
+    },
+  ],
+};
+
+// Resposta vazia de PENULTIMO — usada para verificar o fallback de coluna unica
+// (sem comparacao) quando o backend nao tem o periodo anterior.
+export const ITR_DFP_ACCOUNT_LINES_EMPTY: AccountLinesTreeResponse = {
+  cd_cvm: 9512,
+  statement_type: "DRE",
+  reference_date: "2025-03-31",
+  grupo_dfr: "consolidado",
+  items: [],
 };

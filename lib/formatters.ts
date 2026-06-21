@@ -53,6 +53,64 @@ export function formatValidatedBy(
   return validatedBy.name ?? validatedBy.email ?? "—";
 }
 
+/**
+ * Rotulo de periodo por trimestre/ano, derivado da identidade do filing.
+ *
+ * Apenas APRESENTACAO — nao calcula nem reinterpreta o dado:
+ * - ITR com mes 03 -> Q1, 06 -> Q2, 09 -> Q3, 12 -> Q4 -> `ITR Q{n}/{ano}`
+ * - DFP -> `DFP {ano}` (demonstracao anual)
+ * - mes nao mapeado -> usa o mes cru (`ITR M{mes}/{ano}`) para nao mentir
+ */
+export function formatFilingPeriodLabel(
+  docType: string | null | undefined,
+  referenceDate: string | null | undefined,
+) {
+  if (!referenceDate) {
+    return docType ? docType.toUpperCase() : "—";
+  }
+
+  const match = /^(\d{4})-(\d{2})/.exec(referenceDate);
+  if (!match) {
+    return docType ? docType.toUpperCase() : "—";
+  }
+
+  const year = match[1];
+  const month = match[2];
+  const type = (docType ?? "").toLowerCase();
+
+  if (type === "dfp") {
+    return `DFP ${year}`;
+  }
+
+  const quarterByMonth: Record<string, string> = {
+    "03": "Q1",
+    "06": "Q2",
+    "09": "Q3",
+    "12": "Q4",
+  };
+  const quarter = quarterByMonth[month] ?? `M${month}`;
+  const prefix = type ? type.toUpperCase() : "ITR";
+
+  return `${prefix} ${quarter}/${year}`;
+}
+
+/**
+ * Mesma identidade de periodo, recuada exatamente um ano. Usado apenas para
+ * rotular a coluna de comparacao (PENULTIMO) — nao busca nem altera dado.
+ */
+export function priorYearReferenceDate(referenceDate: string | null | undefined) {
+  if (!referenceDate) {
+    return null;
+  }
+
+  const match = /^(\d{4})(-\d{2}-\d{2})/.exec(referenceDate);
+  if (!match) {
+    return null;
+  }
+
+  return `${Number(match[1]) - 1}${match[2]}`;
+}
+
 export function formatDecimal(
   value: string | number | null | undefined,
   options: Intl.NumberFormatOptions = { minimumFractionDigits: 2, maximumFractionDigits: 2 },
