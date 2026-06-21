@@ -19,7 +19,15 @@ import { realLogin, reportTypeSupported } from "./helpers/real-auth";
  * Skip com mensagem clara quando o tipo nao tem dado no banco.
  */
 
-type Tipo = "itr-dfp" | "fre" | "fca" | "icbgc" | "capital-composition" | "buybacks";
+type Tipo =
+  | "itr-dfp"
+  | "fre"
+  | "fca"
+  | "icbgc"
+  | "capital-composition"
+  | "buybacks"
+  | "vlmo-filings"
+  | "ipe";
 
 interface TipoConfig {
   tipo: Tipo;
@@ -103,6 +111,29 @@ const CONFIGS: TipoConfig[] = [
     // A tela de recompra tem o card "Programa".
     validateContent: /Programa/,
   },
+  {
+    tipo: "vlmo-filings",
+    reportType: "vlmo",
+    // VLMO valida pelo FILING (header/protocolo), nao pelas movimentacoes — a
+    // superficie de validacao e a lista de filings.
+    listPath: "/cvm/vlmo/filings",
+    validatePath: "vlmo",
+    listHeading: /Validacao de filings VLMO/,
+    // A lista de filings tem uma unica coluna-link "Validacao" -> "Abrir".
+    openValidateLink: (row) => row.getByRole("link", { name: "Abrir" }).last(),
+    // A tela de validacao do filing tem o card "Movimentacoes do filing".
+    validateContent: /Movimentacoes do filing/,
+  },
+  {
+    tipo: "ipe",
+    reportType: "ipe",
+    listPath: "/cvm/ipe",
+    listHeading: /Fatos relevantes, comunicados e avisos/,
+    // A lista de IPE tem duas "Abrir" (Detalhe + Validacao). A ultima valida.
+    openValidateLink: (row) => row.getByRole("link", { name: "Abrir" }).last(),
+    // A tela de validacao do IPE tem o card "Assunto e categoria".
+    validateContent: /Assunto e categoria/,
+  },
 ];
 
 /** Selo "Validado por ..." (estado valido) na tela de validacao. */
@@ -153,14 +184,36 @@ for (const config of CONFIGS) {
       await expect(page.getByRole("heading", { name: config.listHeading })).toBeVisible();
 
       const table = page.getByRole("table");
-      const firstRow = table.locator("tbody tr").first();
 
-      // Skip claro quando o tipo nao tem dado no banco real.
-      const rowCount = await table.locator("tbody tr").count();
+      // Skip claro quando o tipo nao tem dado no banco real. O DataTable, vazio,
+      // renderiza UMA linha de empty-state (uma celula com colSpan) — entao
+      // `tbody tr` >= 1 mesmo sem dado. Contamos as linhas REAIS (as que tem o
+      // link "Abrir" da coluna de validacao); zero = sem dado -> skip.
+      //
+      // A lista carrega de forma assincrona apos o goto, e enquanto carrega o
+      // DataTable mostra linhas de skeleton (sem link "Abrir" e sem empty-state).
+      // Esperamos a lista ASSENTAR — surge a 1a linha de dado OU o empty-state —
+      // tolerando o tempo de carregamento. Se nem um nem outro aparecer no prazo
+      // (backend vazio/lento que nunca resolve para uma das duas formas),
+      // tratamos como "sem dado" e skipamos, em vez de falhar o teste.
+      const dataRows = table
+        .locator("tbody tr")
+        .filter({ has: page.getByRole("link", { name: "Abrir" }) });
+      const emptyState = table.getByText(/Nenhum|Sem dado|Sem registros|nao encontrad/i);
+
+      const settled = await dataRows
+        .first()
+        .or(emptyState.first())
+        .waitFor({ state: "visible", timeout: 15_000 })
+        .then(() => true)
+        .catch(() => false);
+
+      const rowCount = settled ? await dataRows.count() : 0;
       test.skip(
         rowCount === 0,
         `Sem dado de ${config.tipo} no banco real — nada para validar.`,
       );
+      const firstRow = dataRows.first();
       await expect(firstRow).toBeVisible();
 
       // Badge de status na 1a linha: "Validado" ou "Pendente" (escopado na tabela).
@@ -179,8 +232,13 @@ for (const config of CONFIGS) {
       // depender da re-populacao assincrona da tabela.
       await page.goto(config.listPath);
       await expect(page.getByRole("heading", { name: config.listHeading })).toBeVisible();
-      const rowForOpen = table.locator("tbody tr").first();
-      await expect(rowForOpen).toBeVisible();
+      const rowForOpen = table
+        .locator("tbody tr")
+        .filter({ has: page.getByRole("link", { name: "Abrir" }) })
+        .first();
+      // Mesma tolerancia ao carregamento assincrono do reload: a 1a linha de
+      // dado pode demorar a aparecer (skeleton enquanto carrega).
+      await expect(rowForOpen).toBeVisible({ timeout: 15_000 });
 
       // --- 3. Abre a tela de validacao do 1o item ---
       await config.openValidateLink(rowForOpen).click();

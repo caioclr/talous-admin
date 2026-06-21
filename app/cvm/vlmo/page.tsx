@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { RefreshCcw } from "lucide-react";
+import { RefreshCcw, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -174,13 +175,21 @@ export default function VLMOPage() {
               </CardDescription>
             </div>
 
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button className="rounded-full">
-                  <RefreshCcw className="size-4" />
-                  Sincronizar
-                </Button>
-              </AlertDialogTrigger>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button asChild variant="outline" className="rounded-full">
+                <Link href="/cvm/vlmo/filings">
+                  <ShieldCheck className="size-4" />
+                  Validar filings
+                </Link>
+              </Button>
+
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button className="rounded-full">
+                    <RefreshCcw className="size-4" />
+                    Sincronizar
+                  </Button>
+                </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>Disparar sync de VLMO?</AlertDialogTitle>
@@ -225,8 +234,9 @@ export default function VLMOPage() {
                     {triggerSyncMutation.isPending ? "Enfileirando..." : "Confirmar"}
                   </AlertDialogAction>
                 </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           </div>
         </CardHeader>
 

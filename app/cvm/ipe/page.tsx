@@ -21,7 +21,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import {
+  ValidationBadge,
+  ValidationStatusFilter,
+  asValidationStatus,
+} from "@/components/validation";
 import { formatDate, formatDateTime, truncateHash } from "@/lib/formatters";
 import {
   getIPESyncStatus,
@@ -81,12 +87,31 @@ const columns: DataTableColumn<IPEDisclosureSummary>[] = [
     ),
   },
   {
+    key: "status",
+    header: "Status",
+    // O backend pode ainda nao materializar `validation` na lista — tratamos
+    // ausencia como pendente para nao quebrar a tela.
+    render: (row) => <ValidationBadge status={row.validation?.status ?? "pending"} />,
+  },
+  {
     key: "detail",
     header: "Detalhe",
     render: (row) => (
       <Link
         className="text-primary underline-offset-4 hover:underline"
         href={`/cvm/ipe/disclosures/detail?id=${row.id}`}
+      >
+        Abrir
+      </Link>
+    ),
+  },
+  {
+    key: "validate",
+    header: "Validacao",
+    render: (row) => (
+      <Link
+        className="text-primary underline-offset-4 hover:underline"
+        href={`/cvm/ipe/validate?id=${encodeURIComponent(row.id)}`}
       >
         Abrir
       </Link>
@@ -107,6 +132,7 @@ export default function IPEPage() {
   const [tipoApresentacao, setTipoApresentacao] = useState("");
   const [signal, setSignal] = useState("");
   const [notified, setNotified] = useState("");
+  const [validationStatus, setValidationStatus] = useState("");
   const [deliveredFrom, setDeliveredFrom] = useState("");
   const [deliveredTo, setDeliveredTo] = useState("");
   const [syncYear, setSyncYear] = useState(new Date().getFullYear().toString());
@@ -126,7 +152,18 @@ export default function IPEPage() {
       "cvm",
       "ipe",
       "disclosures",
-      { page, search, cdCvm, categoria, tipoApresentacao, signal, notified, deliveredFrom, deliveredTo },
+      {
+        page,
+        search,
+        cdCvm,
+        categoria,
+        tipoApresentacao,
+        signal,
+        notified,
+        validationStatus,
+        deliveredFrom,
+        deliveredTo,
+      },
     ],
     queryFn: () =>
       listIPEDisclosures({
@@ -138,6 +175,7 @@ export default function IPEPage() {
         tipo_apresentacao: tipoApresentacao || undefined,
         signal: signal || undefined,
         notified: notified === "" ? undefined : notified === "true",
+        validation_status: asValidationStatus(validationStatus),
         delivered_at_from: toIsoDate(deliveredFrom),
         delivered_at_to: toIsoDate(deliveredTo),
       }),
@@ -311,6 +349,18 @@ export default function IPEPage() {
               <option value="true">Sim</option>
               <option value="false">Nao</option>
             </Select>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="filter-validation-status">Status de validacao</Label>
+              <ValidationStatusFilter
+                id="filter-validation-status"
+                value={validationStatus}
+                onChange={(value) => {
+                  setPage(1);
+                  setValidationStatus(value);
+                }}
+              />
+            </div>
 
             <Input
               type="date"

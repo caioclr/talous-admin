@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   getVLMOAggregates,
+  getVLMOFiling,
   getVLMOSyncStatus,
   listVLMOByCompany,
+  listVLMOFilings,
   listVLMOMovimentacoes,
   triggerVLMOSync,
 } from "@/lib/services/admin/cvm-vlmo";
@@ -27,6 +29,38 @@ describe("cvm-vlmo service", () => {
     vi.stubGlobal("fetch", fetchMock);
     return fetchMock;
   }
+
+  it("builds filings URL with full filter set incl. validation_status", async () => {
+    const fetchMock = mockOk({
+      items: [],
+      pagination: { page: 1, page_size: 25, total: 0, total_pages: 0 },
+    });
+
+    await listVLMOFilings({
+      cnpj: "33000167000101",
+      cd_cvm: 9512,
+      year: 2026,
+      validation_status: "pending",
+      page: 2,
+      page_size: 25,
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://localhost:8001/api/v1/admin/cvm/vlmo/filings?cnpj=33000167000101&cd_cvm=9512&year=2026&validation_status=pending&page=2&page_size=25",
+      expect.objectContaining({ credentials: "include" }),
+    );
+  });
+
+  it("builds filing detail URL by UUID", async () => {
+    const fetchMock = mockOk({});
+
+    await getVLMOFiling("vfil0001-0000-0000-0000-000000000001");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://localhost:8001/api/v1/admin/cvm/vlmo/filings/vfil0001-0000-0000-0000-000000000001",
+      expect.objectContaining({ credentials: "include" }),
+    );
+  });
 
   it("builds movimentacoes URL with full filter set", async () => {
     const fetchMock = mockOk({

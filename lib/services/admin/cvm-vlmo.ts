@@ -1,12 +1,30 @@
 import { apiClient } from "@/lib/services/client";
 import type {
   AdminPagedResponse,
+  ListVLMOFilingsParams,
   ListVLMOMovimentacoesParams,
   TriggerVLMOSyncResponse,
   VLMOAggregatesResponse,
+  VLMOFilingDetail,
+  VLMOFilingSummary,
   VLMOMovimentacaoSummary,
   VLMOSyncStatusResponse,
 } from "./types";
+
+/**
+ * Filings VLMO — superficie de validacao do VLMO (S02 T03). O selo vive no
+ * filing (header/protocolo), nao nas movimentacoes (`/movimentacoes` segue sem
+ * selo). `ref` da API generica = `id` (UUID) do filing.
+ */
+export function listVLMOFilings(params: ListVLMOFilingsParams) {
+  return apiClient<AdminPagedResponse<VLMOFilingSummary>>("/admin/cvm/vlmo/filings", {
+    params,
+  });
+}
+
+export function getVLMOFiling(filingId: string) {
+  return apiClient<VLMOFilingDetail>(`/admin/cvm/vlmo/filings/${filingId}`);
+}
 
 export function listVLMOMovimentacoes(params: ListVLMOMovimentacoesParams) {
   return apiClient<AdminPagedResponse<VLMOMovimentacaoSummary>>(
