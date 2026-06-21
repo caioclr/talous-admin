@@ -699,6 +699,11 @@ export const FCA_DOCUMENTO_PETROBRAS_SUMMARY: FCADocumentoSummary = {
   categoria_documento: "FCA",
   data_recebimento: "2026-05-25",
   captured_at: "2026-06-01T08:00:00Z",
+  validation: {
+    status: "pending",
+    validated_by: null,
+    validated_at: null,
+  },
 };
 
 export const FCA_DOCUMENTO_VALE_SUMMARY: FCADocumentoSummary = {
@@ -712,6 +717,15 @@ export const FCA_DOCUMENTO_VALE_SUMMARY: FCADocumentoSummary = {
   categoria_documento: "FCA",
   data_recebimento: "2026-05-18",
   captured_at: "2026-06-01T08:00:00Z",
+  validation: {
+    status: "valid",
+    validated_by: {
+      id: "00000000-0000-0000-0000-000000000001",
+      name: "Caio Moderador",
+      email: "caio@talous.ai",
+    },
+    validated_at: "2026-05-30T13:45:00Z",
+  },
 };
 
 export const FCA_DOCUMENTOS_LIST = {
