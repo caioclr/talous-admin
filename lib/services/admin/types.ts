@@ -332,6 +332,19 @@ export interface ReportValidationParams {
   ref: string;
 }
 
+/**
+ * Resposta dos POST validate/invalidate. O backend devolve o bloco `validation`
+ * atualizado (quem/quando) junto da identidade do relatorio. Util para refletir
+ * o selo na hora, sem depender do endpoint de detalhe (que pode nao materializar
+ * `validation`).
+ */
+export interface ReportValidationResult {
+  report_type: ReportType;
+  ref: number | string;
+  cd_cvm: number | null;
+  validation: ReportValidation;
+}
+
 // ----------------------------------------------------------------------------
 // Capital composition (Sprint 4)
 // ----------------------------------------------------------------------------
