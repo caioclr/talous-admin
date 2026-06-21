@@ -1,6 +1,6 @@
 import { request } from "@playwright/test";
 
-const BASE_URL = "http://localhost:3001";
+const BASE_URL = "http://localhost:6001";
 const ROUTES_TO_WARM = ["/login", "/cvm", "/cvm/companies", "/cvm/snapshots", "/cvm/sector-mapping"];
 
 /**

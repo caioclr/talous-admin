@@ -21,7 +21,7 @@
 | Telas Sprint 1 — dashboard, companies (lista + detalhe), snapshots (lista + detalhe), sector-mapping | ✅ |
 | Services + telas IPE (Sprint 2) | ➕ |
 | Services + telas ITR/DFP (Sprint 3) | ➕ |
-| CORS backend incluindo `localhost:3001` | ⏳ não verificável aqui |
+| CORS backend incluindo `localhost:6001` | ⏳ não verificável aqui |
 | Smoke test manual ponta-a-ponta | ⏳ depende do usuário |
 
 ---
@@ -40,7 +40,7 @@ Referências de código: [admin/cvm_registry.py](../../talous-backend/app/api/v1
 **Objetivo desta primeira entrega**: bootstrapar o projeto Next.js + autenticação dev + consumir todos os 12 endpoints CVM existentes, entregando ao operador uma ferramenta funcional para inspecionar dados CVM (lista/detalhe de empresas, snapshots, histórico, mudanças, mapeamento de setores, trigger de sync).
 
 **Decisões alinhadas com o usuário**:
-- Stack: Next.js 16.1.x standalone na pasta `talous-admin/` (porta 3001)
+- Stack: Next.js 16.1.x standalone na pasta `talous-admin/` (porta 6001)
 - Escopo MVP: 12 endpoints CVM completos (Sprint 1 backend)
 - Auth: dev login (email) primeiro — Google OAuth fica para fase posterior
 - UI: shadcn/ui inicializado fresh (não copiar do talous-frontend)
@@ -233,16 +233,16 @@ export async function listAdminCompanies(params: ListCompaniesParams) {
 
 ### 8. Configuração de CORS no backend ⏳ (verificar)
 
-Adicionar `http://localhost:3001` em `cors_origins` do backend ([app/config.py:36](../../talous-backend/app/config.py)) — pode ser via env var `CORS_ORIGINS` ou edit direto no `Settings`. Validar antes de iniciar dev.
+Adicionar `http://localhost:6001` em `cors_origins` do backend ([app/config.py:36](../../talous-backend/app/config.py)) — pode ser via env var `CORS_ORIGINS` ou edit direto no `Settings`. Validar antes de iniciar dev.
 
 ### 9. Scripts e dev ✅
 
 - `package.json`:
   ```json
   "scripts": {
-    "dev": "next dev --webpack -p 3001",
+    "dev": "next dev --webpack -p 6001",
     "build": "next build --webpack",
-    "start": "next start -p 3001",
+    "start": "next start -p 6001",
     "lint": "next lint",
     "test": "vitest"
   }
@@ -289,7 +289,7 @@ Adicionar `http://localhost:3001` em `cors_origins` do backend ([app/config.py:3
    ```bash
    cd ../talous-backend && uvicorn app.main:app --reload --port 8001
    ```
-   Confirmar que `http://localhost:8001/docs` mostra a tag `admin-cvm` com 12 endpoints. Garantir que `localhost:3001` está em CORS.
+   Confirmar que `http://localhost:8001/docs` mostra a tag `admin-cvm` com 12 endpoints. Garantir que `localhost:6001` está em CORS.
 
 2. **Banco com dados de teste**:
    ```bash
@@ -302,7 +302,7 @@ Adicionar `http://localhost:3001` em `cors_origins` do backend ([app/config.py:3
    ```bash
    cd talous-admin && npm install && npm run dev
    ```
-   Abrir `http://localhost:3001`.
+   Abrir `http://localhost:6001`.
 
 4. **Smoke test manual** (golden path):
    - Login com email do admin → redirect para `/cvm` → ver KPIs e contagem por situação.
