@@ -382,7 +382,7 @@ function FilingStatus({ filing }: { filing: FilingSummaryWithValidation }) {
   }
 
   return (
-    <div className="flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-emerald-700 dark:text-emerald-300">
+    <div className="flex items-center gap-2 rounded-sm border border-success/20 bg-success-dim px-3 py-1 text-success">
       <Check className="size-3.5" />
       <span className="text-xs font-medium">
         Validado por {formatValidatedBy(filing.validation.validated_by)}

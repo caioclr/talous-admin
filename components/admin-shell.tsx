@@ -135,146 +135,141 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-background px-4 py-4 sm:px-6">
-      <div className="mx-auto flex min-h-[calc(100vh-2rem)] max-w-7xl gap-4 lg:gap-6">
-        <aside
-          className={cn(
-            "panel-surface fixed inset-y-4 left-4 z-30 flex w-[280px] flex-col gap-6 p-5 transition-transform lg:static lg:translate-x-0",
-            mobileOpen ? "translate-x-0" : "-translate-x-[120%]",
-          )}
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
-                Talous Admin
-              </p>
-              <h1 className="mt-2 text-xl font-semibold text-foreground">Operacoes CVM</h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Bootstrap inicial do painel administrativo.
-              </p>
-            </div>
+    <div className="flex h-screen bg-background">
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-30 flex w-56 flex-col border-r border-border bg-card transition-transform lg:static lg:translate-x-0",
+          mobileOpen ? "translate-x-0" : "-translate-x-full",
+        )}
+      >
+        {/* Brand */}
+        <div className="flex h-11 items-center gap-2 border-b border-border px-4">
+          <div className="flex size-5 items-center justify-center rounded bg-accent-dim border border-primary/20 font-mono text-[9px] font-bold text-primary">
+            T
+          </div>
+          <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-primary">
+            Talous Admin
+          </span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="ml-auto size-6 lg:hidden"
+            onClick={() => setMobileOpen(false)}
+          >
+            <X className="size-3.5" />
+            <span className="sr-only">Fechar menu</span>
+          </Button>
+        </div>
 
+        {/* Nav */}
+        <nav className="flex-1 overflow-y-auto px-2 py-3">
+          {navigation.map((group) => (
+            <div key={group.label} className="mb-3">
+              <p className="px-2 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/60">
+                {group.label}
+              </p>
+              <div className="flex flex-col gap-px">
+                {group.items.map((item) => {
+                  const active = isItemActive(pathname, item);
+                  const isSoon = item.status === "soon";
+
+                  if (isSoon) {
+                    return (
+                      <span
+                        key={item.href}
+                        aria-disabled="true"
+                        title="Em breve"
+                        className="flex items-center gap-2 rounded px-2 py-1.5 text-[11px] text-muted-foreground/50"
+                      >
+                        <item.icon className="size-3.5 opacity-40" />
+                        {item.label}
+                        <span className="ml-auto rounded border border-border/60 bg-background px-1 py-px font-mono text-[8px] uppercase tracking-wider text-muted-foreground/50">
+                          em breve
+                        </span>
+                      </span>
+                    );
+                  }
+
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setMobileOpen(false)}
+                      aria-current={active ? "page" : undefined}
+                      className={cn(
+                        "flex items-center gap-2 rounded px-2 py-1.5 text-[11px] font-medium transition",
+                        active
+                          ? "bg-accent-dim text-foreground"
+                          : "text-muted-foreground hover:bg-card-raised hover:text-foreground",
+                      )}
+                    >
+                      <item.icon className={cn("size-3.5", active ? "text-primary" : "opacity-50")} />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </nav>
+      </aside>
+
+      {/* Mobile overlay */}
+      {mobileOpen ? (
+        <button
+          type="button"
+          className="fixed inset-0 z-20 bg-black/50 lg:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      ) : null}
+
+      {/* Main */}
+      <div className="flex min-w-0 flex-1 flex-col">
+        {/* Topbar */}
+        <header className="flex h-11 items-center justify-between border-b border-border bg-card px-4">
+          <div className="flex items-center gap-3">
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              className="lg:hidden"
-              onClick={() => setMobileOpen(false)}
+              className="size-7 lg:hidden"
+              onClick={() => setMobileOpen(true)}
             >
-              <X className="size-4" />
-              <span className="sr-only">Fechar menu</span>
+              <Menu className="size-3.5" />
+              <span className="sr-only">Abrir menu</span>
             </Button>
+            <div className="font-mono text-[11px] text-muted-foreground">
+              admin/<span className="text-foreground">cvm</span>
+            </div>
           </div>
 
-          <nav className="flex flex-1 flex-col gap-5 overflow-y-auto pr-1">
-            {navigation.map((group) => (
-              <div key={group.label} className="flex flex-col gap-1.5">
-                <p className="px-2 text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                  {group.label}
-                </p>
-
-                <div className="flex flex-col gap-1">
-                  {group.items.map((item) => {
-                    const active = isItemActive(pathname, item);
-                    const isSoon = item.status === "soon";
-
-                    if (isSoon) {
-                      return (
-                        <span
-                          key={item.href}
-                          aria-disabled="true"
-                          title="Em breve"
-                          className="flex items-center justify-between gap-3 rounded-xl border border-transparent px-3 py-2 text-sm text-muted-foreground/70"
-                        >
-                          <span className="flex items-center gap-3">
-                            <item.icon className="size-4" />
-                            {item.label}
-                          </span>
-                          <span className="rounded-full border border-border/60 bg-background/50 px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-wider">
-                            em breve
-                          </span>
-                        </span>
-                      );
-                    }
-
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => setMobileOpen(false)}
-                        aria-current={active ? "page" : undefined}
-                        className={cn(
-                          "flex items-center gap-3 rounded-xl border px-3 py-2 text-sm font-medium transition",
-                          active
-                            ? "border-primary/30 bg-primary text-primary-foreground shadow-soft"
-                            : "border-transparent bg-card/70 text-foreground hover:border-border hover:bg-card",
-                        )}
-                      >
-                        <item.icon className="size-4" />
-                        {item.label}
-                      </Link>
-                    );
-                  })}
-                </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-2 rounded px-2 py-1 text-[11px] text-muted-foreground hover:bg-card-raised hover:text-foreground transition">
+                <span className="size-5 rounded-full bg-card-raised border border-border grid place-items-center font-mono text-[9px] font-medium">
+                  {user?.name?.charAt(0)?.toUpperCase() ?? "A"}
+                </span>
+                <span className="hidden sm:inline">{user?.name ?? user?.email ?? "Admin"}</span>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel className="text-[11px]">Conta administrativa</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <div className="px-2 py-1 font-mono text-[10px] text-muted-foreground">
+                {user?.email ?? "Sem e-mail carregado"}
               </div>
-            ))}
-          </nav>
-        </aside>
+              <DropdownMenuItem onClick={handleLogout} className="text-[11px]">
+                <LogOut className="mr-2 size-3.5" />
+                Sair
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </header>
 
-        {mobileOpen ? (
-          <button
-            type="button"
-            className="fixed inset-0 z-20 bg-black/40 lg:hidden"
-            onClick={() => setMobileOpen(false)}
-          />
-        ) : null}
-
-        <div className="flex min-w-0 flex-1 flex-col gap-4">
-          <header className="panel-surface flex items-center justify-between gap-3 px-4 py-4 sm:px-5">
-            <div className="flex items-center gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className="lg:hidden"
-                onClick={() => setMobileOpen(true)}
-              >
-                <Menu className="size-4" />
-                <span className="sr-only">Abrir menu</span>
-              </Button>
-
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary">
-                  Painel Administrativo
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Dados internos consumidos a partir de `/api/v1/admin/cvm/*`.
-                </p>
-              </div>
-            </div>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="min-w-[160px] justify-between rounded-full">
-                  <span className="truncate">{user?.name ?? user?.email ?? "Admin"}</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>Conta administrativa</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                  {user?.email ?? "Sem e-mail carregado"}
-                </div>
-                <DropdownMenuItem onClick={handleLogout}>
-                  <LogOut className="mr-2 size-4" />
-                  Sair
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </header>
-
-          <main className="min-w-0 flex-1">{children}</main>
-        </div>
+        {/* Content */}
+        <main className="flex-1 overflow-y-auto p-5">{children}</main>
       </div>
     </div>
   );

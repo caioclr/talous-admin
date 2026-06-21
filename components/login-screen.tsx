@@ -9,7 +9,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { devLogin } from "@/lib/services/auth";
@@ -55,51 +54,63 @@ export function LoginScreen() {
   }, [isAuthenticated, isReady, nextPath, router]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4 py-10">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="rounded-2xl border border-primary/20 bg-primary/10 p-3 text-primary">
-              <ShieldCheck className="size-5" />
-            </div>
-            <div>
-              <CardTitle>Login de desenvolvimento</CardTitle>
-              <CardDescription>
-                Autenticacao inicial do painel admin antes da fase de Google OAuth.
-              </CardDescription>
-            </div>
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="w-full max-w-sm">
+        {/* Header */}
+        <div className="mb-6 flex items-center gap-3">
+          <div className="flex size-8 items-center justify-center rounded border border-primary/20 bg-accent-dim text-primary">
+            <ShieldCheck className="size-4" />
           </div>
-        </CardHeader>
+          <div>
+            <h1 className="text-sm font-semibold tracking-tight text-foreground">
+              Login de desenvolvimento
+            </h1>
+            <p className="font-mono text-[10px] text-muted-foreground">POST /auth/dev-login</p>
+          </div>
+        </div>
 
-        <CardContent>
+        {/* Form */}
+        <div className="rounded-lg border border-border bg-card p-5">
           <form
             noValidate
             className="flex flex-col gap-4"
             onSubmit={form.handleSubmit((values) => loginMutation.mutate(values))}
           >
-            <div className="space-y-2">
-              <Label htmlFor="email">E-mail</Label>
+            <div className="flex flex-col gap-1.5">
+              <Label
+                htmlFor="email"
+                className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground"
+              >
+                E-mail
+              </Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="admin@talous.ai"
+                className="h-8 bg-background text-xs"
                 {...form.register("email")}
               />
               {form.formState.errors.email ? (
-                <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
+                <p className="font-mono text-[10px] text-destructive">
+                  {form.formState.errors.email.message}
+                </p>
               ) : (
-                <p className="text-xs text-muted-foreground">
+                <p className="font-mono text-[10px] text-muted-foreground">
                   Usa o endpoint `POST /auth/dev-login` do backend.
                 </p>
               )}
             </div>
 
-            <Button type="submit" disabled={loginMutation.isPending}>
+            <Button type="submit" disabled={loginMutation.isPending} className="w-full">
               {loginMutation.isPending ? "Entrando..." : "Entrar no admin"}
             </Button>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+
+        <p className="mt-4 text-center font-mono text-[10px] text-muted-foreground/60">
+          Autenticacao inicial do painel admin antes da fase de Google OAuth.
+        </p>
+      </div>
     </div>
   );
 }
