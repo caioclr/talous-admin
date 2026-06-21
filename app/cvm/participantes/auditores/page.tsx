@@ -14,6 +14,11 @@ import {
   situacaoBadgeVariant,
 } from "@/components/participantes-sync-cards";
 import { ParticipantesSyncDialog } from "@/components/participantes-sync-dialog";
+import {
+  ValidationBadge,
+  ValidationStatusFilter,
+  asValidationStatus,
+} from "@/components/validation";
 import { formatDate, formatDateTime } from "@/lib/formatters";
 import { listAuditores } from "@/lib/services/admin/cvm-participantes";
 import type { AuditorRegistrySummary } from "@/lib/services/admin/types";
@@ -62,21 +67,43 @@ const columns: DataTableColumn<AuditorRegistrySummary>[] = [
     header: "Capturado",
     render: (row) => formatDateTime(row.captured_at),
   },
+  {
+    key: "status",
+    header: "Status",
+    // Backend pode nao materializar `validation` na lista — ausencia = pendente.
+    render: (row) => <ValidationBadge status={row.validation?.status ?? "pending"} />,
+  },
+  {
+    key: "validate",
+    header: "Validacao",
+    // `situacao`/`tipo` da propria linha garantem que o registro esteja na lista
+    // estreitada lida pela tela de validacao (sem endpoint de detalhe por id).
+    render: (row) => (
+      <Link
+        className="text-primary underline-offset-4 hover:underline"
+        href={`/cvm/participantes/auditores/validate?id=${encodeURIComponent(row.id)}&situacao=${encodeURIComponent(row.situacao)}&tipo=${encodeURIComponent(row.tipo)}`}
+      >
+        Abrir
+      </Link>
+    ),
+  },
 ];
 
 export default function ParticipantesAuditoresPage() {
   const [page, setPage] = useState(1);
   const [situacao, setSituacao] = useState("");
   const [tipo, setTipo] = useState("");
+  const [validationStatus, setValidationStatus] = useState("");
 
   const auditoresQuery = useQuery({
-    queryKey: ["cvm", "participantes", "auditores", { page, situacao, tipo }],
+    queryKey: ["cvm", "participantes", "auditores", { page, situacao, tipo, validationStatus }],
     queryFn: () =>
       listAuditores({
         page,
         page_size: 25,
         situacao: situacao || undefined,
         tipo: tipo ? (tipo as "PJ" | "PF") : undefined,
+        validation_status: asValidationStatus(validationStatus),
       }),
   });
 
@@ -133,6 +160,17 @@ export default function ParticipantesAuditoresPage() {
               <option value="PJ">PJ</option>
               <option value="PF">PF</option>
             </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="filter-validation-status">Status de validacao</Label>
+            <ValidationStatusFilter
+              id="filter-validation-status"
+              value={validationStatus}
+              onChange={(value) => {
+                setPage(1);
+                setValidationStatus(value);
+              }}
+            />
           </div>
         </CardContent>
       </Card>

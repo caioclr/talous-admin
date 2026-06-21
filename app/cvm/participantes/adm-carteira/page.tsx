@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +13,11 @@ import {
   situacaoBadgeVariant,
 } from "@/components/participantes-sync-cards";
 import { ParticipantesSyncDialog } from "@/components/participantes-sync-dialog";
+import {
+  ValidationBadge,
+  ValidationStatusFilter,
+  asValidationStatus,
+} from "@/components/validation";
 import { formatDate, formatDateTime } from "@/lib/formatters";
 import { listAdmCarteira } from "@/lib/services/admin/cvm-participantes";
 import type { AdmCarteiraRegistrySummary } from "@/lib/services/admin/types";
@@ -70,19 +76,37 @@ const columns: DataTableColumn<AdmCarteiraRegistrySummary>[] = [
     header: "Capturado",
     render: (row) => formatDateTime(row.captured_at),
   },
+  {
+    key: "status",
+    header: "Status",
+    render: (row) => <ValidationBadge status={row.validation?.status ?? "pending"} />,
+  },
+  {
+    key: "validate",
+    header: "Validacao",
+    render: (row) => (
+      <Link
+        className="text-primary underline-offset-4 hover:underline"
+        href={`/cvm/participantes/adm-carteira/validate?id=${encodeURIComponent(row.id)}&situacao=${encodeURIComponent(row.situacao)}&categoria_registro=${encodeURIComponent(row.categoria_registro)}`}
+      >
+        Abrir
+      </Link>
+    ),
+  },
 ];
 
 export default function ParticipantesAdmCarteiraPage() {
   const [page, setPage] = useState(1);
   const [situacao, setSituacao] = useState("");
   const [categoriaRegistro, setCategoriaRegistro] = useState("");
+  const [validationStatus, setValidationStatus] = useState("");
 
   const admCarteiraQuery = useQuery({
     queryKey: [
       "cvm",
       "participantes",
       "adm-carteira",
-      { page, situacao, categoriaRegistro },
+      { page, situacao, categoriaRegistro, validationStatus },
     ],
     queryFn: () =>
       listAdmCarteira({
@@ -90,6 +114,7 @@ export default function ParticipantesAdmCarteiraPage() {
         page_size: 25,
         situacao: situacao || undefined,
         categoria_registro: categoriaRegistro || undefined,
+        validation_status: asValidationStatus(validationStatus),
       }),
   });
 
@@ -141,6 +166,17 @@ export default function ParticipantesAdmCarteiraPage() {
               onChange={(event) => {
                 setPage(1);
                 setCategoriaRegistro(event.target.value);
+              }}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="filter-validation-status">Status de validacao</Label>
+            <ValidationStatusFilter
+              id="filter-validation-status"
+              value={validationStatus}
+              onChange={(value) => {
+                setPage(1);
+                setValidationStatus(value);
               }}
             />
           </div>

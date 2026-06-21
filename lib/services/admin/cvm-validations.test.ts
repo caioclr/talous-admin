@@ -102,4 +102,43 @@ describe("cvm-validations service (API generica T01)", () => {
       ref: "PETR-2026-01",
     });
   });
+
+  it("aceita report_type=registry com ref UUID do snapshot cadastral (S02 T04)", async () => {
+    const fetchMock = mockOk({
+      report_type: "registry",
+      ref: "5e9b1111-0000-4000-8000-000000000001",
+      cd_cvm: 9512,
+      validation: { status: "valid", validated_by: null, validated_at: null },
+    });
+
+    await validateReport("registry", "5e9b1111-0000-4000-8000-000000000001");
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("http://localhost:8001/api/v1/admin/cvm/validations/validate");
+    expect(JSON.parse(init.body as string)).toEqual({
+      report_type: "registry",
+      ref: "5e9b1111-0000-4000-8000-000000000001",
+    });
+  });
+
+  it.each([
+    "participante_auditor",
+    "participante_intermediario",
+    "participante_adm_carteira",
+  ] as const)("aceita report_type=%s com ref UUID do registro (S02 T04)", async (reportType) => {
+    const fetchMock = mockOk({
+      report_type: reportType,
+      ref: "aaaa1111-aaaa-1111-aaaa-111111111111",
+      cd_cvm: null,
+      validation: { status: "valid", validated_by: null, validated_at: null },
+    });
+
+    await validateReport(reportType, "aaaa1111-aaaa-1111-aaaa-111111111111");
+
+    const [, init] = fetchMock.mock.calls[0];
+    expect(JSON.parse(init.body as string)).toEqual({
+      report_type: reportType,
+      ref: "aaaa1111-aaaa-1111-aaaa-111111111111",
+    });
+  });
 });

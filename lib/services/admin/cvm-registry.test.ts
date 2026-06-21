@@ -1,5 +1,6 @@
 import {
   listAdminCompanies,
+  listSnapshots,
   triggerRegistrySync,
 } from "@/lib/services/admin/cvm-registry";
 import { setAccessToken } from "@/lib/services/client";
@@ -49,6 +50,26 @@ describe("cvm-registry service", () => {
 
     const headers = fetchMock.mock.calls[0]?.[1]?.headers as Headers;
     expect(headers.get("Authorization")).toBe("Bearer test-token");
+  });
+
+  it("forwards validation_status on the snapshots list (S02 T04)", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        items: [],
+        pagination: { page: 1, page_size: 20, total: 0, total_pages: 0 },
+      }),
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await listSnapshots({ page: 1, page_size: 20, cd_cvm: 9512, validation_status: "pending" });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://localhost:8001/api/v1/admin/cvm/registry/snapshots?page=1&page_size=20&cd_cvm=9512&validation_status=pending",
+      expect.objectContaining({ credentials: "include" }),
+    );
   });
 
   it("sends POST for registry sync trigger", async () => {

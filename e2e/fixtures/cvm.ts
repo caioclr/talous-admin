@@ -16,6 +16,8 @@ import type {
   CapitalCompositionSyncStatusResponse,
   CVMSectorMappingResponse,
   CVMSnapshotSummary,
+  CVMSnapshotDetail,
+  ReportValidation,
   RegistryChangeEventResponse,
   SyncStatusResponse,
   UnmappedSectorResponse,
@@ -42,6 +44,24 @@ import type {
   AccountLinesTreeResponse,
   FilingSummaryWithValidation,
 } from "@/lib/services/admin/types";
+
+// Blocos de validacao reutilizaveis (S02 T04). `pending` exercita o badge
+// "Pendente" + selo pendente; `valid` exercita o badge "Validado" + selo.
+export const VALIDATION_PENDING: ReportValidation = {
+  status: "pending",
+  validated_by: null,
+  validated_at: null,
+};
+
+export const VALIDATION_VALID: ReportValidation = {
+  status: "valid",
+  validated_by: {
+    id: "00000000-0000-0000-0000-000000000001",
+    name: "Caio Moderador",
+    email: "caio@talous.ai",
+  },
+  validated_at: "2026-06-09T13:45:00Z",
+};
 
 export const SYNC_STATUS_DEFAULT: SyncStatusResponse = {
   last_captured_at: "2026-04-29T08:00:00Z",
@@ -128,6 +148,78 @@ export const CHANGES_PETROBRAS: RegistryChangeEventResponse[] = [
     captured_at: "2026-04-29T08:00:00Z",
   },
 ];
+
+// --- Snapshots cadastrais (registry) com validacao (S02 T04) ---------------
+export const SNAPSHOT_PETROBRAS: CVMSnapshotSummary = {
+  id: "5e9b1111-0000-4000-8000-000000000001",
+  captured_at: "2026-06-08T08:00:00Z",
+  cd_cvm: 9512,
+  denom_social: "Petroleo Brasileiro S.A. - Petrobras",
+  situacao: "ATIVO",
+  categoria_registro: "A",
+  tipo_mercado: "BOLSA",
+  file_version_hash: "snap-hash-petrobras",
+  validation: VALIDATION_PENDING,
+};
+
+export const SNAPSHOT_VALE: CVMSnapshotSummary = {
+  id: "5e9b2222-0000-4000-8000-000000000002",
+  captured_at: "2026-06-08T08:00:00Z",
+  cd_cvm: 4170,
+  denom_social: "Vale S.A.",
+  situacao: "ATIVO",
+  categoria_registro: "A",
+  tipo_mercado: "BOLSA",
+  file_version_hash: "snap-hash-vale",
+  validation: VALIDATION_VALID,
+};
+
+export const SNAPSHOTS_LIST: AdminPagedResponse<CVMSnapshotSummary> = {
+  items: [SNAPSHOT_PETROBRAS, SNAPSHOT_VALE],
+  pagination: { page: 1, page_size: 20, total: 2, total_pages: 1 },
+};
+
+export const SNAPSHOT_PETROBRAS_DETAIL: CVMSnapshotDetail = {
+  ...SNAPSHOT_PETROBRAS,
+  cnpj_cia: "33000167000101",
+  denom_comercial: "Petrobras",
+  situacao_emissor: "EM ATIVIDADE",
+  dt_ini_situacao: "2010-05-12",
+  dt_ini_sit_emissor: "2010-05-12",
+  dt_cancel: null,
+  motivo_cancel: null,
+  dt_ini_categoria: "1977-12-21",
+  dt_registro: "1977-12-21",
+  dt_constituicao: "1953-10-03",
+  controle_acionario: "Uniao Federal",
+  setor_atividade: "PETROLEO E GAS",
+  auditor: "KPMG Auditores Independentes",
+  cnpj_auditor: "57755217000129",
+  addr_logradouro: "Av. Republica do Chile, 65",
+  addr_compl: null,
+  addr_bairro: "Centro",
+  addr_municipio: "Rio de Janeiro",
+  addr_uf: "RJ",
+  addr_cep: "20031912",
+  addr_pais: "Brasil",
+  addr_telefone: "+55 21 3224-1510",
+  addr_email: "ri@petrobras.com.br",
+  addr_tipo: "SEDE",
+  resp_nome: "Diretor de Relacoes com Investidores",
+  resp_tipo: "DRI",
+  resp_dt_inicio: "2023-01-02",
+  resp_logradouro: "Av. Republica do Chile, 65",
+  resp_municipio: "Rio de Janeiro",
+  resp_uf: "RJ",
+  resp_cep: "20031912",
+  resp_email: "ri@petrobras.com.br",
+  raw_data: {
+    CNPJ_CIA: "33000167000101",
+    DENOM_SOCIAL: "Petroleo Brasileiro S.A. - Petrobras",
+    SIT: "ATIVO",
+  },
+  created_at: "2026-06-08T08:00:00Z",
+};
 
 export const SECTOR_MAPPINGS: CVMSectorMappingResponse[] = [
   {
@@ -1057,6 +1149,7 @@ export const PARTICIPANTES_AUDITOR_PJ: AuditorRegistrySummary = {
   municipio: "Sao Paulo",
   uf: "SP",
   captured_at: "2026-06-08T08:00:00Z",
+  validation: VALIDATION_PENDING,
 };
 
 export const PARTICIPANTES_AUDITOR_PF: AuditorRegistrySummary = {
@@ -1070,6 +1163,7 @@ export const PARTICIPANTES_AUDITOR_PF: AuditorRegistrySummary = {
   municipio: "Curitiba",
   uf: "PR",
   captured_at: "2026-06-08T08:00:00Z",
+  validation: VALIDATION_VALID,
 };
 
 export const PARTICIPANTES_AUDITORES_LIST: AdminPagedResponse<AuditorRegistrySummary> = {
@@ -1092,6 +1186,7 @@ export const PARTICIPANTES_INTERMEDIARIO_XP: IntermediarioRegistrySummary = {
   municipio: "Sao Paulo",
   uf: "SP",
   captured_at: "2026-06-08T08:05:00Z",
+  validation: VALIDATION_PENDING,
 };
 
 export const PARTICIPANTES_INTERMEDIARIO_MODAL: IntermediarioRegistrySummary = {
@@ -1109,6 +1204,7 @@ export const PARTICIPANTES_INTERMEDIARIO_MODAL: IntermediarioRegistrySummary = {
   municipio: "Rio de Janeiro",
   uf: "RJ",
   captured_at: "2026-06-08T08:05:00Z",
+  validation: VALIDATION_VALID,
 };
 
 export const PARTICIPANTES_INTERMEDIARIOS_LIST: AdminPagedResponse<IntermediarioRegistrySummary> = {
@@ -1129,6 +1225,7 @@ export const PARTICIPANTES_ADM_CARTEIRA_PJ: AdmCarteiraRegistrySummary = {
   municipio: "Sao Paulo",
   uf: "SP",
   captured_at: "2026-06-08T08:10:00Z",
+  validation: VALIDATION_PENDING,
 };
 
 export const PARTICIPANTES_ADM_CARTEIRA_PF: AdmCarteiraRegistrySummary = {
@@ -1144,6 +1241,7 @@ export const PARTICIPANTES_ADM_CARTEIRA_PF: AdmCarteiraRegistrySummary = {
   municipio: "Belo Horizonte",
   uf: "MG",
   captured_at: "2026-06-08T08:10:00Z",
+  validation: VALIDATION_VALID,
 };
 
 export const PARTICIPANTES_ADM_CARTEIRA_LIST: AdminPagedResponse<AdmCarteiraRegistrySummary> = {

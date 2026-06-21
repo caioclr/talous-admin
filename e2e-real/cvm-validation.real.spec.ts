@@ -27,7 +27,11 @@ type Tipo =
   | "capital-composition"
   | "buybacks"
   | "vlmo-filings"
-  | "ipe";
+  | "ipe"
+  | "registry-snapshots"
+  | "participantes-auditores"
+  | "participantes-intermediarios"
+  | "participantes-adm-carteira";
 
 interface TipoConfig {
   tipo: Tipo;
@@ -133,6 +137,44 @@ const CONFIGS: TipoConfig[] = [
     openValidateLink: (row) => row.getByRole("link", { name: "Abrir" }).last(),
     // A tela de validacao do IPE tem o card "Assunto e categoria".
     validateContent: /Assunto e categoria/,
+  },
+  {
+    tipo: "registry-snapshots",
+    reportType: "registry",
+    listPath: "/cvm/snapshots",
+    validatePath: "snapshots",
+    listHeading: /Snapshots do cadastro CVM/,
+    // A lista de snapshots tem uma unica coluna-link "Abrir" (Validacao).
+    openValidateLink: (row) => row.getByRole("link", { name: "Abrir" }).last(),
+    // A tela de validacao do snapshot tem o card "Identificacao".
+    validateContent: /Identificacao/,
+  },
+  {
+    tipo: "participantes-auditores",
+    reportType: "participante_auditor",
+    listPath: "/cvm/participantes/auditores",
+    validatePath: "participantes/auditores",
+    listHeading: /Auditores independentes/,
+    openValidateLink: (row) => row.getByRole("link", { name: "Abrir" }).last(),
+    validateContent: /Dados cadastrais/,
+  },
+  {
+    tipo: "participantes-intermediarios",
+    reportType: "participante_intermediario",
+    listPath: "/cvm/participantes/intermediarios",
+    validatePath: "participantes/intermediarios",
+    listHeading: /Intermediarios/,
+    openValidateLink: (row) => row.getByRole("link", { name: "Abrir" }).last(),
+    validateContent: /Dados cadastrais/,
+  },
+  {
+    tipo: "participantes-adm-carteira",
+    reportType: "participante_adm_carteira",
+    listPath: "/cvm/participantes/adm-carteira",
+    validatePath: "participantes/adm-carteira",
+    listHeading: /Administradores de carteira/,
+    openValidateLink: (row) => row.getByRole("link", { name: "Abrir" }).last(),
+    validateContent: /Dados cadastrais/,
   },
 ];
 

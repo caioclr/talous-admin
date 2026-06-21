@@ -12,6 +12,7 @@ import {
   FileSpreadsheet,
   FileStack,
   FileText,
+  History,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -65,6 +66,7 @@ const navigation: NavGroup[] = [
     label: "Empresas",
     items: [
       { label: "Lista", href: "/cvm/companies", icon: Building2, status: "available" },
+      { label: "Snapshots cadastrais", href: "/cvm/snapshots", icon: History, status: "available" },
       { label: "Setores", href: "/cvm/sector-mapping", icon: Network, status: "available" },
     ],
   },

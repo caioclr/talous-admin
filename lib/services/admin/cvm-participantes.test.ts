@@ -49,6 +49,20 @@ describe("cvm-participantes service", () => {
     );
   });
 
+  it("forwards validation_status on the auditores list (S02 T04)", async () => {
+    const fetchMock = mockOk({
+      items: [],
+      pagination: { page: 1, page_size: 25, total: 0, total_pages: 0 },
+    });
+
+    await listAuditores({ page: 1, page_size: 25, validation_status: "valid" });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://localhost:8001/api/v1/admin/cvm/participantes/auditores?page=1&page_size=25&validation_status=valid",
+      expect.objectContaining({ credentials: "include" }),
+    );
+  });
+
   it("builds auditor detail URL by cd_cvm with tipo", async () => {
     const fetchMock = mockOk({});
 

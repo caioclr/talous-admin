@@ -32,6 +32,10 @@ export interface CVMSnapshotSummary {
   categoria_registro: string;
   tipo_mercado: string;
   file_version_hash: string;
+  // S02 T04: selo de validacao por snapshot cadastral (API generica,
+  // report_type="registry", ref=id UUID). Pode nao vir materializado na lista —
+  // tratamos ausencia como pendente na UI (defensivo, igual aos demais tipos).
+  validation?: ReportValidation | null;
 }
 
 export interface CVMSnapshotDetail extends CVMSnapshotSummary {
@@ -140,6 +144,8 @@ export interface ListSnapshotsParams {
   cd_cvm?: number;
   captured_at_from?: string;
   captured_at_to?: string;
+  // S02 T04: filtro de amostragem por status de validacao.
+  validation_status?: ValidationStatus;
   page?: number;
   page_size?: number;
 }
@@ -325,7 +331,11 @@ export type ReportType =
   | "capital"
   | "buyback"
   | "vlmo"
-  | "ipe";
+  | "ipe"
+  | "registry"
+  | "participante_auditor"
+  | "participante_intermediario"
+  | "participante_adm_carteira";
 
 /**
  * Bloco de validacao generico, reutilizado pelos tipos com id_documento.
@@ -844,6 +854,9 @@ export interface AuditorRegistrySummary {
   municipio: string | null;
   uf: string | null;
   captured_at: string;
+  // S02 T04: selo de validacao por registro cadastral (API generica,
+  // report_type="participante_auditor", ref=id UUID). Defensivo: ausencia = pendente.
+  validation?: ReportValidation | null;
 }
 
 export interface IntermediarioRegistrySummary {
@@ -861,6 +874,8 @@ export interface IntermediarioRegistrySummary {
   municipio: string | null;
   uf: string | null;
   captured_at: string;
+  // S02 T04: selo de validacao (report_type="participante_intermediario", ref=id UUID).
+  validation?: ReportValidation | null;
 }
 
 export interface AdmCarteiraRegistrySummary {
@@ -876,6 +891,8 @@ export interface AdmCarteiraRegistrySummary {
   municipio: string | null;
   uf: string | null;
   captured_at: string;
+  // S02 T04: selo de validacao (report_type="participante_adm_carteira", ref=id UUID).
+  validation?: ReportValidation | null;
 }
 
 export interface ParticipantesSyncStatusResponse {
@@ -903,6 +920,7 @@ export interface TriggerParticipantesSyncResponse {
 export interface ListAuditoresParams {
   situacao?: string;
   tipo?: "PJ" | "PF";
+  validation_status?: ValidationStatus;
   page?: number;
   page_size?: number;
 }
@@ -910,6 +928,7 @@ export interface ListAuditoresParams {
 export interface ListIntermediariosParams {
   situacao?: string;
   tipo_participante?: string;
+  validation_status?: ValidationStatus;
   page?: number;
   page_size?: number;
 }
@@ -917,6 +936,7 @@ export interface ListIntermediariosParams {
 export interface ListAdmCarteiraParams {
   situacao?: string;
   categoria_registro?: string;
+  validation_status?: ValidationStatus;
   page?: number;
   page_size?: number;
 }

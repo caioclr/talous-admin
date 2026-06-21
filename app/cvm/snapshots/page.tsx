@@ -1,11 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
+import {
+  ValidationBadge,
+  ValidationStatusFilter,
+  asValidationStatus,
+} from "@/components/validation";
 import { formatDateTime, truncateHash } from "@/lib/formatters";
 import { listSnapshots } from "@/lib/services/admin/cvm-registry";
 import type { CVMSnapshotSummary } from "@/lib/services/admin/types";
@@ -50,6 +57,26 @@ const columns: DataTableColumn<CVMSnapshotSummary>[] = [
       </span>
     ),
   },
+  {
+    key: "status",
+    header: "Status",
+    // O backend pode ainda nao materializar `validation` na lista — tratamos
+    // ausencia como pendente para nao quebrar a tela.
+    render: (row) => <ValidationBadge status={row.validation?.status ?? "pending"} />,
+  },
+  {
+    key: "validate",
+    header: "Validacao",
+    render: (row) => (
+      <Link
+        className="text-primary underline-offset-4 hover:underline"
+        href={`/cvm/snapshots/validate?id=${encodeURIComponent(row.id)}`}
+        onClick={(event) => event.stopPropagation()}
+      >
+        Abrir
+      </Link>
+    ),
+  },
 ];
 
 function toIsoDateTime(value: string) {
@@ -62,9 +89,14 @@ export default function SnapshotsPage() {
   const [cdCvm, setCdCvm] = useState("");
   const [capturedAtFrom, setCapturedAtFrom] = useState("");
   const [capturedAtTo, setCapturedAtTo] = useState("");
+  const [validationStatus, setValidationStatus] = useState("");
 
   const snapshotsQuery = useQuery({
-    queryKey: ["cvm", "snapshots", { page, cdCvm, capturedAtFrom, capturedAtTo }],
+    queryKey: [
+      "cvm",
+      "snapshots",
+      { page, cdCvm, capturedAtFrom, capturedAtTo, validationStatus },
+    ],
     queryFn: () =>
       listSnapshots({
         page,
@@ -72,6 +104,7 @@ export default function SnapshotsPage() {
         cd_cvm: cdCvm ? Number(cdCvm) : undefined,
         captured_at_from: toIsoDateTime(capturedAtFrom),
         captured_at_to: toIsoDateTime(capturedAtTo),
+        validation_status: asValidationStatus(validationStatus),
       }),
   });
 
@@ -81,10 +114,10 @@ export default function SnapshotsPage() {
         <CardHeader>
           <CardTitle>Snapshots do cadastro CVM</CardTitle>
           <CardDescription>
-            Filtro por `cd_cvm` e janela temporal de captura.
+            Filtro por `cd_cvm`, janela temporal de captura e status de validacao.
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-3">
+        <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <Input
             value={cdCvm}
             type="number"
@@ -110,6 +143,17 @@ export default function SnapshotsPage() {
               setCapturedAtTo(event.target.value);
             }}
           />
+          <div className="space-y-1.5">
+            <Label htmlFor="filter-validation-status">Status de validacao</Label>
+            <ValidationStatusFilter
+              id="filter-validation-status"
+              value={validationStatus}
+              onChange={(value) => {
+                setPage(1);
+                setValidationStatus(value);
+              }}
+            />
+          </div>
         </CardContent>
       </Card>
 

@@ -13,6 +13,11 @@ import {
   situacaoBadgeVariant,
 } from "@/components/participantes-sync-cards";
 import { ParticipantesSyncDialog } from "@/components/participantes-sync-dialog";
+import {
+  ValidationBadge,
+  ValidationStatusFilter,
+  asValidationStatus,
+} from "@/components/validation";
 import { formatDate, formatDateTime } from "@/lib/formatters";
 import { listIntermediarios } from "@/lib/services/admin/cvm-participantes";
 import type { IntermediarioRegistrySummary } from "@/lib/services/admin/types";
@@ -62,19 +67,37 @@ const columns: DataTableColumn<IntermediarioRegistrySummary>[] = [
     header: "Capturado",
     render: (row) => formatDateTime(row.captured_at),
   },
+  {
+    key: "status",
+    header: "Status",
+    render: (row) => <ValidationBadge status={row.validation?.status ?? "pending"} />,
+  },
+  {
+    key: "validate",
+    header: "Validacao",
+    render: (row) => (
+      <Link
+        className="text-primary underline-offset-4 hover:underline"
+        href={`/cvm/participantes/intermediarios/validate?id=${encodeURIComponent(row.id)}&situacao=${encodeURIComponent(row.situacao)}&tipo_participante=${encodeURIComponent(row.tipo_participante)}`}
+      >
+        Abrir
+      </Link>
+    ),
+  },
 ];
 
 export default function ParticipantesIntermediariosPage() {
   const [page, setPage] = useState(1);
   const [situacao, setSituacao] = useState("");
   const [tipoParticipante, setTipoParticipante] = useState("");
+  const [validationStatus, setValidationStatus] = useState("");
 
   const intermediariosQuery = useQuery({
     queryKey: [
       "cvm",
       "participantes",
       "intermediarios",
-      { page, situacao, tipoParticipante },
+      { page, situacao, tipoParticipante, validationStatus },
     ],
     queryFn: () =>
       listIntermediarios({
@@ -82,6 +105,7 @@ export default function ParticipantesIntermediariosPage() {
         page_size: 25,
         situacao: situacao || undefined,
         tipo_participante: tipoParticipante || undefined,
+        validation_status: asValidationStatus(validationStatus),
       }),
   });
 
@@ -133,6 +157,17 @@ export default function ParticipantesIntermediariosPage() {
               onChange={(event) => {
                 setPage(1);
                 setTipoParticipante(event.target.value);
+              }}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="filter-validation-status">Status de validacao</Label>
+            <ValidationStatusFilter
+              id="filter-validation-status"
+              value={validationStatus}
+              onChange={(value) => {
+                setPage(1);
+                setValidationStatus(value);
               }}
             />
           </div>
