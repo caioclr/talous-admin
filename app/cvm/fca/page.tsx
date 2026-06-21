@@ -23,6 +23,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
+import {
+  ValidationBadge,
+  ValidationStatusFilter,
+  asValidationStatus,
+} from "@/components/validation";
 import { formatDate, formatDateTime, truncateHash } from "@/lib/formatters";
 import {
   getFCASyncStatus,
@@ -87,12 +92,31 @@ const columns: DataTableColumn<FCADocumentoSummary>[] = [
     render: (row) => formatDateTime(row.captured_at),
   },
   {
+    key: "status",
+    header: "Status",
+    render: (row) => <ValidationBadge status={row.validation.status} />,
+  },
+  {
     key: "detail",
     header: "Documento",
     render: (row) => (
       <Link
         className="text-primary underline-offset-4 hover:underline"
         href={`/cvm/fca/documentos/detail?id_documento=${row.id_documento}`}
+      >
+        Abrir
+      </Link>
+    ),
+  },
+  {
+    key: "validate",
+    header: "Validacao",
+    render: (row) => (
+      <Link
+        className="text-primary underline-offset-4 hover:underline"
+        href={`/cvm/fca/validate?id_documento=${encodeURIComponent(
+          String(row.id_documento),
+        )}`}
       >
         Abrir
       </Link>
@@ -106,6 +130,7 @@ export default function FCAPage() {
   const [cdCvm, setCdCvm] = useState("");
   const [cnpj, setCnpj] = useState("");
   const [year, setYear] = useState("");
+  const [validationStatus, setValidationStatus] = useState("");
   const [forceSync, setForceSync] = useState(false);
   const [syncYear, setSyncYear] = useState(String(CURRENT_YEAR));
 
@@ -117,7 +142,12 @@ export default function FCAPage() {
   });
 
   const documentosQuery = useQuery({
-    queryKey: ["cvm", "fca", "documentos", { page, cdCvmNumber, cnpj, year }],
+    queryKey: [
+      "cvm",
+      "fca",
+      "documentos",
+      { page, cdCvmNumber, cnpj, year, validationStatus },
+    ],
     queryFn: () =>
       listFCADocumentos({
         page,
@@ -125,6 +155,7 @@ export default function FCAPage() {
         cd_cvm: cdCvmNumber,
         cnpj: cnpj || undefined,
         year: year ? Number(year) : undefined,
+        validation_status: asValidationStatus(validationStatus),
       }),
   });
 
@@ -317,6 +348,17 @@ export default function FCAPage() {
                 </option>
               ))}
             </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="filter-validation-status">Status de validacao</Label>
+            <ValidationStatusFilter
+              id="filter-validation-status"
+              value={validationStatus}
+              onChange={(value) => {
+                setPage(1);
+                setValidationStatus(value);
+              }}
+            />
           </div>
         </CardContent>
       </Card>

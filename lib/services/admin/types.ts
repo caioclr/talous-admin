@@ -674,6 +674,8 @@ export interface FCADocumentoSummary {
   categoria_documento: string | null;
   data_recebimento: string | null;
   captured_at: string;
+  // S02 T03: bloco de validacao embutido por item (API generica, report_type=fca).
+  validation: ReportValidation;
 }
 
 export interface FCAGeralSummary {
@@ -746,6 +748,8 @@ export interface ListFCADocumentosParams {
   cd_cvm?: number;
   cnpj?: string;
   year?: number;
+  // S02 T03: filtro de amostragem pendente/validado (resolvido em lote no backend).
+  validation_status?: ValidationStatus;
   page?: number;
   page_size?: number;
 }
