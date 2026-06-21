@@ -313,7 +313,7 @@ export interface ListFilingsWithValidationParams extends ListFilingsParams {
 // item das listagens FRE/FCA/ICBGC, e o filtro `validation_status` ja existe.
 // ----------------------------------------------------------------------------
 
-export type ReportType = "fre" | "fca" | "icbgc";
+export type ReportType = "fre" | "fca" | "icbgc" | "capital" | "buyback";
 
 /**
  * Bloco de validacao generico, reutilizado pelos tipos com id_documento.
@@ -362,6 +362,8 @@ export interface CapitalCompositionSnapshotSummary {
   qt_total_integralized: string | number | null;
   qt_total_treasury: string | number | null;
   file_version_hash: string;
+  // S02 T02: bloco de validacao embutido por item (API generica, report_type=capital).
+  validation: ReportValidation;
 }
 
 export interface CapitalCompositionSnapshotDetail extends CapitalCompositionSnapshotSummary {
@@ -392,6 +394,8 @@ export interface ListCapitalCompositionParams {
   cnpj?: string;
   source?: string;
   period_type?: string;
+  // S02 T02: filtro de amostragem pendente/validado (resolvido em lote no backend).
+  validation_status?: ValidationStatus;
   page?: number;
   page_size?: number;
 }
@@ -414,6 +418,8 @@ export interface BuybackProgramSummary {
   qt_acoes_ordinarias: string | number | null;
   qt_acoes_preferenciais: string | number | null;
   captured_at: string;
+  // S02 T02: bloco de validacao embutido por item (API generica, report_type=buyback).
+  validation: ReportValidation;
 }
 
 export interface BuybackQuantitySummary {
@@ -457,6 +463,8 @@ export interface ListBuybackProgramsParams {
   cnpj?: string;
   situacao?: string;
   tipo_operacao?: string;
+  // S02 T02: filtro de amostragem pendente/validado (resolvido em lote no backend).
+  validation_status?: ValidationStatus;
   page?: number;
   page_size?: number;
 }

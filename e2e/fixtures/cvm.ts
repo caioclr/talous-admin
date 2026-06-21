@@ -158,6 +158,12 @@ export const CAPITAL_COMPOSITION_PETROBRAS_SERIES: CapitalCompositionSnapshotSum
     qt_total_integralized: "13044496930",
     qt_total_treasury: "12000000",
     file_version_hash: "hash-q1-2025",
+    // S02 T02: snapshot pendente de validacao — exercita o badge "Pendente" + selo.
+    validation: {
+      status: "pending",
+      validated_by: null,
+      validated_at: null,
+    },
   },
   {
     id: "cccc2222-2222-2222-2222-222222222222",
@@ -172,6 +178,16 @@ export const CAPITAL_COMPOSITION_PETROBRAS_SERIES: CapitalCompositionSnapshotSum
     qt_total_integralized: "13044496930",
     qt_total_treasury: "10500000",
     file_version_hash: "hash-q2-2025",
+    // S02 T02: snapshot ja validado — exercita o badge "Validado" na lista.
+    validation: {
+      status: "valid",
+      validated_by: {
+        id: "00000000-0000-0000-0000-000000000001",
+        name: "Caio Moderador",
+        email: "caio@talous.ai",
+      },
+      validated_at: "2026-05-02T13:45:00Z",
+    },
   },
   {
     id: "cccc3333-3333-3333-3333-333333333333",
@@ -186,6 +202,11 @@ export const CAPITAL_COMPOSITION_PETROBRAS_SERIES: CapitalCompositionSnapshotSum
     qt_total_integralized: "13044496930",
     qt_total_treasury: "9800000",
     file_version_hash: "hash-q3-2025",
+    validation: {
+      status: "pending",
+      validated_by: null,
+      validated_at: null,
+    },
   },
 ];
 
@@ -230,6 +251,12 @@ export const BUYBACK_PROGRAM_PETROBRAS: BuybackProgramSummary = {
   qt_acoes_ordinarias: "100000000",
   qt_acoes_preferenciais: "50000000",
   captured_at: "2026-04-29T08:00:00Z",
+  // S02 T02: programa pendente de validacao — exercita o badge "Pendente" + selo.
+  validation: {
+    status: "pending",
+    validated_by: null,
+    validated_at: null,
+  },
 };
 
 export const BUYBACK_PROGRAM_VALE: BuybackProgramSummary = {
@@ -246,6 +273,16 @@ export const BUYBACK_PROGRAM_VALE: BuybackProgramSummary = {
   qt_acoes_ordinarias: "200000000",
   qt_acoes_preferenciais: null,
   captured_at: "2026-04-29T08:00:00Z",
+  // S02 T02: programa ja validado — exercita o badge "Validado" na lista.
+  validation: {
+    status: "valid",
+    validated_by: {
+      id: "00000000-0000-0000-0000-000000000001",
+      name: "Caio Moderador",
+      email: "caio@talous.ai",
+    },
+    validated_at: "2026-05-02T13:45:00Z",
+  },
 };
 
 export const BUYBACKS_ACTIVE: AdminPagedResponse<BuybackProgramSummary> = {

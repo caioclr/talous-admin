@@ -49,6 +49,24 @@ describe("cvm-buybacks service", () => {
     );
   });
 
+  it("forwards validation_status filter (S02 T02)", async () => {
+    const fetchMock = mockOk({
+      items: [],
+      pagination: { page: 1, page_size: 20, total: 0, total_pages: 0 },
+    });
+
+    await listBuybackPrograms({
+      validation_status: "valid",
+      page: 1,
+      page_size: 20,
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://localhost:8001/api/v1/admin/cvm/buybacks/programs?validation_status=valid&page=1&page_size=20",
+      expect.objectContaining({ credentials: "include" }),
+    );
+  });
+
   it("URL-encodes id_programa on detail", async () => {
     const fetchMock = mockOk({});
 

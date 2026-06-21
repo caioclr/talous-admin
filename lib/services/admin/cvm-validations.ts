@@ -8,10 +8,11 @@ import type {
 /**
  * S02 — API generica de validacao de relatorios CVM (contrato T01).
  *
- * Vale para qualquer tipo com id de documento proprio (FRE/FCA/ICBGC). O
- * `report_uid` e montado no backend a partir de `{report_type}:{ref}`; o
- * frontend so envia o par `(report_type, ref)`. O selo e metadado interno de QA:
- * nao altera o dado nem o app do usuario final.
+ * Vale para qualquer tipo com referencia propria: FRE/FCA/ICBGC (id_documento),
+ * capital (id UUID do snapshot) e buyback (id_programa). O `report_uid` e montado
+ * no backend a partir de `{report_type}:{ref}`; o frontend so envia o par
+ * `(report_type, ref)` — `ref` aceita numero ou UUID, sempre como string. O selo
+ * e metadado interno de QA: nao altera o dado nem o app do usuario final.
  *
  * IMPORTANTE: o `apiClient` do admin usa `body:` (nao `data:`) para o corpo do
  * POST. Manter `body: JSON.stringify(params)` — `data:` faz o corpo sumir.
