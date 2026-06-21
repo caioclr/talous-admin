@@ -303,6 +303,36 @@ export interface ListFilingsWithValidationParams extends ListFilingsParams {
 }
 
 // ----------------------------------------------------------------------------
+// S02 — Validacao generica de relatorios CVM (contrato T01)
+//
+// API generica (substitui a abordagem bespoke do ITR/DFP para os novos tipos):
+//   POST /admin/cvm/validations/validate    body { report_type, ref }
+//   POST /admin/cvm/validations/invalidate  body { report_type, ref }
+// `report_type` ∈ {fre, fca, icbgc}; `ref` = id_documento do tipo.
+// O bloco `validation` (mesmo shape do ITR/DFP) passa a vir embutido em cada
+// item das listagens FRE/FCA/ICBGC, e o filtro `validation_status` ja existe.
+// ----------------------------------------------------------------------------
+
+export type ReportType = "fre" | "fca" | "icbgc";
+
+/**
+ * Bloco de validacao generico, reutilizado pelos tipos com id_documento.
+ * Mesmo shape de `FilingValidation` (status + quem/quando) — mantido como tipo
+ * separado para deixar explicito que e o contrato da API generica T01.
+ */
+export interface ReportValidation {
+  status: ValidationStatus;
+  validated_by: ValidatedBy | null;
+  validated_at: string | null;
+}
+
+/** Corpo dos POST validate/invalidate da API generica. */
+export interface ReportValidationParams {
+  report_type: ReportType;
+  ref: string;
+}
+
+// ----------------------------------------------------------------------------
 // Capital composition (Sprint 4)
 // ----------------------------------------------------------------------------
 
@@ -498,6 +528,8 @@ export interface FREFilingSummary {
   categoria_documento: string | null;
   data_recebimento: string | null;
   captured_at: string;
+  // S02 T01: bloco de validacao embutido por item (API generica).
+  validation: ReportValidation;
 }
 
 export interface FREAuditorSummary {
@@ -556,6 +588,8 @@ export interface ListFREFilingsParams {
   cd_cvm?: number;
   cnpj?: string;
   year?: number;
+  // S02 T01: filtro de amostragem pendente/validado (resolvido em lote no backend).
+  validation_status?: ValidationStatus;
   page?: number;
   page_size?: number;
 }

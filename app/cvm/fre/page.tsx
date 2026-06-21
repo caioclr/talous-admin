@@ -23,6 +23,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
+import {
+  ValidationBadge,
+  ValidationStatusFilter,
+  asValidationStatus,
+} from "@/components/validation";
 import { formatDate, formatDateTime, truncateHash } from "@/lib/formatters";
 import { getFRESyncStatus, listFREFilings, triggerFRESync } from "@/lib/services/admin/cvm-fre";
 import type { FREFilingSummary } from "@/lib/services/admin/types";
@@ -69,12 +74,17 @@ const columns: DataTableColumn<FREFilingSummary>[] = [
     render: (row) => formatDateTime(row.captured_at),
   },
   {
+    key: "status",
+    header: "Status",
+    render: (row) => <ValidationBadge status={row.validation.status} />,
+  },
+  {
     key: "detail",
-    header: "Filing",
+    header: "Validacao",
     render: (row) => (
       <Link
         className="text-primary underline-offset-4 hover:underline"
-        href={`/cvm/fre/filings/detail?id_documento=${encodeURIComponent(row.id_documento)}`}
+        href={`/cvm/fre/validate?id_documento=${encodeURIComponent(row.id_documento)}`}
       >
         Abrir
       </Link>
@@ -88,6 +98,7 @@ export default function FREPage() {
   const [cdCvm, setCdCvm] = useState("");
   const [cnpj, setCnpj] = useState("");
   const [year, setYear] = useState("");
+  const [validationStatus, setValidationStatus] = useState("");
   const [forceSync, setForceSync] = useState(false);
   const [syncYear, setSyncYear] = useState(String(CURRENT_YEAR));
 
@@ -99,7 +110,7 @@ export default function FREPage() {
   });
 
   const filingsQuery = useQuery({
-    queryKey: ["cvm", "fre", "filings", { page, cdCvmNumber, cnpj, year }],
+    queryKey: ["cvm", "fre", "filings", { page, cdCvmNumber, cnpj, year, validationStatus }],
     queryFn: () =>
       listFREFilings({
         page,
@@ -107,6 +118,7 @@ export default function FREPage() {
         cd_cvm: cdCvmNumber,
         cnpj: cnpj || undefined,
         year: year ? Number(year) : undefined,
+        validation_status: asValidationStatus(validationStatus),
       }),
   });
 
@@ -297,6 +309,17 @@ export default function FREPage() {
                 </option>
               ))}
             </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="filter-validation-status">Status de validacao</Label>
+            <ValidationStatusFilter
+              id="filter-validation-status"
+              value={validationStatus}
+              onChange={(value) => {
+                setPage(1);
+                setValidationStatus(value);
+              }}
+            />
           </div>
         </CardContent>
       </Card>
