@@ -48,6 +48,8 @@ import type {
   GovernanceSyncStatusResponse,
   AccountLinesTreeResponse,
   FilingSummaryWithValidation,
+  SectorWithSubsectorsResponse,
+  CompanyAssignmentResponse,
 } from "@/lib/services/admin/types";
 
 // Blocos de validacao reutilizaveis (S02 T04). `pending` exercita o badge
@@ -1621,4 +1623,63 @@ export const CVM_DASHBOARD_EMPTY: CVMDashboardResponse = {
     last_eod: null,
   },
   by_type: [],
+};
+
+// ---------------------------------------------------------------------------
+// Taxonomia setor/subsetor (S10 T02). UUIDs estaveis para casar os patterns
+// de rota /admin/sectors/{uuid}/... . Energia tem 2 subsetores; Materiais tem
+// company_count > 0 (exercita a guarda de DELETE 409 no fluxo real).
+// ---------------------------------------------------------------------------
+
+export const SECTOR_ENERGIA_ID = "33333333-3333-3333-3333-333333333333";
+export const SECTOR_MATERIAIS_ID = "55555555-5555-5555-5555-555555555555";
+export const SUBSECTOR_EP_ID = "66666666-6666-6666-6666-666666666666";
+export const SUBSECTOR_REFINO_ID = "77777777-7777-7777-7777-777777777777";
+
+export const SECTORS_WITH_SUBSECTORS: SectorWithSubsectorsResponse[] = [
+  {
+    id: SECTOR_ENERGIA_ID,
+    name: "Energia",
+    slug: "energia",
+    company_count: 3,
+    created_at: "2026-04-01T00:00:00Z",
+    subsectors: [
+      {
+        id: SUBSECTOR_EP_ID,
+        sector_id: SECTOR_ENERGIA_ID,
+        name: "Exploracao e Producao",
+        slug: "exploracao-e-producao",
+        company_count: 1,
+        created_at: "2026-04-02T00:00:00Z",
+        updated_at: "2026-04-02T00:00:00Z",
+      },
+      {
+        id: SUBSECTOR_REFINO_ID,
+        sector_id: SECTOR_ENERGIA_ID,
+        name: "Refino",
+        slug: "refino",
+        company_count: 0,
+        created_at: "2026-04-02T00:00:00Z",
+        updated_at: "2026-04-02T00:00:00Z",
+      },
+    ],
+  },
+  {
+    id: SECTOR_MATERIAIS_ID,
+    name: "Materiais",
+    slug: "materiais",
+    company_count: 2,
+    created_at: "2026-04-01T00:00:00Z",
+    subsectors: [],
+  },
+];
+
+export const COMPANY_ASSIGNMENT_PETROBRAS: CompanyAssignmentResponse = {
+  id: "11111111-1111-1111-1111-111111111111",
+  cd_cvm: 9512,
+  name: "Petroleo Brasileiro S.A. - Petrobras",
+  sector_id: SECTOR_ENERGIA_ID,
+  sector_slug: "energia",
+  subsector_id: SUBSECTOR_EP_ID,
+  subsector_slug: "exploracao-e-producao",
 };

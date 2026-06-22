@@ -1,11 +1,13 @@
 import { expect, test } from "@playwright/test";
 import { mockAuth } from "./helpers/mock-api";
 import { CvmRoutes, mockGet, mockMethod } from "./helpers/mock-cvm";
-import { SECTOR_MAPPINGS, UNMAPPED_SECTORS } from "./fixtures/cvm";
+import { SECTORS_WITH_SUBSECTORS, SECTOR_MAPPINGS, UNMAPPED_SECTORS } from "./fixtures/cvm";
 
 test.describe("CVM sector mapping", () => {
   test.beforeEach(async ({ page }) => {
     await mockAuth(page, { authenticated: true });
+    // A pagina agora carrega tambem a taxonomia (/admin/sectors) na montagem.
+    mockGet(page, CvmRoutes.sectorsList, SECTORS_WITH_SUBSECTORS);
     // Registered last so that GET /sector-mapping/unmapped wins over the
     // /sector-mapping/{item} catch-all when matching.
     mockGet(page, CvmRoutes.sectorMappingList, SECTOR_MAPPINGS);
@@ -87,7 +89,13 @@ test.describe("CVM sector mapping", () => {
   test("editing an existing row pre-fills the form with current values", async ({ page }) => {
     await page.goto("/cvm/sector-mapping");
 
-    await page.getByRole("button", { name: "Editar" }).first().click();
+    // Escopa na linha do mapeamento CVM (ha botoes "Editar" tambem nos cards de
+    // setor/subsetor da taxonomia, que renderizam antes na pagina).
+    await page
+      .getByRole("row")
+      .filter({ hasText: "PETROLEO E GAS" })
+      .getByRole("button", { name: "Editar" })
+      .click();
 
     await expect(page.getByLabel("Setor CVM")).toHaveValue("PETROLEO E GAS");
     await expect(page.getByLabel("Slug interno")).toHaveValue("energy");
@@ -99,7 +107,11 @@ test.describe("CVM sector mapping", () => {
 
     await page.goto("/cvm/sector-mapping");
 
-    await page.getByRole("button", { name: "Excluir" }).first().click();
+    await page
+      .getByRole("row")
+      .filter({ hasText: "PETROLEO E GAS" })
+      .getByRole("button", { name: "Excluir" })
+      .click();
     await expect(
       page.getByRole("heading", { name: "Remover mapeamento?" }),
     ).toBeVisible();
