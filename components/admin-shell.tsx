@@ -59,7 +59,7 @@ const navigation: NavGroup[] = [
     label: "Visao Geral",
     items: [
       { label: "Dashboard CVM", href: "/cvm", icon: LayoutDashboard, status: "available" },
-      { label: "Alertas operacionais", href: "/cvm/alerts", icon: AlertTriangle, status: "available" },
+      { label: "Alertas", href: "/cvm/alerts", icon: AlertTriangle, status: "available" },
     ],
   },
   {
@@ -83,7 +83,7 @@ const navigation: NavGroup[] = [
     label: "Mercado & Capital",
     items: [
       { label: "Recompras", href: "/cvm/buybacks", icon: Repeat, status: "available" },
-      { label: "Insider VLMO", href: "/cvm/vlmo", icon: TrendingUp, status: "available" },
+      { label: "VLMO", href: "/cvm/vlmo", icon: TrendingUp, status: "available" },
       { label: "Composicao de capital", href: "/cvm/capital-composition", icon: PieChart, status: "available" },
     ],
   },
@@ -96,7 +96,7 @@ const navigation: NavGroup[] = [
     items: [
       { label: "Auditores", href: "/cvm/participantes/auditores", icon: UserCheck, status: "available" },
       { label: "Intermediarios", href: "/cvm/participantes/intermediarios", icon: Briefcase, status: "available" },
-      { label: "Admins de carteira", href: "/cvm/participantes/adm-carteira", icon: Wallet, status: "available" },
+      { label: "Adm de carteira", href: "/cvm/participantes/adm-carteira", icon: Wallet, status: "available" },
     ],
   },
   {
