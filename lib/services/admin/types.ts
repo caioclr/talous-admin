@@ -972,3 +972,48 @@ export interface ListAlertsParams {
   page?: number;
   page_size?: number;
 }
+
+// ----------------------------------------------------------------------------
+// Dashboard CVM consolidado (S06)
+// ----------------------------------------------------------------------------
+
+/** Frescor do dataset por tipo. `em_dia` quando dentro da janela de recencia. */
+export type DashboardFreshness = "em_dia" | "atraso";
+
+/** Tipos de documento exibidos no grid "Documentos por tipo" do dashboard. */
+export type DashboardReportType =
+  | "itr_dfp"
+  | "fre"
+  | "fca"
+  | "ipe"
+  | "buyback"
+  | "vlmo"
+  | "capital"
+  | "icbgc"
+  | "participantes";
+
+/** KPIs do topo do dashboard CVM. Numeros sao calculados no backend (on-read). */
+export interface DashboardKPIs {
+  total_filings: number;
+  validated: number;
+  pending: number;
+  active_alerts: number;
+  companies: number;
+  /** Data ISO da ultima EOD (ranking, fallback score) ou null. */
+  last_eod: string | null;
+}
+
+/** Rollup por tipo de documento (uma linha do grid "Documentos por tipo"). */
+export interface DashboardByType {
+  report_type: string;
+  total: number;
+  validated: number;
+  pending: number;
+  freshness: DashboardFreshness | string;
+}
+
+/** Resposta de `GET /admin/cvm/dashboard`. */
+export interface CVMDashboardResponse {
+  kpis: DashboardKPIs;
+  by_type: DashboardByType[];
+}

@@ -4,6 +4,7 @@ import type {
   AdminCompanySummary,
   AdminPagedResponse,
   AlertsSummaryResponse,
+  CVMDashboardResponse,
   OperationalAlert,
   AuditorRegistrySummary,
   IntermediarioRegistrySummary,
@@ -1518,4 +1519,44 @@ export const ITR_DFP_ACCOUNT_LINES_EMPTY: AccountLinesTreeResponse = {
   reference_date: "2025-03-31",
   grupo_dfr: "consolidado",
   items: [],
+};
+
+// ----------------------------------------------------------------------------
+// S06 — Dashboard CVM consolidado
+// ----------------------------------------------------------------------------
+
+// Cobre: freshness em_dia/atraso, validados/pendentes, e os 9 tipos do grid.
+export const CVM_DASHBOARD_DEFAULT: CVMDashboardResponse = {
+  kpis: {
+    total_filings: 2847,
+    validated: 1203,
+    pending: 1644,
+    active_alerts: 12,
+    companies: 196,
+    last_eod: "2026-06-20",
+  },
+  by_type: [
+    { report_type: "itr_dfp", total: 842, validated: 412, pending: 430, freshness: "em_dia" },
+    { report_type: "fre", total: 318, validated: 156, pending: 162, freshness: "em_dia" },
+    { report_type: "fca", total: 189, validated: 67, pending: 122, freshness: "atraso" },
+    { report_type: "ipe", total: 456, validated: 298, pending: 158, freshness: "em_dia" },
+    { report_type: "buyback", total: 124, validated: 89, pending: 35, freshness: "em_dia" },
+    { report_type: "vlmo", total: 87, validated: 52, pending: 35, freshness: "em_dia" },
+    { report_type: "capital", total: 234, validated: 121, pending: 113, freshness: "em_dia" },
+    { report_type: "icbgc", total: 156, validated: 8, pending: 148, freshness: "em_dia" },
+    { report_type: "participantes", total: 401, validated: 0, pending: 401, freshness: "atraso" },
+  ],
+};
+
+// Ambiente recem-provisionado: sem EOD e sem documentos agregados.
+export const CVM_DASHBOARD_EMPTY: CVMDashboardResponse = {
+  kpis: {
+    total_filings: 0,
+    validated: 0,
+    pending: 0,
+    active_alerts: 0,
+    companies: 0,
+    last_eod: null,
+  },
+  by_type: [],
 };

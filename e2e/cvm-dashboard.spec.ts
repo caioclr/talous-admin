@@ -1,113 +1,143 @@
 import { expect, test } from "@playwright/test";
 import { mockAuth } from "./helpers/mock-api";
-import { CvmRoutes, mockGet, mockMethod } from "./helpers/mock-cvm";
-import { SYNC_STATUS_DEFAULT } from "./fixtures/cvm";
+import { CvmRoutes, mockGet } from "./helpers/mock-cvm";
+import {
+  ALERTS_LIST,
+  CVM_DASHBOARD_DEFAULT,
+  CVM_DASHBOARD_EMPTY,
+} from "./fixtures/cvm";
 
 test.describe("CVM dashboard", () => {
   test.beforeEach(async ({ page }) => {
     await mockAuth(page, { authenticated: true });
   });
 
-  test("renders KPIs and situation counts from sync-status", async ({ page }) => {
-    mockGet(page, CvmRoutes.syncStatus, SYNC_STATUS_DEFAULT);
+  test("renders the 6 KPIs from the dashboard endpoint", async ({ page }) => {
+    mockGet(page, CvmRoutes.dashboard, CVM_DASHBOARD_DEFAULT);
+    mockGet(page, CvmRoutes.alertsList, ALERTS_LIST);
 
     await page.goto("/cvm");
 
-    // Header
-    await expect(
-      page.getByRole("heading", { name: "Visao operacional do cadastro CVM" }),
-    ).toBeVisible();
+    const main = page.getByRole("main");
 
-    // KPI cards (look up by description to avoid ambiguity)
+    await expect(page.getByRole("heading", { name: "Dashboard CVM" })).toBeVisible();
+
+    // KPI cards (scoped to main + by label to avoid sidebar/grid collisions).
+    await expect(main.locator("text=Total filings").locator("..").getByText("2.847")).toBeVisible();
     await expect(
-      page.locator("text=Total de snapshots").locator("..").getByText("412"),
+      main.locator("text=Alertas ativos").locator("..").getByText("12", { exact: true }),
     ).toBeVisible();
     await expect(
-      page.locator("text=Setores sem mapeamento").locator("..").getByText("2"),
+      main.locator("text=Empresas").locator("..").getByText("196", { exact: true }),
     ).toBeVisible();
-
-    // Truncated hash starts with first 8 chars
-    await expect(page.getByText("01234567", { exact: false })).toBeVisible();
-
-    // Situation counts grid
-    await expect(page.getByText("ATIVO", { exact: true })).toBeVisible();
-    await expect(page.getByText("350", { exact: true })).toBeVisible();
-    await expect(page.getByText("CANCELADO", { exact: true })).toBeVisible();
-    await expect(page.getByText("SUSPENSO", { exact: true })).toBeVisible();
+    // last_eod present: assert the EOD card shows a 2026 date (TZ-safe — avoids
+    // hard-coding the day, which shifts with the runner timezone).
+    await expect(
+      main.locator("text=Última EOD").locator("..").getByText(/\/2026$/),
+    ).toBeVisible();
   });
 
-  test("shows empty placeholders when backend has no snapshots", async ({ page }) => {
-    mockGet(page, CvmRoutes.syncStatus, {
-      last_captured_at: null,
-      last_file_hash: null,
-      total_snapshots: 0,
-      situation_counts: {},
-      unmapped_sectors_count: 0,
+  test("renders the 9 document-type cards with validados/pendentes and freshness", async ({
+    page,
+  }) => {
+    mockGet(page, CvmRoutes.dashboard, CVM_DASHBOARD_DEFAULT);
+    mockGet(page, CvmRoutes.alertsList, ALERTS_LIST);
+
+    await page.goto("/cvm");
+
+    const main = page.getByRole("main");
+
+    await expect(main.getByRole("heading", { name: "Documentos por tipo" })).toBeVisible();
+
+    // PT-BR labels for the 9 backend report_type strings (card titles in main).
+    for (const label of [
+      "ITR/DFP",
+      "FRE",
+      "FCA",
+      "IPE",
+      "Recompras",
+      "VLMO",
+      "Composição",
+      "ICBGC",
+      "Participantes",
+    ]) {
+      await expect(main.getByText(label, { exact: true })).toBeVisible();
+    }
+
+    // FCA card is "atraso"; the others in the fixture are "em dia".
+    await expect(main.getByText("atraso").first()).toBeVisible();
+    await expect(main.getByText("em dia").first()).toBeVisible();
+
+    // ITR/DFP totals (total 842 / validados 412 / pendentes 430).
+    const itrCard = main.locator("a", { hasText: "ITR/DFP" });
+    await expect(itrCard.getByText("842")).toBeVisible();
+    await expect(itrCard.getByText("412")).toBeVisible();
+    await expect(itrCard.getByText("430")).toBeVisible();
+
+    // Cards link to their dataset route.
+    await expect(itrCard).toHaveAttribute("href", "/cvm/itr-dfp");
+  });
+
+  test("lists operational alerts reusing the alerts endpoint", async ({ page }) => {
+    mockGet(page, CvmRoutes.dashboard, CVM_DASHBOARD_DEFAULT);
+    mockGet(page, CvmRoutes.alertsList, ALERTS_LIST);
+
+    await page.goto("/cvm");
+
+    const main = page.getByRole("main");
+
+    await expect(main.getByRole("heading", { name: "Alertas operacionais" })).toBeVisible();
+    await expect(
+      main.getByText("FRE mais recente esta desatualizado ha mais de 12 meses."),
+    ).toBeVisible();
+    // "Ver todos" cross-links to the full alerts page.
+    await expect(main.getByRole("link", { name: "Ver todos →" })).toHaveAttribute(
+      "href",
+      "/cvm/alerts",
+    );
+  });
+
+  test("shows the pipeline placeholder (operação em breve)", async ({ page }) => {
+    mockGet(page, CvmRoutes.dashboard, CVM_DASHBOARD_DEFAULT);
+    mockGet(page, CvmRoutes.alertsList, ALERTS_LIST);
+
+    await page.goto("/cvm");
+
+    const main = page.getByRole("main");
+
+    await expect(main.getByRole("heading", { name: "Status do pipeline" })).toBeVisible();
+    await expect(main.getByText("Operação em breve")).toBeVisible();
+  });
+
+  test("handles an empty environment (no EOD, no documents)", async ({ page }) => {
+    mockGet(page, CvmRoutes.dashboard, CVM_DASHBOARD_EMPTY);
+    mockGet(page, CvmRoutes.alertsList, {
+      items: [],
+      pagination: { page: 1, page_size: 6, total: 0, total_pages: 0 },
     });
 
     await page.goto("/cvm");
 
-    await expect(
-      page.getByText("Nenhuma pendencia de mapeamento encontrada."),
-    ).toBeVisible();
-    // Hash placeholder
-    await expect(
-      page.locator("text=Hash do ultimo arquivo").locator("..").getByText("—"),
-    ).toBeVisible();
+    const main = page.getByRole("main");
+
+    // last_eod null -> em-dash + hint.
+    await expect(main.getByText("Nenhuma EOD registrada")).toBeVisible();
+    await expect(main.getByText("Nenhum documento CVM agregado ainda.")).toBeVisible();
+    await expect(main.getByText("Nenhum alerta operacional ativo.")).toBeVisible();
   });
 
-  test("triggers manual sync with force=false and shows toast with task_id", async ({ page }) => {
-    mockGet(page, CvmRoutes.syncStatus, SYNC_STATUS_DEFAULT);
-    const triggerCaptured = mockMethod(page, "POST", CvmRoutes.triggerSync, {
-      body: { task_id: "task-abc-123", status: "queued" },
-      status: 202,
+  test("surfaces a backend error on the dashboard endpoint", async ({ page }) => {
+    void page.route(CvmRoutes.dashboard, async (route) => {
+      await route.fulfill({
+        status: 500,
+        contentType: "application/json",
+        body: JSON.stringify({ detail: "Falha ao agregar dashboard" }),
+      });
     });
+    mockGet(page, CvmRoutes.alertsList, ALERTS_LIST);
 
     await page.goto("/cvm");
 
-    await page.getByRole("button", { name: "Sincronizar agora" }).click();
-    await expect(
-      page.getByRole("heading", { name: "Disparar sincronizacao manual?" }),
-    ).toBeVisible();
-
-    await page.getByRole("button", { name: "Confirmar sync" }).click();
-
-    await expect(
-      page.getByText("Sincronizacao enfileirada com task_id task-abc-123."),
-    ).toBeVisible();
-
-    expect(triggerCaptured).toHaveLength(1);
-    expect(triggerCaptured[0]?.query).toEqual({ force: "false" });
-  });
-
-  test("sends force=true when the checkbox is enabled before confirming", async ({ page }) => {
-    mockGet(page, CvmRoutes.syncStatus, SYNC_STATUS_DEFAULT);
-    const triggerCaptured = mockMethod(page, "POST", CvmRoutes.triggerSync, {
-      body: { task_id: "task-force-001", status: "queued" },
-      status: 202,
-    });
-
-    await page.goto("/cvm");
-    await page.getByRole("button", { name: "Sincronizar agora" }).click();
-
-    await page.getByLabel("Forcar persistencia mesmo se o hash ja existir.").check();
-    await page.getByRole("button", { name: "Confirmar sync" }).click();
-
-    await expect(page.getByText("task-force-001", { exact: false })).toBeVisible();
-    expect(triggerCaptured[0]?.query).toEqual({ force: "true" });
-  });
-
-  test("surfaces backend error when sync trigger fails", async ({ page }) => {
-    mockGet(page, CvmRoutes.syncStatus, SYNC_STATUS_DEFAULT);
-    mockMethod(page, "POST", CvmRoutes.triggerSync, {
-      status: 500,
-      body: { detail: "Celery broker indisponivel" },
-    });
-
-    await page.goto("/cvm");
-    await page.getByRole("button", { name: "Sincronizar agora" }).click();
-    await page.getByRole("button", { name: "Confirmar sync" }).click();
-
-    await expect(page.getByText("Celery broker indisponivel")).toBeVisible();
+    await expect(page.getByRole("main").getByText("Falha ao agregar dashboard")).toBeVisible();
   });
 });

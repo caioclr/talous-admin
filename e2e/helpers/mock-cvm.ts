@@ -82,6 +82,7 @@ export function mockMethod(
  * /companies/9512) don't collide.
  */
 export const CvmRoutes = {
+  dashboard: /\/api\/v1\/admin\/cvm\/dashboard$/,
   syncStatus: /\/api\/v1\/admin\/cvm\/registry\/sync-status$/,
   triggerSync: /\/api\/v1\/admin\/cvm\/registry\/sync(\?.*)?$/,
   snapshotsList: /\/api\/v1\/admin\/cvm\/registry\/snapshots(\?.*)?$/,
