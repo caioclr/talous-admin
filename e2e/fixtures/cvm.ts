@@ -9,9 +9,11 @@ import type {
   AuditorRegistrySummary,
   IntermediarioRegistrySummary,
   ParticipantesSyncStatusResponse,
+  BuybackByCompanyResponse,
   BuybackProgramDetail,
   BuybackProgramSummary,
   BuybackSyncStatusResponse,
+  CapitalCompositionByCompanyResponse,
   CapitalCompositionSnapshotDetail,
   CapitalCompositionSnapshotSummary,
   CapitalCompositionSyncStatusResponse,
@@ -23,6 +25,7 @@ import type {
   SyncStatusResponse,
   UnmappedSectorResponse,
   VLMOAggregatesResponse,
+  VLMOByCompanyResponse,
   VLMOFilingDetail,
   VLMOFilingSummary,
   VLMOMovimentacaoSummary,
@@ -35,6 +38,7 @@ import type {
   FCADocumentoDetail,
   FCADocumentoSummary,
   FCASyncStatusResponse,
+  FREByCompanyResponse,
   FREFilingDetail,
   FREFilingSummary,
   FRESyncStatusResponse,
@@ -1116,6 +1120,58 @@ export const FCA_BY_COMPANY_PETROBRAS: FCAByCompanyResponse = {
       captured_at: "2025-06-01T08:00:00Z",
     },
   ],
+};
+
+// ----------------------------------------------------------------------------
+// S07 T01 — Envelopes by-company para o detalhe consolidado da empresa.
+// FRE/Buyback/Capital/VLMO devolvem `{cd_cvm, company_name, <lista>}` (NAO
+// AdminPagedResponse). Reusam as summaries ja existentes (Petrobras=cd_cvm 9512).
+// ----------------------------------------------------------------------------
+
+export const FRE_BY_COMPANY_PETROBRAS: FREByCompanyResponse = {
+  cd_cvm: 9512,
+  company_name: "Petroleo Brasileiro S.A. - Petrobras",
+  filings: [
+    FRE_FILING_PETROBRAS_SUMMARY,
+    {
+      ...FRE_FILING_PETROBRAS_SUMMARY,
+      id: "fff3333-3333-3333-3333-333333333333",
+      id_documento: "FRE-PETR-2024",
+      data_referencia: "2024-12-31",
+      data_recebimento: "2025-04-29",
+      captured_at: "2025-04-29T08:00:00Z",
+      validation: VALIDATION_VALID,
+    },
+  ],
+};
+
+export const BUYBACK_BY_COMPANY_PETROBRAS: BuybackByCompanyResponse = {
+  cd_cvm: 9512,
+  company_name: "Petroleo Brasileiro S.A. - Petrobras",
+  programs: [
+    BUYBACK_PROGRAM_PETROBRAS,
+    {
+      ...BUYBACK_PROGRAM_PETROBRAS,
+      id: "bbbb3333-3333-3333-3333-333333333333",
+      id_programa: "PETR-2024-02",
+      data_deliberacao: "2024-08-10",
+      data_final_prazo: "2025-02-10",
+      situacao: "ENCERRADO",
+      validation: VALIDATION_VALID,
+    },
+  ],
+};
+
+export const CAPITAL_BY_COMPANY_PETROBRAS: CapitalCompositionByCompanyResponse = {
+  cd_cvm: 9512,
+  company_name: "Petroleo Brasileiro S.A. - Petrobras",
+  snapshots: CAPITAL_COMPOSITION_PETROBRAS_SERIES,
+};
+
+export const VLMO_BY_COMPANY_PETROBRAS: VLMOByCompanyResponse = {
+  cd_cvm: 9512,
+  company_name: "Petroleo Brasileiro S.A. - Petrobras",
+  movimentacoes: [VLMO_MOV_TRADE, VLMO_MOV_SNAPSHOT],
 };
 
 export const PARTICIPANTES_SYNC_STATUS: ParticipantesSyncStatusResponse = {

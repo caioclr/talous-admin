@@ -396,6 +396,17 @@ export interface CapitalCompositionSnapshotDetail extends CapitalCompositionSnap
   raw_data: Record<string, unknown>;
 }
 
+/**
+ * Histórico de snapshots de composição de capital de uma empresa
+ * (`GET /admin/cvm/capital-composition/by-company/{cd_cvm}`). NÃO é paginado —
+ * o backend devolve `CapitalCompositionByCompanyResponse` (envelope `snapshots`).
+ */
+export interface CapitalCompositionByCompanyResponse {
+  cd_cvm: number;
+  company_name: string;
+  snapshots: CapitalCompositionSnapshotSummary[];
+}
+
 export interface CapitalCompositionSyncStatusResponse {
   last_captured_at: string | null;
   last_file_hash: string | null;
@@ -462,6 +473,17 @@ export interface BuybackProgramDetail extends BuybackProgramSummary {
   raw_data: Record<string, unknown>;
   quantities: BuybackQuantitySummary[];
   intermediaries: BuybackIntermediarySummary[];
+}
+
+/**
+ * Histórico de programas de recompra de uma empresa
+ * (`GET /admin/cvm/buybacks/programs/by-company/{cd_cvm}`). NÃO é paginado —
+ * o backend devolve `BuybackByCompanyResponse` (envelope `programs`).
+ */
+export interface BuybackByCompanyResponse {
+  cd_cvm: number;
+  company_name: string;
+  programs: BuybackProgramSummary[];
 }
 
 export interface BuybackSyncStatusResponse {
@@ -542,6 +564,19 @@ export interface VLMOFilingSummary {
 export interface VLMOFilingDetail extends VLMOFilingSummary {
   file_version_hash: string;
   raw_data: Record<string, unknown>;
+}
+
+/**
+ * Movimentações VLMO de uma empresa (`GET /admin/cvm/vlmo/by-company/{cd_cvm}`).
+ * NÃO é paginado no envelope — aceita `page`/`page_size` como filtro de janela,
+ * mas o backend devolve `VLMOByCompanyResponse` (envelope `movimentacoes`), não
+ * `AdminPagedResponse`. O selo de validação vive no FILING (`/vlmo/filings`), não
+ * na movimentação — por isso `VLMOMovimentacaoSummary` não traz `validation`.
+ */
+export interface VLMOByCompanyResponse {
+  cd_cvm: number;
+  company_name: string;
+  movimentacoes: VLMOMovimentacaoSummary[];
 }
 
 export interface ListVLMOFilingsParams {
@@ -649,6 +684,17 @@ export interface FREFilingDetail extends FREFilingSummary {
   valores_mobiliarios: FREValorMobiliarioSummary[];
   mercado_estrangeiro: Record<string, unknown>[];
   transacoes_parte_relacionada: Record<string, unknown>[];
+}
+
+/**
+ * Histórico anual de FREs de uma empresa (`GET /admin/cvm/fre/by-company/{cd_cvm}`).
+ * NÃO é paginado — o backend devolve `FREByCompanyResponse` (envelope com a lista
+ * `filings`), não `AdminPagedResponse`.
+ */
+export interface FREByCompanyResponse {
+  cd_cvm: number;
+  company_name: string;
+  filings: FREFilingSummary[];
 }
 
 export interface FRESyncStatusResponse {

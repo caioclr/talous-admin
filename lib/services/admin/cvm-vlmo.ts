@@ -5,6 +5,7 @@ import type {
   ListVLMOMovimentacoesParams,
   TriggerVLMOSyncResponse,
   VLMOAggregatesResponse,
+  VLMOByCompanyResponse,
   VLMOFilingDetail,
   VLMOFilingSummary,
   VLMOMovimentacaoSummary,
@@ -37,7 +38,7 @@ export function listVLMOByCompany(
   cdCvm: string | number,
   params?: { is_position_snapshot?: boolean; year?: number; page?: number; page_size?: number },
 ) {
-  return apiClient<AdminPagedResponse<VLMOMovimentacaoSummary>>(
+  return apiClient<VLMOByCompanyResponse>(
     `/admin/cvm/vlmo/by-company/${cdCvm}`,
     { params },
   );

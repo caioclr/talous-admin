@@ -193,10 +193,8 @@ export default function VLMOCompanyPage() {
         <CardContent>
           <DataTable
             columns={movColumns}
-            data={movsQuery.data?.items ?? []}
+            data={movsQuery.data?.movimentacoes ?? []}
             loading={movsQuery.isLoading}
-            pagination={movsQuery.data?.pagination}
-            onPageChange={setPage}
             getRowKey={(row) => row.id}
             emptyMessage="Sem movimentacoes para a empresa nos filtros aplicados."
           />
