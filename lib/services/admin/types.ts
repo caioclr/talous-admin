@@ -1080,3 +1080,89 @@ export interface CVMDashboardResponse {
   kpis: DashboardKPIs;
   by_type: DashboardByType[];
 }
+
+// ---------------------------------------------------------------------------
+// Taxonomia setor/subsetor (S10 T02) — endpoints `/admin/sectors/*` (NAO sob
+// `/admin/cvm`). Subsetor e camada organizacional/visual: score e DCF
+// continuam por `sector_id`. Slugs: derivados do `name` quando ausentes;
+// setor name/slug unicos globais; subsetor slug unico por setor.
+// ---------------------------------------------------------------------------
+
+/** Subsetor aninhado dentro de um setor (GET) ou retorno de create/update. */
+export interface SubsectorResponse {
+  id: string;
+  sector_id: string;
+  name: string;
+  slug: string;
+  company_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Item de `GET /admin/sectors`: setor com subsetores aninhados e contagens. */
+export interface SectorWithSubsectorsResponse {
+  id: string;
+  name: string;
+  slug: string;
+  company_count: number;
+  created_at: string;
+  subsectors: SubsectorResponse[];
+}
+
+/** Retorno de create/update de setor (sem subsetores aninhados). */
+export interface SectorResponse {
+  id: string;
+  name: string;
+  slug: string;
+  created_at: string;
+}
+
+/** Body de `POST /admin/sectors`. Slug derivado do name quando ausente. */
+export interface SectorCreateRequest {
+  name: string;
+  slug?: string;
+}
+
+/** Body de `PATCH /admin/sectors/{id}`. Renomear sem slug re-deriva o slug. */
+export interface SectorUpdateRequest {
+  name?: string;
+  slug?: string;
+}
+
+/** Body de `POST /admin/sectors/{id}/subsectors`. */
+export interface SubsectorCreateRequest {
+  name: string;
+  slug?: string;
+}
+
+/** Body de `PATCH /admin/sectors/{id}/subsectors/{subsector_id}`. */
+export interface SubsectorUpdateRequest {
+  name?: string;
+  slug?: string;
+}
+
+/**
+ * Body de `PATCH /admin/sectors/companies/{company_id}/assignment`.
+ *
+ * Semantica do backend (distingue "nao enviado" de "enviado null" via
+ * `model_fields_set`):
+ *   - `sector_id` omitido => mantem o setor atual.
+ *   - `subsector_id` omitido (chave ausente) => mantem o subsetor atual.
+ *   - `subsector_id: null` (chave PRESENTE com null) => limpa o subsetor.
+ * O subsetor final deve pertencer ao setor final, senao 422.
+ */
+export interface CompanyReassignRequest {
+  sector_id?: string;
+  subsector_id?: string | null;
+}
+
+/** Retorno de `PATCH .../assignment`. */
+export interface CompanyAssignmentResponse {
+  id: string;
+  cd_cvm: number | null;
+  name: string;
+  sector_id: string;
+  sector_slug: string;
+  subsector_id: string | null;
+  subsector_slug: string | null;
+}
