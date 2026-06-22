@@ -24,7 +24,10 @@ describe("cvm-itr-dfp service", () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
-      json: async () => [],
+      json: async () => ({
+        items: [],
+        pagination: { page: 2, page_size: 25, total: 0, total_pages: 0 },
+      }),
     });
 
     vi.stubGlobal("fetch", fetchMock);
@@ -33,11 +36,12 @@ describe("cvm-itr-dfp service", () => {
       cd_cvm: 9512,
       doc_type: "itr",
       grupo_dfr: "consolidado",
-      limit: 25,
+      page: 2,
+      page_size: 25,
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "http://localhost:8001/api/v1/admin/cvm/itr-dfp/filings?cd_cvm=9512&doc_type=itr&grupo_dfr=consolidado&limit=25",
+      "http://localhost:8001/api/v1/admin/cvm/itr-dfp/filings?cd_cvm=9512&doc_type=itr&grupo_dfr=consolidado&page=2&page_size=25",
       expect.objectContaining({
         credentials: "include",
         headers: expect.any(Headers),
@@ -125,7 +129,10 @@ describe("cvm-itr-dfp service", () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
-      json: async () => [],
+      json: async () => ({
+        items: [],
+        pagination: { page: 1, page_size: 50, total: 0, total_pages: 0 },
+      }),
     });
 
     vi.stubGlobal("fetch", fetchMock);
@@ -133,11 +140,12 @@ describe("cvm-itr-dfp service", () => {
     await listITRDFPFilingsWithValidation({
       cd_cvm: 9512,
       validation_status: "pending",
-      limit: 50,
+      page: 1,
+      page_size: 50,
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "http://localhost:8001/api/v1/admin/cvm/itr-dfp/filings?cd_cvm=9512&validation_status=pending&limit=50",
+      "http://localhost:8001/api/v1/admin/cvm/itr-dfp/filings?cd_cvm=9512&validation_status=pending&page=1&page_size=50",
       expect.objectContaining({ credentials: "include" }),
     );
   });

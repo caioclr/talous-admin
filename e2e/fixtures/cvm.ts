@@ -1462,12 +1462,18 @@ export const ITR_DFP_FILING_PETROBRAS_ITR_2024Q1: FilingSummaryWithValidation = 
   },
 };
 
-export const ITR_DFP_FILINGS_WITH_VALIDATION: FilingSummaryWithValidation[] = [
-  ITR_DFP_FILING_PETROBRAS_ITR_2024Q1,
-  ITR_DFP_FILING_PETROBRAS_DFP_2024,
-  ITR_DFP_FILING_PETROBRAS_PENDING,
-  ITR_DFP_FILING_PETROBRAS_INDIVIDUAL,
-];
+// S09 T02: o backend converteu `GET /admin/cvm/itr-dfp/filings` de array cru
+// para envelope paginado `AdminPagedResponse[FilingSummary]`. Os 3 consumidores
+// (lista, validate, aba ITR/DFP do detalhe) leem `items` + `pagination`.
+export const ITR_DFP_FILINGS_WITH_VALIDATION: AdminPagedResponse<FilingSummaryWithValidation> = {
+  items: [
+    ITR_DFP_FILING_PETROBRAS_ITR_2024Q1,
+    ITR_DFP_FILING_PETROBRAS_DFP_2024,
+    ITR_DFP_FILING_PETROBRAS_PENDING,
+    ITR_DFP_FILING_PETROBRAS_INDIVIDUAL,
+  ],
+  pagination: { page: 1, page_size: 50, total: 4, total_pages: 1 },
+};
 
 export const ITR_DFP_ACCOUNT_LINES_DRE: AccountLinesTreeResponse = {
   cd_cvm: 9512,
