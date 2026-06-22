@@ -101,7 +101,7 @@ const navigation: NavGroup[] = [
   },
   {
     label: "Operacao",
-    items: [{ label: "Jobs / Sync", href: "/cvm/jobs", icon: Cog, status: "soon" }],
+    items: [{ label: "Jobs / Sync", href: "/cvm/jobs", icon: Cog, status: "available" }],
   },
 ];
 

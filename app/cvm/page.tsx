@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowUpRight, Clock, RefreshCcw } from "lucide-react";
+import {
+  ArrowUpRight,
+  CheckCircle2,
+  CircleAlert,
+  Loader2,
+  RefreshCcw,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,7 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatDate } from "@/lib/formatters";
+import { formatDate, formatDateTime, formatDuration } from "@/lib/formatters";
 import {
   ALERT_TYPE_LABELS,
   ALERT_TYPE_ORIGIN,
@@ -25,10 +31,18 @@ import {
   dashboardTypeRoute,
   getCVMDashboard,
 } from "@/lib/services/admin/cvm-dashboard";
+import {
+  PIPELINE_JOB_NAMES,
+  getOpsJobs,
+  isCvmSyncJob,
+  jobDescription,
+  jobLabel,
+} from "@/lib/services/admin/ops-jobs";
 import type {
   AlertSeverity,
   DashboardByType,
   OperationalAlert,
+  OpsJobRun,
 } from "@/lib/services/admin/types";
 
 const ALERTS_PREVIEW_SIZE = 6;
@@ -41,6 +55,56 @@ const SEVERITY_BADGES: Record<
   media: { label: "Media", variant: "warning" },
   baixa: { label: "Baixa", variant: "secondary" },
 };
+
+function JobStatusBadge({ run }: { run: OpsJobRun }) {
+  if (run.status === "running") {
+    return (
+      <Badge variant="default" className="gap-1">
+        <Loader2 className="size-3 animate-spin" />
+        Rodando
+      </Badge>
+    );
+  }
+  if (run.status === "failed") {
+    return (
+      <Badge variant="destructive" className="gap-1">
+        <CircleAlert className="size-3" />
+        Falha
+      </Badge>
+    );
+  }
+  if (run.stale) {
+    return (
+      <Badge variant="warning" className="gap-1">
+        <CircleAlert className="size-3" />
+        Atrasado
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="success" className="gap-1">
+      <CheckCircle2 className="size-3" />
+      OK
+    </Badge>
+  );
+}
+
+function PipelineJobRow({ run }: { run: OpsJobRun }) {
+  const description = jobDescription(run.job_name);
+  return (
+    <div className="flex items-start gap-3 border-b border-border/60 px-4 py-3 last:border-b-0">
+      <div className="min-w-0 flex-1 space-y-1">
+        <p className="truncate text-sm font-medium text-foreground">{jobLabel(run.job_name)}</p>
+        <p className="font-mono text-[11px] text-muted-foreground">
+          {formatDateTime(run.started_at)}
+          {run.duration_ms !== null ? ` · ${formatDuration(run.duration_ms)}` : ""}
+          {description ? ` · ${description}` : ""}
+        </p>
+      </div>
+      <JobStatusBadge run={run} />
+    </div>
+  );
+}
 
 /** Inteiros no padrao pt-BR (separador de milhar). Sem casas decimais. */
 function formatInteger(value: number | null | undefined) {
@@ -193,9 +257,26 @@ export default function CVMDashboardPage() {
     queryFn: () => listOperationalAlerts({ page: 1, page_size: ALERTS_PREVIEW_SIZE }),
   });
 
+  const opsQuery = useQuery({
+    queryKey: ["cvm", "dashboard", "ops-jobs"],
+    queryFn: () => getOpsJobs(),
+  });
+
   const dashboard = dashboardQuery.data;
   const kpis = dashboard?.kpis;
   const byType = dashboard?.by_type ?? [];
+
+  // Jobs principais do pipeline para o painel do dashboard, na ordem definida.
+  // Os ~10 cvm_sync_* ficam condensados num contador; o detalhe vai p/ /cvm/jobs.
+  const allJobs = opsQuery.data?.jobs ?? [];
+  const jobsByName = new Map(allJobs.map((job) => [job.job_name, job]));
+  const pipelineJobs = PIPELINE_JOB_NAMES.map((name) => jobsByName.get(name)).filter(
+    (job): job is OpsJobRun => job !== undefined,
+  );
+  const cvmSyncJobs = allJobs.filter((job) => isCvmSyncJob(job.job_name));
+  const cvmSyncAttention = cvmSyncJobs.filter(
+    (job) => job.status === "failed" || (job.status === "ok" && job.stale),
+  ).length;
 
   return (
     <div className="flex flex-col gap-4">
@@ -218,6 +299,7 @@ export default function CVMDashboardPage() {
             onClick={() => {
               void dashboardQuery.refetch();
               void alertsQuery.refetch();
+              void opsQuery.refetch();
             }}
             disabled={dashboardQuery.isFetching}
           >
@@ -336,15 +418,51 @@ export default function CVMDashboardPage() {
         <section className="space-y-2">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-foreground">Status do pipeline</h3>
+            <Link
+              href="/cvm/jobs"
+              className="font-mono text-[11px] text-primary underline-offset-4 hover:underline"
+            >
+              Ver jobs →
+            </Link>
           </div>
-          <Card className="panel-surface flex min-h-[160px] flex-col items-center justify-center gap-2 p-6 text-center">
-            <div className="rounded-full bg-muted p-3 text-muted-foreground">
-              <Clock className="size-5" />
-            </div>
-            <p className="text-sm font-medium text-foreground">Operação em breve</p>
-            <p className="max-w-xs text-[11px] text-muted-foreground">
-              O monitoramento de jobs e do pipeline EOD chega em uma sprint futura.
-            </p>
+          <Card className="panel-surface overflow-hidden p-0">
+            {opsQuery.isError ? (
+              <div className="p-6 text-sm text-destructive">
+                Não foi possível carregar o status do pipeline. {opsQuery.error?.message}
+              </div>
+            ) : opsQuery.isLoading ? (
+              <div className="space-y-3 p-4">
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <Skeleton key={`pipeline-skeleton-${index}`} className="h-10 w-full" />
+                ))}
+              </div>
+            ) : pipelineJobs.length === 0 ? (
+              <div className="p-6 text-sm text-muted-foreground">
+                Nenhum job do pipeline registrado ainda.
+              </div>
+            ) : (
+              <div>
+                {pipelineJobs.map((job) => (
+                  <PipelineJobRow key={job.job_name} run={job} />
+                ))}
+                {cvmSyncJobs.length > 0 ? (
+                  <Link
+                    href="/cvm/jobs"
+                    className="flex items-center justify-between gap-3 px-4 py-3 text-[11px] text-muted-foreground transition hover:bg-card-raised hover:text-foreground"
+                  >
+                    <span>
+                      Syncs CVM ({cvmSyncJobs.length})
+                      {cvmSyncAttention > 0 ? ` · ${cvmSyncAttention} requer atenção` : ""}
+                    </span>
+                    {cvmSyncAttention > 0 ? (
+                      <Badge variant="warning">{cvmSyncAttention}</Badge>
+                    ) : (
+                      <Badge variant="secondary">ver detalhe</Badge>
+                    )}
+                  </Link>
+                ) : null}
+              </div>
+            )}
           </Card>
         </section>
       </div>

@@ -19,6 +19,38 @@ export function formatDate(value: string | null | undefined) {
   }).format(new Date(value));
 }
 
+/**
+ * Duracao legivel a partir de milissegundos (apresentacao apenas — nao calcula
+ * nada; o backend ja entrega `duration_ms`). Ex.: 850 -> "850 ms", 4200 ->
+ * "4,2 s", 95000 -> "1 min 35 s".
+ */
+export function formatDuration(ms: number | null | undefined) {
+  if (ms === null || ms === undefined || !Number.isFinite(ms) || ms < 0) {
+    return "—";
+  }
+
+  if (ms < 1000) {
+    return `${Math.round(ms)} ms`;
+  }
+
+  const totalSeconds = ms / 1000;
+
+  if (totalSeconds < 60) {
+    return `${new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 1 }).format(totalSeconds)} s`;
+  }
+
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = Math.round(totalSeconds % 60);
+
+  if (minutes < 60) {
+    return seconds > 0 ? `${minutes} min ${seconds} s` : `${minutes} min`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+  const remMinutes = minutes % 60;
+  return remMinutes > 0 ? `${hours} h ${remMinutes} min` : `${hours} h`;
+}
+
 export function truncateHash(value: string | null | undefined, size = 10) {
   if (!value) {
     return "—";

@@ -1166,3 +1166,46 @@ export interface CompanyAssignmentResponse {
   subsector_id: string | null;
   subsector_slug: string | null;
 }
+
+// ----------------------------------------------------------------------------
+// S12 — Operacao / Status do pipeline (jobs Celery instrumentados)
+// `GET /admin/cvm/ops/jobs` => { jobs, history }. APENAS LEITURA — sem disparo/retry.
+// Tudo computado no backend (stale, duration_ms). O front so exibe.
+// ----------------------------------------------------------------------------
+
+/** Estado de uma execucao de job. */
+export type JobStatus = "running" | "ok" | "failed";
+
+/**
+ * Uma linha de execucao de job (mesmo shape em `jobs` e `history`).
+ *
+ * - `jobs[]` = ultima linha por `job_name` (status atual).
+ * - `history[]` = execucoes recentes (mais novas primeiro, filtraveis por job).
+ *
+ * Regras do backend (NAO recalcular no front):
+ * - `stale` = ultimo sucesso alem da janela esperada. `running` nunca e stale.
+ * - `expected_window_seconds: null` = job sob demanda (nunca stale).
+ */
+export interface OpsJobRun {
+  job_name: string;
+  status: JobStatus;
+  started_at: string | null;
+  finished_at: string | null;
+  duration_ms: number | null;
+  detail: string | null;
+  last_ok_at: string | null;
+  stale: boolean;
+  expected_window_seconds: number | null;
+}
+
+/** Resposta de `GET /admin/cvm/ops/jobs`. */
+export interface OpsJobsResponse {
+  jobs: OpsJobRun[];
+  history: OpsJobRun[];
+}
+
+/** Params de `GET /admin/cvm/ops/jobs`. `history_limit` 1–200 (default 20). */
+export interface ListOpsJobsParams {
+  job_name?: string;
+  history_limit?: number;
+}

@@ -5,11 +5,15 @@ import {
   ALERTS_LIST,
   CVM_DASHBOARD_DEFAULT,
   CVM_DASHBOARD_EMPTY,
+  OPS_JOBS_DEFAULT,
 } from "./fixtures/cvm";
 
 test.describe("CVM dashboard", () => {
   test.beforeEach(async ({ page }) => {
     await mockAuth(page, { authenticated: true });
+    // S12: the dashboard now reads real pipeline status; mock the ops endpoint
+    // for every dashboard test so the panel does not fire an un-stubbed request.
+    mockGet(page, CvmRoutes.opsJobs, OPS_JOBS_DEFAULT);
   });
 
   test("renders the 6 KPIs from the dashboard endpoint", async ({ page }) => {
@@ -97,7 +101,7 @@ test.describe("CVM dashboard", () => {
     );
   });
 
-  test("shows the pipeline placeholder (operação em breve)", async ({ page }) => {
+  test("shows real pipeline status (S12 replaced the 'em breve' placeholder)", async ({ page }) => {
     mockGet(page, CvmRoutes.dashboard, CVM_DASHBOARD_DEFAULT);
     mockGet(page, CvmRoutes.alertsList, ALERTS_LIST);
 
@@ -106,7 +110,8 @@ test.describe("CVM dashboard", () => {
     const main = page.getByRole("main");
 
     await expect(main.getByRole("heading", { name: "Status do pipeline" })).toBeVisible();
-    await expect(main.getByText("Operação em breve")).toBeVisible();
+    await expect(main.getByText("Operação em breve")).toHaveCount(0);
+    await expect(main.getByText("Pipeline EOD", { exact: true })).toBeVisible();
   });
 
   test("handles an empty environment (no EOD, no documents)", async ({ page }) => {
