@@ -76,6 +76,43 @@ test.describe("ITR/DFP — lista de validacao", () => {
 
     await expect.poll(() => captured.at(-1)?.query.validation_status).toBe("pending");
   });
+
+  test("envia page/page_size e pagina pela barra de paginacao", async ({ page }) => {
+    // S09 T02: a listagem virou envelope paginado. Fixture com 2 paginas para
+    // exercitar o controle de paginacao (Proxima -> page=2).
+    const captured: Array<Record<string, string>> = [];
+    await page.route(CvmRoutes.itrDfpFilings, async (route) => {
+      if (route.request().method() !== "GET") {
+        await route.fallback();
+        return;
+      }
+      const url = new URL(route.request().url());
+      const requestedPage = Number(url.searchParams.get("page") ?? "1");
+      captured.push(Object.fromEntries(url.searchParams));
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          items: ITR_DFP_FILINGS_WITH_VALIDATION.items,
+          pagination: { page: requestedPage, page_size: 50, total: 80, total_pages: 2 },
+        }),
+      });
+    });
+
+    await page.goto("/cvm/itr-dfp");
+
+    // Load inicial: page=1 e page_size explicito (50).
+    await expect.poll(() => captured.length).toBeGreaterThanOrEqual(1);
+    expect(captured[0]?.page).toBe("1");
+    expect(captured[0]?.page_size).toBe("50");
+
+    // KPI "Filings (total)" reflete o total do envelope, nao a pagina.
+    await expect(page.getByRole("heading", { name: "80", exact: true })).toBeVisible();
+
+    // Barra de paginacao avanca para page=2.
+    await page.getByRole("button", { name: "Proxima" }).click();
+    await expect.poll(() => captured.at(-1)?.page).toBe("2");
+  });
 });
 
 test.describe("ITR/DFP — tela de validacao", () => {
@@ -165,10 +202,14 @@ test.describe("ITR/DFP — tela de validacao", () => {
       const filing = state.validated
         ? { ...ITR_DFP_FILING_PETROBRAS_PENDING, validation: ITR_DFP_FILING_PETROBRAS_INDIVIDUAL.validation }
         : ITR_DFP_FILING_PETROBRAS_PENDING;
+      // S09 T02: a listagem agora e um envelope paginado.
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify([filing]),
+        body: JSON.stringify({
+          items: [filing],
+          pagination: { page: 1, page_size: 200, total: 1, total_pages: 1 },
+        }),
       });
     });
 

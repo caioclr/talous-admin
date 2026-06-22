@@ -107,13 +107,13 @@ function toIsoDate(value: string) {
 }
 
 export default function ITRDFPPage() {
+  const [page, setPage] = useState(1);
   const [cdCvm, setCdCvm] = useState("");
   const [docType, setDocType] = useState("");
   const [grupoDfr, setGrupoDfr] = useState("");
   const [validationStatus, setValidationStatus] = useState("");
   const [refDateFrom, setRefDateFrom] = useState("");
   const [refDateTo, setRefDateTo] = useState("");
-  const limit = "100";
   const [syncDocType, setSyncDocType] = useState("itr");
   const [syncYear, setSyncYear] = useState(new Date().getFullYear().toString());
 
@@ -122,17 +122,18 @@ export default function ITRDFPPage() {
       "cvm",
       "itr-dfp",
       "filings",
-      { cdCvm, docType, grupoDfr, validationStatus, refDateFrom, refDateTo, limit },
+      { page, cdCvm, docType, grupoDfr, validationStatus, refDateFrom, refDateTo },
     ],
     queryFn: () =>
       listITRDFPFilingsWithValidation({
+        page,
+        page_size: 50,
         cd_cvm: cdCvm ? Number(cdCvm) : undefined,
         doc_type: docType || undefined,
         grupo_dfr: grupoDfr || undefined,
         validation_status: (validationStatus || undefined) as ValidationStatus | undefined,
         ref_date_from: toIsoDate(refDateFrom),
         ref_date_to: toIsoDate(refDateTo),
-        limit: limit ? Number(limit) : 100,
       }),
   });
 
@@ -147,9 +148,11 @@ export default function ITRDFPPage() {
   });
 
   const summary = useMemo(() => {
-    const filings = filingsQuery.data ?? [];
+    const filings = filingsQuery.data?.items ?? [];
     return {
-      total: filings.length,
+      // `total` vem do envelope (todos os filings do filtro); as demais metricas
+      // sao da pagina carregada.
+      total: filingsQuery.data?.pagination.total ?? 0,
       companies: new Set(filings.map((item) => item.cd_cvm)).size,
       valid: filings.filter((item) => item.validation.status === "valid").length,
       pending: filings.filter((item) => item.validation.status === "pending").length,
@@ -231,10 +234,10 @@ export default function ITRDFPPage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <MetricCard label="Filings carregados" value={String(summary.total)} />
-          <MetricCard label="Empresas distintas" value={String(summary.companies)} />
-          <MetricCard label="Validados" value={String(summary.valid)} />
-          <MetricCard label="Pendentes" value={String(summary.pending)} />
+          <MetricCard label="Filings (total)" value={String(summary.total)} />
+          <MetricCard label="Empresas na pagina" value={String(summary.companies)} />
+          <MetricCard label="Validados na pagina" value={String(summary.valid)} />
+          <MetricCard label="Pendentes na pagina" value={String(summary.pending)} />
         </div>
       </section>
 
@@ -254,21 +257,34 @@ export default function ITRDFPPage() {
               placeholder="cd_cvm"
               aria-label="cd_cvm"
               value={cdCvm}
-              onChange={(event) => setCdCvm(event.target.value)}
+              onChange={(event) => {
+                setPage(1);
+                setCdCvm(event.target.value);
+              }}
             />
           </div>
 
           <Select
             aria-label="Status de validacao"
             value={validationStatus}
-            onChange={(event) => setValidationStatus(event.target.value)}
+            onChange={(event) => {
+              setPage(1);
+              setValidationStatus(event.target.value);
+            }}
           >
             <option value="">Todos status</option>
             <option value="pending">Pendente</option>
             <option value="valid">Validado</option>
           </Select>
 
-          <Select aria-label="Doc type" value={docType} onChange={(event) => setDocType(event.target.value)}>
+          <Select
+            aria-label="Doc type"
+            value={docType}
+            onChange={(event) => {
+              setPage(1);
+              setDocType(event.target.value);
+            }}
+          >
             <option value="">Doc type</option>
             <option value="itr">ITR</option>
             <option value="dfp">DFP</option>
@@ -277,7 +293,10 @@ export default function ITRDFPPage() {
           <Select
             aria-label="Grupo DFR"
             value={grupoDfr}
-            onChange={(event) => setGrupoDfr(event.target.value)}
+            onChange={(event) => {
+              setPage(1);
+              setGrupoDfr(event.target.value);
+            }}
           >
             <option value="">Grupo DFR</option>
             <option value="consolidado">consolidado</option>
@@ -288,26 +307,42 @@ export default function ITRDFPPage() {
             type="date"
             aria-label="Referencia de"
             value={refDateFrom}
-            onChange={(event) => setRefDateFrom(event.target.value)}
+            onChange={(event) => {
+              setPage(1);
+              setRefDateFrom(event.target.value);
+            }}
           />
           <Input
             type="date"
             aria-label="Referencia ate"
             value={refDateTo}
-            onChange={(event) => setRefDateTo(event.target.value)}
+            onChange={(event) => {
+              setPage(1);
+              setRefDateTo(event.target.value);
+            }}
           />
         </CardContent>
       </Card>
 
-      <DataTable
-        columns={columns}
-        data={filingsQuery.data ?? []}
-        loading={filingsQuery.isLoading}
-        getRowKey={(row, index) =>
-          `${row.cd_cvm}-${row.doc_type}-${row.reference_date}-${row.grupo_dfr}-${row.version}-${index}`
-        }
-        emptyMessage="Nenhum filing encontrado para os filtros informados."
-      />
+      {filingsQuery.isError ? (
+        <Card>
+          <CardContent className="p-6 text-sm text-destructive">
+            Nao foi possivel carregar os filings. {filingsQuery.error?.message}
+          </CardContent>
+        </Card>
+      ) : (
+        <DataTable
+          columns={columns}
+          data={filingsQuery.data?.items ?? []}
+          loading={filingsQuery.isLoading}
+          pagination={filingsQuery.data?.pagination}
+          onPageChange={setPage}
+          getRowKey={(row, index) =>
+            `${row.cd_cvm}-${row.doc_type}-${row.reference_date}-${row.grupo_dfr}-${row.version}-${index}`
+          }
+          emptyMessage="Nenhum filing encontrado para os filtros informados."
+        />
+      )}
     </div>
   );
 }

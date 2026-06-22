@@ -1,6 +1,7 @@
 import { apiClient } from "@/lib/services/client";
 import type {
   AccountLinesTreeResponse,
+  AdminPagedResponse,
   FilingSummary,
   FilingSummaryWithValidation,
   ListFilingsParams,
@@ -11,7 +12,7 @@ import type {
 } from "./types";
 
 export function listITRDFPFilings(params: ListFilingsParams) {
-  return apiClient<FilingSummary[]>("/admin/cvm/itr-dfp/filings", {
+  return apiClient<AdminPagedResponse<FilingSummary>>("/admin/cvm/itr-dfp/filings", {
     params,
   });
 }
@@ -61,7 +62,7 @@ export function triggerITRDFPSync(docType = "itr", year?: number) {
  * filtro `validation_status` para conferencia por amostragem.
  */
 export function listITRDFPFilingsWithValidation(params: ListFilingsWithValidationParams) {
-  return apiClient<FilingSummaryWithValidation[]>("/admin/cvm/itr-dfp/filings", {
+  return apiClient<AdminPagedResponse<FilingSummaryWithValidation>>("/admin/cvm/itr-dfp/filings", {
     params,
   });
 }

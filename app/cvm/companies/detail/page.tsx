@@ -133,7 +133,11 @@ export default function CompanyDetailPage() {
   const itrDfpQuery = useQuery({
     queryKey: ["cvm", "company", cdCvm, "itr-dfp"],
     queryFn: () =>
-      listITRDFPFilingsWithValidation({ cd_cvm: Number(cdCvm), limit: 200 }),
+      listITRDFPFilingsWithValidation({
+        cd_cvm: Number(cdCvm),
+        page: 1,
+        page_size: BY_COMPANY_PAGE_SIZE,
+      }),
     enabled: hasCdCvm && tab === "moderar" && moderarSub === "itr-dfp",
   });
 
@@ -549,7 +553,7 @@ export default function CompanyDetailPage() {
                   <TabSection query={itrDfpQuery}>
                     <DataTable
                       columns={itrDfpColumns}
-                      data={itrDfpQuery.data ?? []}
+                      data={itrDfpQuery.data?.items ?? []}
                       loading={itrDfpQuery.isLoading}
                       getRowKey={(row, index) =>
                         `${row.doc_type}-${row.reference_date}-${row.version}-${index}`

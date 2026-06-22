@@ -225,6 +225,10 @@ export interface FilingSummary {
   grupo_dfr: string;
   version: number;
   statement_types: string[];
+  // S09 T02: o backend passou a embutir o bloco de validacao por filing na
+  // listagem paginada (`AdminPagedResponse[FilingSummary]`). Mantemos defensivo
+  // (pode vir ausente em respostas legadas) — a UI trata ausencia como pendente.
+  validation?: FilingValidation | null;
 }
 
 export interface AccountLineResponse {
@@ -278,7 +282,10 @@ export interface ListFilingsParams {
   ref_date_from?: string;
   ref_date_to?: string;
   grupo_dfr?: string;
-  limit?: number;
+  // S09 T02: `limit` foi removido do backend; a listagem agora e paginada
+  // (`page` >= 1 default 1, `page_size` 1..200 default 50).
+  page?: number;
+  page_size?: number;
 }
 
 // ----------------------------------------------------------------------------
@@ -302,6 +309,11 @@ export interface FilingValidation {
   validated_at: string | null;
 }
 
+/**
+ * Filing com o bloco de validacao garantido (non-null). O backend embute
+ * `validation` em cada item da listagem paginada (S09 T02); este tipo torna o
+ * campo obrigatorio para os consumidores que renderizam selo/status sem guarda.
+ */
 export interface FilingSummaryWithValidation extends FilingSummary {
   validation: FilingValidation;
 }

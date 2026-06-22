@@ -86,12 +86,13 @@ export default function ITRDFPCompanyExplorerPage() {
     queryFn: () =>
       listITRDFPFilings({
         cd_cvm: Number(cdCvm),
-        limit: 200,
+        page: 1,
+        page_size: 200,
       }),
   });
 
   const filingOptions = useMemo(() => {
-    return (filingsQuery.data ?? []).map((filing) => ({
+    return (filingsQuery.data?.items ?? []).map((filing) => ({
       key: `${filing.doc_type}|${filing.reference_date}|${filing.grupo_dfr}|${filing.version}`,
       filing,
     }));
@@ -293,7 +294,7 @@ export default function ITRDFPCompanyExplorerPage() {
                 render: (row: FilingSummary) => row.statement_types.join(", "),
               },
             ]}
-            data={filingsQuery.data ?? []}
+            data={filingsQuery.data?.items ?? []}
             loading={filingsQuery.isLoading}
             getRowKey={(row, index) => `${row.cd_cvm}-${row.reference_date}-${row.version}-${index}`}
             emptyMessage="Nenhum filing encontrado para esta empresa."

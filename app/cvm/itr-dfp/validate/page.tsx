@@ -255,7 +255,8 @@ export default function ValidateFilingPage() {
     queryFn: () =>
       listITRDFPFilingsWithValidation({
         cd_cvm: Number(cdCvm),
-        limit: 200,
+        page: 1,
+        page_size: 200,
       }),
     enabled: Boolean(cdCvm),
   });
@@ -263,7 +264,7 @@ export default function ValidateFilingPage() {
   // Filings da MESMA empresa e MESMO grupo_dfr, ordenados por reference_date,
   // misturando doc_types (ITR e DFP). Base da faixa de navegacao.
   const sameGroupFilings = useMemo(() => {
-    return (filingsQuery.data ?? [])
+    return (filingsQuery.data?.items ?? [])
       .filter((filing) => filing.grupo_dfr === grupoDfr)
       .slice()
       .sort(
