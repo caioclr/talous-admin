@@ -135,7 +135,12 @@ export interface ListCompaniesParams {
   market_type?: string;
   sector_slug?: string;
   is_active?: boolean;
+  // Termo unico de busca: backend faz OR entre nome (acento-insensivel),
+  // CNPJ (substring), ticker e cd_cvm (match exato quando numerico).
   search?: string;
+  // true retorna apenas empresas com >= 1 ticker B3. Backend default e false;
+  // o admin envia explicitamente (tela inicia com b3_only=true).
+  b3_only?: boolean;
   page?: number;
   page_size?: number;
 }
