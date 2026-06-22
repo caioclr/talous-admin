@@ -1,6 +1,7 @@
 import { apiClient } from "@/lib/services/client";
 import type {
   AdminPagedResponse,
+  CapitalCompositionByCompanyResponse,
   CapitalCompositionSnapshotDetail,
   CapitalCompositionSnapshotSummary,
   CapitalCompositionSyncStatusResponse,
@@ -25,7 +26,7 @@ export function listCapitalCompositionByCompany(
   cdCvm: string | number,
   params?: { source?: string; period_type?: string; page?: number; page_size?: number },
 ) {
-  return apiClient<AdminPagedResponse<CapitalCompositionSnapshotSummary>>(
+  return apiClient<CapitalCompositionByCompanyResponse>(
     `/admin/cvm/capital-composition/by-company/${cdCvm}`,
     { params },
   );

@@ -1,6 +1,7 @@
 import { apiClient } from "@/lib/services/client";
 import type {
   AdminPagedResponse,
+  FREByCompanyResponse,
   FREFilingDetail,
   FREFilingSummary,
   FRESyncStatusResponse,
@@ -25,7 +26,7 @@ export function listFREByCompany(
   cdCvm: string | number,
   params?: { page?: number; page_size?: number },
 ) {
-  return apiClient<AdminPagedResponse<FREFilingSummary>>(
+  return apiClient<FREByCompanyResponse>(
     `/admin/cvm/fre/by-company/${cdCvm}`,
     { params },
   );

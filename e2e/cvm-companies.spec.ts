@@ -117,7 +117,10 @@ test.describe("CVM companies — detail", () => {
 
     await expect(page.getByText("CNPJ")).toBeVisible();
     await expect(page.getByText(COMPANY_DETAIL_PETROBRAS.cnpj!)).toBeVisible();
-    await expect(page.getByText(COMPANY_DETAIL_PETROBRAS.cvm_setor_atividade!)).toBeVisible();
+    // O setor aparece tambem no header (descricao); casa o valor exato do card.
+    await expect(
+      page.getByText(COMPANY_DETAIL_PETROBRAS.cvm_setor_atividade!, { exact: true }),
+    ).toBeVisible();
     await expect(page.getByText("Uniao Federal")).toBeVisible();
   });
 

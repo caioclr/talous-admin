@@ -1,6 +1,7 @@
 import { apiClient } from "@/lib/services/client";
 import type {
   AdminPagedResponse,
+  BuybackByCompanyResponse,
   BuybackProgramDetail,
   BuybackProgramSummary,
   BuybackSyncStatusResponse,
@@ -25,7 +26,7 @@ export function listBuybackProgramsByCompany(
   cdCvm: string | number,
   params?: { situacao?: string; page?: number; page_size?: number },
 ) {
-  return apiClient<AdminPagedResponse<BuybackProgramSummary>>(
+  return apiClient<BuybackByCompanyResponse>(
     `/admin/cvm/buybacks/programs/by-company/${cdCvm}`,
     { params },
   );
