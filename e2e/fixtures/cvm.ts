@@ -50,6 +50,7 @@ import type {
   FilingSummaryWithValidation,
   SectorWithSubsectorsResponse,
   CompanyAssignmentResponse,
+  OpsJobsResponse,
 } from "@/lib/services/admin/types";
 
 // Blocos de validacao reutilizaveis (S02 T04). `pending` exercita o badge
@@ -1682,4 +1683,143 @@ export const COMPANY_ASSIGNMENT_PETROBRAS: CompanyAssignmentResponse = {
   sector_slug: "energia",
   subsector_id: SUBSECTOR_EP_ID,
   subsector_slug: "exploracao-e-producao",
+};
+
+// ----------------------------------------------------------------------------
+// S12 — Operacao / status do pipeline (`GET /admin/ops/jobs`).
+// Cobre os 4 estados: ok, running, failed, stale (ok + stale=true).
+// `jobs` = ultima linha por job; `history` = execucoes recentes.
+// ----------------------------------------------------------------------------
+export const OPS_JOBS_DEFAULT: OpsJobsResponse = {
+  jobs: [
+    // EOD: ok, dentro da janela.
+    {
+      job_name: "jobs.run_eod_pipeline",
+      status: "ok",
+      started_at: "2026-06-21T23:10:00Z",
+      finished_at: "2026-06-21T23:18:20Z",
+      duration_ms: 500000,
+      detail: "Score e Ranking recalculados",
+      last_ok_at: "2026-06-21T23:18:20Z",
+      stale: false,
+      expected_window_seconds: 86400,
+    },
+    // Intraday: rodando agora (nunca stale).
+    {
+      job_name: "jobs.update_intraday_prices",
+      status: "running",
+      started_at: "2026-06-22T13:05:00Z",
+      finished_at: null,
+      duration_ms: null,
+      detail: null,
+      last_ok_at: "2026-06-22T12:50:00Z",
+      stale: false,
+      expected_window_seconds: 900,
+    },
+    // Release: sob demanda (janela null = nunca stale).
+    {
+      job_name: "jobs.refresh_fundamentals_after_release",
+      status: "ok",
+      started_at: "2026-06-20T10:00:00Z",
+      finished_at: "2026-06-20T10:02:10Z",
+      duration_ms: 130000,
+      detail: null,
+      last_ok_at: "2026-06-20T10:02:10Z",
+      stale: false,
+      expected_window_seconds: null,
+    },
+    // Selic: falha na ultima execucao.
+    {
+      job_name: "jobs.update_selic_rate",
+      status: "failed",
+      started_at: "2026-06-22T06:00:00Z",
+      finished_at: "2026-06-22T06:00:05Z",
+      duration_ms: 5000,
+      detail: "Timeout ao consultar BCB",
+      last_ok_at: "2026-06-21T06:00:04Z",
+      stale: false,
+      expected_window_seconds: 86400,
+    },
+    // Structural: ok mas alem da janela esperada (stale).
+    {
+      job_name: "jobs.cvm_structural_change_trigger",
+      status: "ok",
+      started_at: "2026-06-18T03:00:00Z",
+      finished_at: "2026-06-18T03:01:00Z",
+      duration_ms: 60000,
+      detail: null,
+      last_ok_at: "2026-06-18T03:01:00Z",
+      stale: true,
+      expected_window_seconds: 86400,
+    },
+    // Um sync CVM ok + um sync CVM com falha (para o contador condensado).
+    {
+      job_name: "jobs.cvm_sync_ipe",
+      status: "ok",
+      started_at: "2026-06-22T05:00:00Z",
+      finished_at: "2026-06-22T05:03:00Z",
+      duration_ms: 180000,
+      detail: null,
+      last_ok_at: "2026-06-22T05:03:00Z",
+      stale: false,
+      expected_window_seconds: 86400,
+    },
+    {
+      job_name: "jobs.cvm_sync_fre",
+      status: "failed",
+      started_at: "2026-06-22T05:10:00Z",
+      finished_at: "2026-06-22T05:10:30Z",
+      duration_ms: 30000,
+      detail: "Arquivo FRE corrompido",
+      last_ok_at: "2026-06-21T05:09:00Z",
+      stale: false,
+      expected_window_seconds: 86400,
+    },
+  ],
+  history: [
+    {
+      job_name: "jobs.run_eod_pipeline",
+      status: "ok",
+      started_at: "2026-06-21T23:10:00Z",
+      finished_at: "2026-06-21T23:18:20Z",
+      duration_ms: 500000,
+      detail: "Score e Ranking recalculados",
+      last_ok_at: "2026-06-21T23:18:20Z",
+      stale: false,
+      expected_window_seconds: 86400,
+    },
+    {
+      job_name: "jobs.update_selic_rate",
+      status: "failed",
+      started_at: "2026-06-22T06:00:00Z",
+      finished_at: "2026-06-22T06:00:05Z",
+      duration_ms: 5000,
+      detail: "Timeout ao consultar BCB",
+      last_ok_at: "2026-06-21T06:00:04Z",
+      stale: false,
+      expected_window_seconds: 86400,
+    },
+    {
+      job_name: "jobs.update_selic_rate",
+      status: "ok",
+      started_at: "2026-06-21T06:00:00Z",
+      finished_at: "2026-06-21T06:00:04Z",
+      duration_ms: 4000,
+      detail: null,
+      last_ok_at: "2026-06-21T06:00:04Z",
+      stale: false,
+      expected_window_seconds: 86400,
+    },
+  ],
+};
+
+// Histórico filtrado por jobs.update_selic_rate (só as duas execuções da Selic).
+export const OPS_JOBS_SELIC_FILTERED: OpsJobsResponse = {
+  jobs: OPS_JOBS_DEFAULT.jobs.filter((job) => job.job_name === "jobs.update_selic_rate"),
+  history: OPS_JOBS_DEFAULT.history.filter((run) => run.job_name === "jobs.update_selic_rate"),
+};
+
+export const OPS_JOBS_EMPTY: OpsJobsResponse = {
+  jobs: [],
+  history: [],
 };

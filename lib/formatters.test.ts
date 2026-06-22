@@ -1,5 +1,34 @@
 import { describe, expect, it } from "vitest";
-import { formatFilingPeriodLabel, priorYearReferenceDate } from "@/lib/formatters";
+import { formatDuration, formatFilingPeriodLabel, priorYearReferenceDate } from "@/lib/formatters";
+
+describe("formatDuration", () => {
+  it("returns em-dash for null/invalid", () => {
+    expect(formatDuration(null)).toBe("—");
+    expect(formatDuration(undefined)).toBe("—");
+    expect(formatDuration(-1)).toBe("—");
+    expect(formatDuration(Number.NaN)).toBe("—");
+  });
+
+  it("shows milliseconds under a second", () => {
+    expect(formatDuration(0)).toBe("0 ms");
+    expect(formatDuration(850)).toBe("850 ms");
+  });
+
+  it("shows seconds with one decimal under a minute", () => {
+    expect(formatDuration(4200)).toBe("4,2 s");
+    expect(formatDuration(45000)).toBe("45 s");
+  });
+
+  it("shows minutes and seconds under an hour", () => {
+    expect(formatDuration(95000)).toBe("1 min 35 s");
+    expect(formatDuration(120000)).toBe("2 min");
+  });
+
+  it("shows hours and minutes above an hour", () => {
+    expect(formatDuration(3_600_000)).toBe("1 h");
+    expect(formatDuration(5_400_000)).toBe("1 h 30 min");
+  });
+});
 
 describe("formatFilingPeriodLabel", () => {
   it("maps ITR months to quarters", () => {
