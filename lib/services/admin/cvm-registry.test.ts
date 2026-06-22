@@ -52,6 +52,26 @@ describe("cvm-registry service", () => {
     expect(headers.get("Authorization")).toBe("Bearer test-token");
   });
 
+  it("forwards b3_only on the companies list (S08 T02)", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        items: [],
+        pagination: { page: 1, page_size: 20, total: 0, total_pages: 0 },
+      }),
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await listAdminCompanies({ page: 1, page_size: 20, search: "PETR4", b3_only: true });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://localhost:8001/api/v1/admin/cvm/companies?page=1&page_size=20&search=PETR4&b3_only=true",
+      expect.objectContaining({ credentials: "include" }),
+    );
+  });
+
   it("forwards validation_status on the snapshots list (S02 T04)", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,

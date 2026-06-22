@@ -56,15 +56,51 @@ test.describe("CVM companies — list", () => {
     await expect.poll(() => captured.at(-1)?.query.is_active).toBe("true");
   });
 
-  test("search input forwards query to backend after typing", async ({ page }) => {
+  test("initial load defaults to b3_only=true even though backend default is false", async ({
+    page,
+  }) => {
     const captured = mockGet(page, CvmRoutes.companiesList, COMPANIES_LIST);
 
     await page.goto("/cvm/companies");
     await expect.poll(() => captured.length).toBeGreaterThanOrEqual(1);
 
-    await page.getByPlaceholder("Buscar por nome ou CNPJ").fill("Petro");
+    // O toggle "Somente B3" inicia ligado e o param e enviado explicitamente.
+    expect(captured.at(-1)?.query.b3_only).toBe("true");
+    await expect(page.getByRole("checkbox", { name: "Somente B3" })).toBeChecked();
+  });
+
+  test("search by name forwards query to backend after typing", async ({ page }) => {
+    const captured = mockGet(page, CvmRoutes.companiesList, COMPANIES_LIST);
+
+    await page.goto("/cvm/companies");
+    await expect.poll(() => captured.length).toBeGreaterThanOrEqual(1);
+
+    await page.getByPlaceholder("Buscar por nome, CNPJ ou ticker").fill("Petro");
 
     await expect.poll(() => captured.at(-1)?.query.search).toBe("Petro");
+  });
+
+  test("search by ticker forwards the single search term to backend", async ({ page }) => {
+    const captured = mockGet(page, CvmRoutes.companiesList, COMPANIES_LIST);
+
+    await page.goto("/cvm/companies");
+    await expect.poll(() => captured.length).toBeGreaterThanOrEqual(1);
+
+    await page.getByPlaceholder("Buscar por nome, CNPJ ou ticker").fill("PETR4");
+
+    await expect.poll(() => captured.at(-1)?.query.search).toBe("PETR4");
+  });
+
+  test("toggling \"Somente B3\" off sends b3_only=false", async ({ page }) => {
+    const captured = mockGet(page, CvmRoutes.companiesList, COMPANIES_LIST);
+
+    await page.goto("/cvm/companies");
+    await expect.poll(() => captured.length).toBeGreaterThanOrEqual(1);
+
+    await page.getByRole("checkbox", { name: "Somente B3" }).uncheck();
+
+    await expect.poll(() => captured.at(-1)?.query.b3_only).toBe("false");
+    expect(captured.at(-1)?.query.page).toBe("1");
   });
 
   test("clicking a row navigates to the company detail by cd_cvm", async ({ page }) => {

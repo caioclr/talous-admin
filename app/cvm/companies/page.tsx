@@ -74,13 +74,16 @@ export default function CompaniesPage() {
   const [marketType, setMarketType] = useState("");
   const [sectorSlug, setSectorSlug] = useState("");
   const [active, setActive] = useState("");
+  // Default ON: o admin opera so com empresas da B3. Enviado explicitamente
+  // porque o backend tem default false.
+  const [b3Only, setB3Only] = useState(true);
   const deferredSearch = useDeferredValue(search);
 
   const companiesQuery = useQuery({
     queryKey: [
       "cvm",
       "companies",
-      { page, deferredSearch, situation, category, marketType, sectorSlug, active },
+      { page, deferredSearch, situation, category, marketType, sectorSlug, active, b3Only },
     ],
     queryFn: () =>
       listAdminCompanies({
@@ -93,6 +96,7 @@ export default function CompaniesPage() {
         sector_slug: sectorSlug || undefined,
         is_active:
           active === "" ? undefined : active === "true",
+        b3_only: b3Only,
       }),
   });
 
@@ -111,7 +115,7 @@ export default function CompaniesPage() {
             <Input
               value={search}
               className="pl-10"
-              placeholder="Buscar por nome ou CNPJ"
+              placeholder="Buscar por nome, CNPJ ou ticker"
               onChange={(event) => {
                 setPage(1);
                 setSearch(event.target.value);
@@ -173,23 +177,46 @@ export default function CompaniesPage() {
             <option value="true">Sim</option>
             <option value="false">Nao</option>
           </Select>
+
+          <label className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <input
+              type="checkbox"
+              className="size-4 rounded border-input accent-primary"
+              checked={b3Only}
+              onChange={(event) => {
+                setPage(1);
+                setB3Only(event.target.checked);
+              }}
+            />
+            Somente B3
+          </label>
         </CardContent>
       </Card>
 
-      <DataTable
-        columns={columns}
-        data={companiesQuery.data?.items ?? []}
-        loading={companiesQuery.isLoading}
-        pagination={companiesQuery.data?.pagination}
-        onPageChange={setPage}
-        getRowKey={(row) => row.id}
-        onRowClick={(row) => {
-          if (row.cd_cvm) {
-            router.push(`/cvm/companies/detail?cd_cvm=${row.cd_cvm}`);
-          }
-        }}
-        emptyMessage="Nenhuma empresa encontrada para os filtros informados."
-      />
+      {companiesQuery.isError ? (
+        <Card>
+          <CardContent className="p-6 text-sm text-destructive">
+            Não foi possível carregar as empresas. {companiesQuery.error?.message}
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {companiesQuery.isError ? null : (
+        <DataTable
+          columns={columns}
+          data={companiesQuery.data?.items ?? []}
+          loading={companiesQuery.isLoading}
+          pagination={companiesQuery.data?.pagination}
+          onPageChange={setPage}
+          getRowKey={(row) => row.id}
+          onRowClick={(row) => {
+            if (row.cd_cvm) {
+              router.push(`/cvm/companies/detail?cd_cvm=${row.cd_cvm}`);
+            }
+          }}
+          emptyMessage="Nenhuma empresa encontrada para os filtros informados."
+        />
+      )}
     </div>
   );
 }
