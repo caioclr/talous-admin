@@ -28,6 +28,7 @@ import {
   ValidationStatusFilter,
   asValidationStatus,
 } from "@/components/validation";
+import { CvmAcronym } from "@/components/cvm-acronym";
 import { formatDate, formatDateTime, truncateHash } from "@/lib/formatters";
 import {
   getIPESyncStatus,
@@ -44,7 +45,9 @@ const columns: DataTableColumn<IPEDisclosureSummary>[] = [
     render: (row) => (
       <div className="space-y-1">
         <p className="font-medium text-foreground">{row.nome_companhia}</p>
-        <p className="text-xs text-muted-foreground">cd_cvm {row.cd_cvm}</p>
+        <p className="text-xs text-muted-foreground">
+          <CvmAcronym sigla="cd_cvm" /> {row.cd_cvm}
+        </p>
       </div>
     ),
   },
@@ -200,7 +203,7 @@ export default function IPEPage() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary">
-              Sprint 2 · IPE
+              Sprint 2 · <CvmAcronym sigla="IPE" />
             </p>
             <h2 className="text-2xl font-semibold text-foreground">
               Fatos relevantes, comunicados e avisos ao mercado

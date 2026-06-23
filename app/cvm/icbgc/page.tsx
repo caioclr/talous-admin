@@ -28,6 +28,7 @@ import {
   ValidationStatusFilter,
   asValidationStatus,
 } from "@/components/validation";
+import { CvmAcronym } from "@/components/cvm-acronym";
 import { formatDate, formatDateTime, truncateHash } from "@/lib/formatters";
 import {
   getICBGCSyncStatus,
@@ -189,7 +190,9 @@ export default function ICBGCPage() {
         <CardHeader>
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <CardTitle>Governanca corporativa (ICBGC)</CardTitle>
+              <CardTitle>
+                Governanca corporativa (<CvmAcronym sigla="ICBGC" />)
+              </CardTitle>
               <CardDescription>
                 Informe do Codigo Brasileiro de Governanca Corporativa — adocao pratique-ou-explique,
                 item a item, das ~54 praticas recomendadas.
