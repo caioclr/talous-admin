@@ -28,6 +28,7 @@ import {
   ValidationStatusFilter,
   asValidationStatus,
 } from "@/components/validation";
+import { CvmAcronym } from "@/components/cvm-acronym";
 import { formatDate, formatDateTime, truncateHash } from "@/lib/formatters";
 import { getFRESyncStatus, listFREFilings, triggerFRESync } from "@/lib/services/admin/cvm-fre";
 import type { FREFilingSummary } from "@/lib/services/admin/types";
@@ -140,7 +141,9 @@ export default function FREPage() {
         <CardHeader>
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <CardTitle>Formulario de Referencia (FRE)</CardTitle>
+              <CardTitle>
+                Formulario de Referencia (<CvmAcronym sigla="FRE" />)
+              </CardTitle>
               <CardDescription>
                 Documento anual com 21 secoes — capital social, posicao acionaria, auditores, remuneracao, valores mobiliarios, partes relacionadas. PII com hash satelite.
               </CardDescription>

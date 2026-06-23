@@ -6,6 +6,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { Check, RefreshCcw, Search } from "lucide-react";
 import { toast } from "sonner";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
+import { CvmAcronym } from "@/components/cvm-acronym";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -168,12 +169,12 @@ export default function ITRDFPPage() {
               S01 · Moderacao CVM
             </p>
             <h2 className="text-2xl font-semibold text-foreground">
-              Validacao de filings ITR/DFP
+              Validacao de filings <CvmAcronym sigla="ITR/DFP" />
             </h2>
             <p className="max-w-3xl text-sm text-muted-foreground">
-              Conferencia interna por amostragem. Abra o demonstrativo de uma empresa/periodo, leia
-              DRE/DFC/BP e marque como valido. O selo e consultivo: nao altera o dado nem o app do
-              usuario final.
+              Conferencia interna por amostragem. Abra o demonstrativo de uma empresa/periodo, leia{" "}
+              <CvmAcronym sigla="DRE" />/<CvmAcronym sigla="DFC" />/<CvmAcronym sigla="BP" /> e marque
+              como valido. O selo e consultivo: nao altera o dado nem o app do usuario final.
             </p>
           </div>
 

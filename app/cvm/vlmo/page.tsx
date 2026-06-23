@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
+import { CvmAcronym } from "@/components/cvm-acronym";
 import { formatDate, formatDateTime, formatDecimal, truncateHash } from "@/lib/formatters";
 import {
   getVLMOSyncStatus,
@@ -168,7 +169,9 @@ export default function VLMOPage() {
         <CardHeader>
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <CardTitle>Insider trading · VLMO</CardTitle>
+              <CardTitle>
+                Insider trading · <CvmAcronym sigla="VLMO" />
+              </CardTitle>
               <CardDescription>
                 Movimentacoes de controlador, conselho, diretoria e gestao.
                 <strong className="ml-1">Saldos iniciais escondidos por padrao</strong> — toggle abaixo se quiser auditar fotografias.

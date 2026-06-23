@@ -28,6 +28,7 @@ import {
   ValidationStatusFilter,
   asValidationStatus,
 } from "@/components/validation";
+import { CvmAcronym } from "@/components/cvm-acronym";
 import { formatDate, formatDateTime, truncateHash } from "@/lib/formatters";
 import {
   getFCASyncStatus,
@@ -177,7 +178,9 @@ export default function FCAPage() {
         <CardHeader>
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <CardTitle>Formulario Cadastral (FCA)</CardTitle>
+              <CardTitle>
+                Formulario Cadastral (<CvmAcronym sigla="FCA" />)
+              </CardTitle>
               <CardDescription>
                 Cadastro anual da companhia — dados gerais, DRI, valores mobiliarios listados e
                 auditor independente.

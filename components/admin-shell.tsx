@@ -39,6 +39,20 @@ import {
 import { cn } from "@/lib/utils";
 import { logout } from "@/lib/services/auth";
 import { useAuthStore } from "@/lib/stores/auth-store";
+import { CvmAcronym } from "@/components/cvm-acronym";
+import { getCvmAcronym } from "@/lib/cvm-glossary";
+
+/**
+ * Enriquece o rotulo de navegacao com um tooltip quando ele e exatamente uma
+ * sigla conhecida da CVM. Rotulos que nao sao sigla pura renderizam texto puro.
+ * O conteudo textual do link permanece identico ao `item.label`.
+ */
+function NavLabel({ label }: { label: string }) {
+  if (getCvmAcronym(label)) {
+    return <CvmAcronym sigla={label} interactive={false} />;
+  }
+  return <>{label}</>;
+}
 
 type NavStatus = "available" | "soon";
 
@@ -186,7 +200,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                         className="flex items-center gap-2 rounded px-2 py-1.5 text-[11px] text-muted-foreground/50"
                       >
                         <item.icon className="size-3.5 opacity-40" />
-                        {item.label}
+                        <NavLabel label={item.label} />
                         <span className="ml-auto rounded border border-border/60 bg-background px-1 py-px font-mono text-[8px] uppercase tracking-wider text-muted-foreground/50">
                           em breve
                         </span>
@@ -208,7 +222,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                       )}
                     >
                       <item.icon className={cn("size-3.5", active ? "text-primary" : "opacity-50")} />
-                      {item.label}
+                      <NavLabel label={item.label} />
                     </Link>
                   );
                 })}
