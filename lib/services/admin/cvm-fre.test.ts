@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  getDividendPolicy,
   getFREFiling,
   getFRESyncStatus,
+  listDividendPolicyByCompany,
   listFREByCompany,
   listFREFilings,
   triggerFRESync,
@@ -77,6 +79,31 @@ describe("cvm-fre service", () => {
 
     expect(fetchMock).toHaveBeenCalledWith(
       "http://localhost:8001/api/v1/admin/cvm/fre/by-company/9512?page=1&page_size=50",
+      expect.objectContaining({ credentials: "include" }),
+    );
+  });
+
+  it("builds dividend-policy by-company URL with paging window", async () => {
+    const fetchMock = mockOk({
+      items: [],
+      pagination: { page: 1, page_size: 50, total: 0, total_pages: 0 },
+    });
+
+    await listDividendPolicyByCompany(9512, { page: 1, page_size: 50 });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://localhost:8001/api/v1/admin/cvm/fre/dividend-policy/by-company/9512?page=1&page_size=50",
+      expect.objectContaining({ credentials: "include" }),
+    );
+  });
+
+  it("builds dividend-policy detail URL by id", async () => {
+    const fetchMock = mockOk({ id: "pol-1", policy_text: "x" });
+
+    await getDividendPolicy("pol00001-0000-0000-0000-000000000001");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://localhost:8001/api/v1/admin/cvm/fre/dividend-policy/pol00001-0000-0000-0000-000000000001",
       expect.objectContaining({ credentials: "include" }),
     );
   });

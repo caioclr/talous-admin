@@ -22,7 +22,11 @@ import {
   listReleasesByCompany,
 } from "@/lib/services/admin/cvm-ipe";
 import { listITRDFPFilingsWithValidation } from "@/lib/services/admin/cvm-itr-dfp";
-import { listFREByCompany } from "@/lib/services/admin/cvm-fre";
+import {
+  getDividendPolicy,
+  listDividendPolicyByCompany,
+  listFREByCompany,
+} from "@/lib/services/admin/cvm-fre";
 import { getFCAByCompany } from "@/lib/services/admin/cvm-fca";
 import { listBuybackProgramsByCompany } from "@/lib/services/admin/cvm-buybacks";
 import { listVLMOByCompany } from "@/lib/services/admin/cvm-vlmo";
@@ -35,6 +39,7 @@ import type {
   CVMSnapshotSummary,
   FCADocumentoSummary,
   FilingSummaryWithValidation,
+  FREDividendPolicySummary,
   FREFilingSummary,
   GovernanceReportSummary,
   IPEDisclosureSummary,
@@ -159,6 +164,16 @@ export default function CompanyDetailPage() {
   const freQuery = useQuery({
     queryKey: ["cvm", "company", cdCvm, "fre"],
     queryFn: () => listFREByCompany(cdCvm, { page: 1, page_size: BY_COMPANY_PAGE_SIZE }),
+    enabled: hasCdCvm && tab === "moderar" && moderarSub === "fre",
+  });
+
+  // S18: politica de dividendos extraida do FRE (texto qualitativo). Lazy junto
+  // da sub-aba FRE; o policy_text e buscado item a item ao expandir (ver
+  // DividendPolicySection / DividendPolicyRow).
+  const dividendPolicyQuery = useQuery({
+    queryKey: ["cvm", "company", cdCvm, "fre-dividend-policy"],
+    queryFn: () =>
+      listDividendPolicyByCompany(cdCvm, { page: 1, page_size: BY_COMPANY_PAGE_SIZE }),
     enabled: hasCdCvm && tab === "moderar" && moderarSub === "fre",
   });
 
@@ -580,7 +595,7 @@ export default function CompanyDetailPage() {
                   </TabSection>
                 </TabsContent>
 
-                <TabsContent value="fre">
+                <TabsContent value="fre" className="space-y-8">
                   <TabSection query={freQuery}>
                     <DataTable
                       columns={freColumns}
@@ -590,6 +605,8 @@ export default function CompanyDetailPage() {
                       emptyMessage="Nenhum FRE para esta empresa."
                     />
                   </TabSection>
+
+                  <DividendPolicySection query={dividendPolicyQuery} />
                 </TabsContent>
 
                 <TabsContent value="fca">
@@ -840,6 +857,142 @@ function ReleaseRow({ release }: { release: IPEReleaseSummary }) {
             </pre>
           ) : (
             <p className="text-sm text-muted-foreground">Texto vazio para este release.</p>
+          )}
+        </div>
+      ) : null}
+    </li>
+  );
+}
+
+const DIVIDEND_POLICY_STATUS_LABEL: Record<
+  FREDividendPolicySummary["extraction_status"],
+  string
+> = {
+  ok: "Texto extraido",
+  not_found: "Nao localizada",
+  no_text: "Sem texto",
+  failed: "Falha na extracao",
+};
+
+function DividendPolicyStatusBadge({
+  status,
+}: {
+  status: FREDividendPolicySummary["extraction_status"];
+}) {
+  const variant =
+    status === "ok" ? "default" : status === "failed" ? "destructive" : "secondary";
+  return <Badge variant={variant}>{DIVIDEND_POLICY_STATUS_LABEL[status]}</Badge>;
+}
+
+/**
+ * S18: lista as politicas de dividendos extraidas do FRE da empresa. Espelha o
+ * viewer de release (S16): le `items` do envelope paginado e o `policy_text`
+ * NAO vem aqui — cada linha o busca LAZY ao expandir (ver `DividendPolicyRow`).
+ * Estados loading/erro/vazio coerentes com as demais sub-abas.
+ */
+function DividendPolicySection({
+  query,
+}: {
+  query: UseQueryResult<AdminPagedResponse<FREDividendPolicySummary>>;
+}) {
+  const policies = query.data?.items ?? [];
+
+  return (
+    <section className="space-y-3" aria-label="Politica de dividendos">
+      <div className="space-y-1">
+        <h3 className="text-sm font-semibold text-foreground">Politica de dividendos</h3>
+        <p className="text-xs text-muted-foreground">
+          Texto extraido da politica de dividendos (FRE). Abra um item para ler o conteudo completo.
+        </p>
+      </div>
+
+      <TabSection query={query}>
+        {query.isLoading ? (
+          <p className="text-sm text-muted-foreground">Carregando politicas de dividendos…</p>
+        ) : policies.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Nenhuma politica de dividendos extraida para esta empresa.
+          </p>
+        ) : (
+          <ul className="space-y-3">
+            {policies.map((policy) => (
+              <DividendPolicyRow key={policy.id} policy={policy} />
+            ))}
+          </ul>
+        )}
+      </TabSection>
+    </section>
+  );
+}
+
+/**
+ * Uma linha de politica de dividendos: cabecalho sempre visivel (data de
+ * referencia/status/char_count) e viewer expansivel. O detalhe (`policy_text`)
+ * so e buscado quando o usuario abre o item (`enabled: open`). Quando
+ * `extraction_status != "ok"` mostramos um aviso claro em vez de viewer vazio.
+ */
+function DividendPolicyRow({ policy }: { policy: FREDividendPolicySummary }) {
+  const [open, setOpen] = useState(false);
+  const hasText = policy.extraction_status === "ok";
+
+  const detailQuery = useQuery({
+    queryKey: ["cvm", "dividend-policy", policy.id],
+    queryFn: () => getDividendPolicy(policy.id),
+    enabled: open && hasText,
+  });
+
+  const unavailableMessage =
+    policy.extraction_status === "failed"
+      ? "Falha na extracao do texto desta politica de dividendos."
+      : policy.extraction_status === "not_found"
+        ? "Politica de dividendos nao localizada neste FRE."
+        : "Sem texto extraivel para esta politica de dividendos.";
+
+  return (
+    <li className="rounded-2xl border border-border/80 bg-background/70">
+      <div className="flex flex-wrap items-start justify-between gap-3 px-4 py-3">
+        <div className="min-w-0 space-y-1">
+          <p className="truncate text-sm font-medium text-foreground">
+            Referencia: {formatDate(policy.reference_date)}
+          </p>
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <span>{policy.char_count.toLocaleString("pt-BR")} caracteres</span>
+            <DividendPolicyStatusBadge status={policy.extraction_status} />
+          </div>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          aria-expanded={open}
+          onClick={() => setOpen((value) => !value)}
+        >
+          {open ? "Fechar" : "Abrir texto"}
+        </Button>
+      </div>
+
+      {open ? (
+        <div className="border-t border-border/60 px-4 py-3">
+          {!hasText ? (
+            <p className="text-sm text-muted-foreground">{unavailableMessage}</p>
+          ) : detailQuery.isLoading ? (
+            <p className="text-sm text-muted-foreground">Carregando texto…</p>
+          ) : detailQuery.isError ? (
+            <div className="space-y-3">
+              <p className="text-sm text-destructive">
+                Falha ao carregar o texto: {(detailQuery.error as Error).message}
+              </p>
+              <Button variant="outline" size="sm" onClick={() => detailQuery.refetch()}>
+                Tentar novamente
+              </Button>
+            </div>
+          ) : detailQuery.data?.policy_text ? (
+            <pre className="max-h-[28rem] overflow-auto whitespace-pre-wrap break-words rounded-xl bg-muted/40 p-4 font-mono text-xs leading-relaxed text-foreground">
+              {detailQuery.data.policy_text}
+            </pre>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Texto vazio para esta politica de dividendos.
+            </p>
           )}
         </div>
       ) : null}

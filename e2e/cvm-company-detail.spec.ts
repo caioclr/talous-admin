@@ -6,6 +6,8 @@ import {
   CAPITAL_BY_COMPANY_PETROBRAS,
   CHANGES_PETROBRAS,
   COMPANY_DETAIL_PETROBRAS,
+  DIVIDEND_POLICY_BY_COMPANY,
+  DIVIDEND_POLICY_OK_DETAIL,
   FCA_BY_COMPANY_PETROBRAS,
   FRE_BY_COMPANY_PETROBRAS,
   HISTORY_PETROBRAS,
@@ -44,6 +46,16 @@ function mockCompanyDetail(page: import("@playwright/test").Page) {
     releaseDetail: mockGet(page, CvmRoutes.ipeReleaseById, IPE_RELEASE_OK_DETAIL),
     itrDfp: mockGet(page, CvmRoutes.itrDfpFilings, ITR_DFP_FILINGS_WITH_VALIDATION),
     fre: mockGet(page, CvmRoutes.freByCompany, FRE_BY_COMPANY_PETROBRAS),
+    dividendPolicy: mockGet(
+      page,
+      CvmRoutes.freDividendPolicyByCompany,
+      DIVIDEND_POLICY_BY_COMPANY,
+    ),
+    dividendPolicyDetail: mockGet(
+      page,
+      CvmRoutes.freDividendPolicyById,
+      DIVIDEND_POLICY_OK_DETAIL,
+    ),
     fca: mockGet(page, CvmRoutes.fcaByCompany, FCA_BY_COMPANY_PETROBRAS),
     buybacks: mockGet(page, CvmRoutes.buybacksByCompany, BUYBACK_BY_COMPANY_PETROBRAS),
     vlmo: mockGet(page, CvmRoutes.vlmoByCompany, VLMO_BY_COMPANY_PETROBRAS),
@@ -274,11 +286,15 @@ test.describe("CVM company detail — estados de erro/vazio", () => {
       });
     });
 
+    // A sub-aba FRE tem o erro do by-company de FRE; mockamos tambem a politica
+    // de dividendos (S18) com OK para isolar o erro da lista de filings.
+    mockGet(page, CvmRoutes.freDividendPolicyByCompany, DIVIDEND_POLICY_BY_COMPANY);
+
     await page.goto(DETAIL_URL);
     await page.getByRole("tab", { name: "Moderar" }).click();
     await page.getByRole("tab", { name: "FRE" }).click();
 
-    await expect(page.getByText(/Falha ao carregar os dados/)).toBeVisible();
+    await expect(page.getByText("Falha ao carregar os dados: boom")).toBeVisible();
     await expect(page.getByRole("button", { name: "Tentar novamente" })).toBeVisible();
   });
 
@@ -385,6 +401,114 @@ test.describe("CVM company detail — releases de resultados (S16)", () => {
 
     await expect(
       page.getByText("Nenhum release de resultados extraido para esta empresa."),
+    ).toBeVisible();
+  });
+});
+
+test.describe("CVM company detail — politica de dividendos (S18)", () => {
+  test.beforeEach(async ({ page }) => {
+    await mockAuth(page, { authenticated: true });
+  });
+
+  test("lista as politicas na sub-aba FRE de forma lazy", async ({ page }) => {
+    const calls = mockCompanyDetail(page);
+    await page.goto(DETAIL_URL);
+
+    // Info (default) nao busca politica de dividendos.
+    await expect(page.getByText("Setor interno")).toBeVisible();
+    expect(calls.dividendPolicy.length).toBe(0);
+
+    // Abrir Moderar (sub-aba IPE default) ainda nao busca FRE/politica.
+    await page.getByRole("tab", { name: "Moderar" }).click();
+    await expect.poll(() => calls.ipe.length).toBeGreaterThanOrEqual(1);
+    expect(calls.dividendPolicy.length).toBe(0);
+
+    // Trocar para a sub-aba FRE dispara a lista de politicas de dividendos.
+    await page.getByRole("tab", { name: "FRE" }).click();
+    await expect.poll(() => calls.dividendPolicy.length).toBeGreaterThanOrEqual(1);
+
+    const main = page.getByRole("main");
+    await expect(
+      main.getByRole("heading", { name: "Politica de dividendos" }),
+    ).toBeVisible();
+
+    // Detalhe so e buscado ao abrir um item.
+    expect(calls.dividendPolicyDetail.length).toBe(0);
+  });
+
+  test("abrir uma politica ok busca e mostra o policy_text", async ({ page }) => {
+    const calls = mockCompanyDetail(page);
+    await page.goto(DETAIL_URL);
+    await page.getByRole("tab", { name: "Moderar" }).click();
+    await page.getByRole("tab", { name: "FRE" }).click();
+
+    // Identificamos a linha pela badge de status (estavel; a data de referencia
+    // varia com o fuso do runner — ver fixtures).
+    const okRow = page
+      .getByRole("main")
+      .getByRole("listitem")
+      .filter({ hasText: "Texto extraido" });
+
+    await okRow.getByRole("button", { name: "Abrir texto" }).click();
+
+    // Detalhe foi buscado lazy ao abrir.
+    await expect.poll(() => calls.dividendPolicyDetail.length).toBeGreaterThanOrEqual(1);
+    await expect(okRow.getByText(/disciplina de capital/)).toBeVisible();
+  });
+
+  test("politica not_found mostra aviso, nao viewer vazio nem fetch de detalhe", async ({
+    page,
+  }) => {
+    const calls = mockCompanyDetail(page);
+    await page.goto(DETAIL_URL);
+    await page.getByRole("tab", { name: "Moderar" }).click();
+    await page.getByRole("tab", { name: "FRE" }).click();
+
+    const notFoundRow = page
+      .getByRole("main")
+      .getByRole("listitem")
+      .filter({ hasText: "Nao localizada" });
+
+    await notFoundRow.getByRole("button", { name: "Abrir texto" }).click();
+
+    await expect(
+      notFoundRow.getByText("Politica de dividendos nao localizada neste FRE."),
+    ).toBeVisible();
+    // Sem texto => nao busca o detalhe.
+    expect(calls.dividendPolicyDetail.length).toBe(0);
+  });
+
+  test("politica failed mostra aviso de falha na extracao", async ({ page }) => {
+    mockCompanyDetail(page);
+    await page.goto(DETAIL_URL);
+    await page.getByRole("tab", { name: "Moderar" }).click();
+    await page.getByRole("tab", { name: "FRE" }).click();
+
+    const failedRow = page
+      .getByRole("main")
+      .getByRole("listitem")
+      .filter({ hasText: "Falha na extracao" });
+
+    await failedRow.getByRole("button", { name: "Abrir texto" }).click();
+    await expect(
+      failedRow.getByText("Falha na extracao do texto desta politica de dividendos."),
+    ).toBeVisible();
+  });
+
+  test("empresa sem politica de dividendos mostra estado vazio coerente", async ({ page }) => {
+    mockGet(page, CvmRoutes.companyDetail, COMPANY_DETAIL_PETROBRAS);
+    mockGet(page, CvmRoutes.freByCompany, FRE_BY_COMPANY_PETROBRAS);
+    mockGet(page, CvmRoutes.freDividendPolicyByCompany, {
+      items: [],
+      pagination: { page: 1, page_size: 50, total: 0, total_pages: 0 },
+    });
+
+    await page.goto(DETAIL_URL);
+    await page.getByRole("tab", { name: "Moderar" }).click();
+    await page.getByRole("tab", { name: "FRE" }).click();
+
+    await expect(
+      page.getByText("Nenhuma politica de dividendos extraida para esta empresa."),
     ).toBeVisible();
   });
 });
