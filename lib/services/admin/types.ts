@@ -217,6 +217,41 @@ export interface ListIPEDisclosuresParams {
   page_size?: number;
 }
 
+// S15/S16: release de resultados (IPE) com texto extraido. Status de extracao
+// e literal do backend (`ok` | `no_text` | `failed`) — a UI trata != "ok" como
+// aviso (sem texto), nunca viewer vazio.
+export type IPEReleaseExtractionStatus = "ok" | "no_text" | "failed";
+
+export interface IPEReleaseSummary {
+  id: string;
+  ipe_disclosure_id: string;
+  cd_cvm: number;
+  company_id: string | null;
+  reference_date: string | null;
+  title: string;
+  extraction_status: IPEReleaseExtractionStatus;
+  char_count: number;
+  extracted_at: string | null;
+  // Primeiros ~300 chars (sem full_text). Pode ser null quando nao ha texto.
+  excerpt: string | null;
+}
+
+export interface IPEReleaseDetail {
+  id: string;
+  ipe_disclosure_id: string;
+  cd_cvm: number;
+  company_id: string | null;
+  reference_date: string | null;
+  title: string;
+  full_text: string | null;
+  s3_key: string | null;
+  char_count: number;
+  extraction_status: IPEReleaseExtractionStatus;
+  extracted_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface FilingSummary {
   cd_cvm: number;
   denom_cia: string;

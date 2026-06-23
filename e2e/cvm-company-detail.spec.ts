@@ -11,6 +11,8 @@ import {
   HISTORY_PETROBRAS,
   ICBGC_BY_COMPANY_PETROBRAS,
   IPE_DISCLOSURES_LIST,
+  IPE_RELEASE_OK_DETAIL,
+  IPE_RELEASES_BY_COMPANY,
   ITR_DFP_FILINGS_WITH_VALIDATION,
   VLMO_BY_COMPANY_PETROBRAS,
 } from "./fixtures/cvm";
@@ -38,6 +40,8 @@ function mockCompanyDetail(page: import("@playwright/test").Page) {
     history: mockGet(page, CvmRoutes.companyHistory, HISTORY_PETROBRAS),
     changes: mockGet(page, CvmRoutes.companyChanges, CHANGES_PETROBRAS),
     ipe: mockGet(page, CvmRoutes.ipeByCompany, IPE_DISCLOSURES_LIST),
+    releases: mockGet(page, CvmRoutes.ipeReleasesByCompany, IPE_RELEASES_BY_COMPANY),
+    releaseDetail: mockGet(page, CvmRoutes.ipeReleaseById, IPE_RELEASE_OK_DETAIL),
     itrDfp: mockGet(page, CvmRoutes.itrDfpFilings, ITR_DFP_FILINGS_WITH_VALIDATION),
     fre: mockGet(page, CvmRoutes.freByCompany, FRE_BY_COMPANY_PETROBRAS),
     fca: mockGet(page, CvmRoutes.fcaByCompany, FCA_BY_COMPANY_PETROBRAS),
@@ -291,5 +295,96 @@ test.describe("CVM company detail — estados de erro/vazio", () => {
     await page.getByRole("tab", { name: "FCA" }).click();
 
     await expect(page.getByText("Nenhum documento FCA para esta empresa.")).toBeVisible();
+  });
+});
+
+test.describe("CVM company detail — releases de resultados (S16)", () => {
+  test.beforeEach(async ({ page }) => {
+    await mockAuth(page, { authenticated: true });
+  });
+
+  test("lista os releases na sub-aba IPE de forma lazy", async ({ page }) => {
+    const calls = mockCompanyDetail(page);
+    await page.goto(DETAIL_URL);
+
+    // Info (default) nao busca releases.
+    await expect(page.getByText("Setor interno")).toBeVisible();
+    expect(calls.releases.length).toBe(0);
+
+    // Abrir Moderar (sub-aba IPE default) dispara a lista de releases.
+    await page.getByRole("tab", { name: "Moderar" }).click();
+    await expect.poll(() => calls.releases.length).toBeGreaterThanOrEqual(1);
+
+    const main = page.getByRole("main");
+    await expect(main.getByRole("heading", { name: "Releases de resultados" })).toBeVisible();
+    await expect(main.getByText("Release de Resultados 1T26")).toBeVisible();
+    await expect(main.getByText("Release de Resultados 4T25")).toBeVisible();
+
+    // Detalhe so e buscado ao abrir um item.
+    expect(calls.releaseDetail.length).toBe(0);
+  });
+
+  test("abrir um release ok busca e mostra o full_text", async ({ page }) => {
+    const calls = mockCompanyDetail(page);
+    await page.goto(DETAIL_URL);
+    await page.getByRole("tab", { name: "Moderar" }).click();
+
+    const okRow = page
+      .getByRole("main")
+      .getByRole("listitem")
+      .filter({ hasText: "Release de Resultados 1T26" });
+
+    await okRow.getByRole("button", { name: "Abrir texto" }).click();
+
+    // Detalhe foi buscado lazy ao abrir.
+    await expect.poll(() => calls.releaseDetail.length).toBeGreaterThanOrEqual(1);
+    await expect(okRow.getByText(/lucro liquido recorde/)).toBeVisible();
+  });
+
+  test("release no_text mostra aviso, nao viewer vazio nem fetch de detalhe", async ({ page }) => {
+    const calls = mockCompanyDetail(page);
+    await page.goto(DETAIL_URL);
+    await page.getByRole("tab", { name: "Moderar" }).click();
+
+    const noTextRow = page
+      .getByRole("main")
+      .getByRole("listitem")
+      .filter({ hasText: "Release de Resultados 4T25" });
+
+    await noTextRow.getByRole("button", { name: "Abrir texto" }).click();
+
+    await expect(noTextRow.getByText("Sem texto extraivel para este release.")).toBeVisible();
+    // Sem texto => nao busca o detalhe.
+    expect(calls.releaseDetail.length).toBe(0);
+  });
+
+  test("release failed mostra aviso de falha na extracao", async ({ page }) => {
+    mockCompanyDetail(page);
+    await page.goto(DETAIL_URL);
+    await page.getByRole("tab", { name: "Moderar" }).click();
+
+    const failedRow = page
+      .getByRole("main")
+      .getByRole("listitem")
+      .filter({ hasText: "Release de Resultados 3T25" });
+
+    await failedRow.getByRole("button", { name: "Abrir texto" }).click();
+    await expect(failedRow.getByText("Falha na extracao do texto deste release.")).toBeVisible();
+  });
+
+  test("empresa sem releases mostra estado vazio coerente", async ({ page }) => {
+    mockGet(page, CvmRoutes.companyDetail, COMPANY_DETAIL_PETROBRAS);
+    mockGet(page, CvmRoutes.ipeByCompany, IPE_DISCLOSURES_LIST);
+    mockGet(page, CvmRoutes.ipeReleasesByCompany, {
+      items: [],
+      pagination: { page: 1, page_size: 50, total: 0, total_pages: 0 },
+    });
+
+    await page.goto(DETAIL_URL);
+    await page.getByRole("tab", { name: "Moderar" }).click();
+
+    await expect(
+      page.getByText("Nenhum release de resultados extraido para esta empresa."),
+    ).toBeVisible();
   });
 });

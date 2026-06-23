@@ -33,6 +33,8 @@ import type {
   IPEDisclosureDetail,
   IPEDisclosureSummary,
   IPECategoryCount,
+  IPEReleaseDetail,
+  IPEReleaseSummary,
   IPESyncStatusResponse,
   FCAByCompanyResponse,
   FCADocumentoDetail,
@@ -689,6 +691,73 @@ export const IPE_DISCLOSURE_PETROBRAS_DETAIL: IPEDisclosureDetail = {
     CD_CVM: 9512,
     ASSUNTO: "Aprovacao de novo plano estrategico 2026-2030",
   },
+};
+
+// ---------------------------------------------------------------------------
+// S16 — releases de resultados (IPE) com texto extraido.
+// Lista by-company traz resumo + excerpt (sem full_text); o detalhe traz o
+// full_text completo, buscado lazy ao abrir o item.
+// ---------------------------------------------------------------------------
+
+export const IPE_RELEASE_OK_SUMMARY: IPEReleaseSummary = {
+  id: "rel00001-0000-0000-0000-000000000001",
+  ipe_disclosure_id: "ipe00001-0000-0000-0000-000000000001",
+  cd_cvm: 9512,
+  company_id: "comp0001-0000-0000-0000-000000000001",
+  reference_date: "2026-03-31",
+  title: "Release de Resultados 1T26",
+  extraction_status: "ok",
+  char_count: 12840,
+  extracted_at: "2026-04-29T08:05:00Z",
+  excerpt: "A Petrobras registrou no primeiro trimestre de 2026 um lucro liquido de...",
+};
+
+export const IPE_RELEASE_NO_TEXT_SUMMARY: IPEReleaseSummary = {
+  id: "rel00002-0000-0000-0000-000000000002",
+  ipe_disclosure_id: "ipe00003-0000-0000-0000-000000000003",
+  cd_cvm: 9512,
+  company_id: "comp0001-0000-0000-0000-000000000001",
+  reference_date: "2025-12-31",
+  title: "Release de Resultados 4T25",
+  extraction_status: "no_text",
+  char_count: 0,
+  extracted_at: "2026-02-15T08:05:00Z",
+  excerpt: null,
+};
+
+export const IPE_RELEASE_FAILED_SUMMARY: IPEReleaseSummary = {
+  id: "rel00003-0000-0000-0000-000000000003",
+  ipe_disclosure_id: "ipe00004-0000-0000-0000-000000000004",
+  cd_cvm: 9512,
+  company_id: "comp0001-0000-0000-0000-000000000001",
+  reference_date: "2025-09-30",
+  title: "Release de Resultados 3T25",
+  extraction_status: "failed",
+  char_count: 0,
+  extracted_at: null,
+  excerpt: null,
+};
+
+export const IPE_RELEASES_BY_COMPANY: AdminPagedResponse<IPEReleaseSummary> = {
+  items: [IPE_RELEASE_OK_SUMMARY, IPE_RELEASE_NO_TEXT_SUMMARY, IPE_RELEASE_FAILED_SUMMARY],
+  pagination: { page: 1, page_size: 50, total: 3, total_pages: 1 },
+};
+
+export const IPE_RELEASE_OK_DETAIL: IPEReleaseDetail = {
+  id: IPE_RELEASE_OK_SUMMARY.id,
+  ipe_disclosure_id: IPE_RELEASE_OK_SUMMARY.ipe_disclosure_id,
+  cd_cvm: 9512,
+  company_id: IPE_RELEASE_OK_SUMMARY.company_id,
+  reference_date: IPE_RELEASE_OK_SUMMARY.reference_date,
+  title: IPE_RELEASE_OK_SUMMARY.title,
+  full_text:
+    "RELEASE DE RESULTADOS 1T26\n\nA Petrobras registrou no primeiro trimestre de 2026 um lucro liquido recorde, impulsionado pela producao do pre-sal e pela disciplina de capital.",
+  s3_key: "cvm/ipe/releases/9512/2026-03-31.txt",
+  char_count: IPE_RELEASE_OK_SUMMARY.char_count,
+  extraction_status: "ok",
+  extracted_at: IPE_RELEASE_OK_SUMMARY.extracted_at,
+  created_at: "2026-04-29T08:05:00Z",
+  updated_at: "2026-04-29T08:05:00Z",
 };
 
 export const FRE_SYNC_STATUS: FRESyncStatusResponse = {

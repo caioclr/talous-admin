@@ -16,7 +16,11 @@ import {
   getCompanyChanges,
   getCompanyHistory,
 } from "@/lib/services/admin/cvm-registry";
-import { listIPEByCompany } from "@/lib/services/admin/cvm-ipe";
+import {
+  getRelease,
+  listIPEByCompany,
+  listReleasesByCompany,
+} from "@/lib/services/admin/cvm-ipe";
 import { listITRDFPFilingsWithValidation } from "@/lib/services/admin/cvm-itr-dfp";
 import { listFREByCompany } from "@/lib/services/admin/cvm-fre";
 import { getFCAByCompany } from "@/lib/services/admin/cvm-fca";
@@ -25,6 +29,7 @@ import { listVLMOByCompany } from "@/lib/services/admin/cvm-vlmo";
 import { listCapitalCompositionByCompany } from "@/lib/services/admin/cvm-capital-composition";
 import { getICBGCByCompany } from "@/lib/services/admin/cvm-icbgc";
 import type {
+  AdminPagedResponse,
   BuybackProgramSummary,
   CapitalCompositionSnapshotSummary,
   CVMSnapshotSummary,
@@ -33,6 +38,7 @@ import type {
   FREFilingSummary,
   GovernanceReportSummary,
   IPEDisclosureSummary,
+  IPEReleaseSummary,
   RegistryChangeEventResponse,
   VLMOMovimentacaoSummary,
 } from "@/lib/services/admin/types";
@@ -127,6 +133,15 @@ export default function CompanyDetailPage() {
   const ipeQuery = useQuery({
     queryKey: ["cvm", "company", cdCvm, "ipe"],
     queryFn: () => listIPEByCompany(cdCvm, { page: 1, page_size: BY_COMPANY_PAGE_SIZE }),
+    enabled: hasCdCvm && tab === "moderar" && moderarSub === "ipe",
+  });
+
+  // S16: releases de resultados extraidos (texto qualitativo). Lazy junto da
+  // sub-aba IPE; o full_text e buscado item a item ao expandir (ver
+  // ReleasesSection / ReleaseRow).
+  const releasesQuery = useQuery({
+    queryKey: ["cvm", "company", cdCvm, "ipe-releases"],
+    queryFn: () => listReleasesByCompany(cdCvm, { page: 1, page_size: BY_COMPANY_PAGE_SIZE }),
     enabled: hasCdCvm && tab === "moderar" && moderarSub === "ipe",
   });
 
@@ -537,7 +552,7 @@ export default function CompanyDetailPage() {
                   <TabsTrigger value="fca">FCA</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="ipe">
+                <TabsContent value="ipe" className="space-y-8">
                   <TabSection query={ipeQuery}>
                     <DataTable
                       columns={ipeColumns}
@@ -547,6 +562,8 @@ export default function CompanyDetailPage() {
                       emptyMessage="Nenhum disclosure IPE para esta empresa."
                     />
                   </TabSection>
+
+                  <ReleasesSection query={releasesQuery} />
                 </TabsContent>
 
                 <TabsContent value="itr-dfp">
@@ -706,6 +723,128 @@ function TabSection({
   }
 
   return <>{children}</>;
+}
+
+const RELEASE_STATUS_LABEL: Record<IPEReleaseSummary["extraction_status"], string> = {
+  ok: "Texto extraido",
+  no_text: "Sem texto",
+  failed: "Falha na extracao",
+};
+
+function ReleaseStatusBadge({ status }: { status: IPEReleaseSummary["extraction_status"] }) {
+  const variant = status === "ok" ? "default" : status === "failed" ? "destructive" : "secondary";
+  return <Badge variant={variant}>{RELEASE_STATUS_LABEL[status]}</Badge>;
+}
+
+/**
+ * S16: lista os releases de resultados (IPE) extraidos da empresa. Reutiliza o
+ * envelope paginado (le `items`); o `full_text` NAO vem aqui — cada linha o
+ * busca LAZY ao expandir (ver `ReleaseRow`). Estados loading/erro/vazio
+ * coerentes com as demais sub-abas.
+ */
+function ReleasesSection({
+  query,
+}: {
+  query: UseQueryResult<AdminPagedResponse<IPEReleaseSummary>>;
+}) {
+  const releases = query.data?.items ?? [];
+
+  return (
+    <section className="space-y-3" aria-label="Releases de resultados">
+      <div className="space-y-1">
+        <h3 className="text-sm font-semibold text-foreground">Releases de resultados</h3>
+        <p className="text-xs text-muted-foreground">
+          Texto extraido dos releases de resultados (IPE). Abra um item para ler o conteudo completo.
+        </p>
+      </div>
+
+      <TabSection query={query}>
+        {query.isLoading ? (
+          <p className="text-sm text-muted-foreground">Carregando releases…</p>
+        ) : releases.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Nenhum release de resultados extraido para esta empresa.
+          </p>
+        ) : (
+          <ul className="space-y-3">
+            {releases.map((release) => (
+              <ReleaseRow key={release.id} release={release} />
+            ))}
+          </ul>
+        )}
+      </TabSection>
+    </section>
+  );
+}
+
+/**
+ * Uma linha de release: cabecalho sempre visivel (titulo/data/status/char_count)
+ * e viewer expansivel. O detalhe (`full_text`) so e buscado quando o usuario
+ * abre o item (`enabled: open`). Quando `extraction_status != "ok"` mostramos um
+ * aviso claro em vez de viewer vazio.
+ */
+function ReleaseRow({ release }: { release: IPEReleaseSummary }) {
+  const [open, setOpen] = useState(false);
+  const hasText = release.extraction_status === "ok";
+
+  const detailQuery = useQuery({
+    queryKey: ["cvm", "release", release.id],
+    queryFn: () => getRelease(release.id),
+    enabled: open && hasText,
+  });
+
+  return (
+    <li className="rounded-2xl border border-border/80 bg-background/70">
+      <div className="flex flex-wrap items-start justify-between gap-3 px-4 py-3">
+        <div className="min-w-0 space-y-1">
+          <p className="truncate text-sm font-medium text-foreground">{release.title}</p>
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <span>Referencia: {formatDate(release.reference_date)}</span>
+            <span aria-hidden>·</span>
+            <span>{release.char_count.toLocaleString("pt-BR")} caracteres</span>
+            <ReleaseStatusBadge status={release.extraction_status} />
+          </div>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          aria-expanded={open}
+          onClick={() => setOpen((value) => !value)}
+        >
+          {open ? "Fechar" : "Abrir texto"}
+        </Button>
+      </div>
+
+      {open ? (
+        <div className="border-t border-border/60 px-4 py-3">
+          {!hasText ? (
+            <p className="text-sm text-muted-foreground">
+              {release.extraction_status === "failed"
+                ? "Falha na extracao do texto deste release."
+                : "Sem texto extraivel para este release."}
+            </p>
+          ) : detailQuery.isLoading ? (
+            <p className="text-sm text-muted-foreground">Carregando texto…</p>
+          ) : detailQuery.isError ? (
+            <div className="space-y-3">
+              <p className="text-sm text-destructive">
+                Falha ao carregar o texto: {(detailQuery.error as Error).message}
+              </p>
+              <Button variant="outline" size="sm" onClick={() => detailQuery.refetch()}>
+                Tentar novamente
+              </Button>
+            </div>
+          ) : detailQuery.data?.full_text ? (
+            <pre className="max-h-[28rem] overflow-auto whitespace-pre-wrap break-words rounded-xl bg-muted/40 p-4 font-mono text-xs leading-relaxed text-foreground">
+              {detailQuery.data.full_text}
+            </pre>
+          ) : (
+            <p className="text-sm text-muted-foreground">Texto vazio para este release.</p>
+          )}
+        </div>
+      ) : null}
+    </li>
+  );
 }
 
 function DetailItem({
