@@ -132,6 +132,10 @@ export const CvmRoutes = {
   freFilingsList: /\/api\/v1\/admin\/cvm\/fre\/filings(\?.*)?$/,
   freFilingById: /\/api\/v1\/admin\/cvm\/fre\/filings\/[^/?]+$/,
   freByCompany: /\/api\/v1\/admin\/cvm\/fre\/by-company\/\d+(\?.*)?$/,
+  // S18 — politica de dividendos extraida do FRE. by-company e detalhe por id.
+  freDividendPolicyByCompany:
+    /\/api\/v1\/admin\/cvm\/fre\/dividend-policy\/by-company\/\d+(\?.*)?$/,
+  freDividendPolicyById: /\/api\/v1\/admin\/cvm\/fre\/dividend-policy\/[^/?]+$/,
   fcaSyncStatus: /\/api\/v1\/admin\/cvm\/fca\/sync-status$/,
   fcaSync: /\/api\/v1\/admin\/cvm\/fca\/sync(\?.*)?$/,
   fcaDocumentosList: /\/api\/v1\/admin\/cvm\/fca\/documentos(\?.*)?$/,

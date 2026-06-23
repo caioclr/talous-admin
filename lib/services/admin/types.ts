@@ -252,6 +252,46 @@ export interface IPEReleaseDetail {
   updated_at: string;
 }
 
+// S17/S18: politica de dividendos extraida do FRE. Status de extracao e literal
+// do backend (`ok` | `not_found` | `no_text` | `failed`) — a UI trata != "ok"
+// como aviso (sem texto), nunca viewer vazio. Difere do release (IPE) por ter o
+// estado extra `not_found` (secao nao localizada no documento).
+export type FREDividendPolicyExtractionStatus =
+  | "ok"
+  | "not_found"
+  | "no_text"
+  | "failed";
+
+export interface FREDividendPolicySummary {
+  id: string;
+  fre_filing_id: string;
+  cd_cvm: number;
+  company_id: string | null;
+  reference_date: string | null;
+  extraction_status: FREDividendPolicyExtractionStatus;
+  source_format: string | null;
+  char_count: number;
+  extracted_at: string | null;
+  // Primeiros ~300 chars (sem policy_text). Pode ser null quando nao ha texto.
+  excerpt: string | null;
+}
+
+export interface FREDividendPolicyDetail {
+  id: string;
+  fre_filing_id: string;
+  cd_cvm: number;
+  company_id: string | null;
+  reference_date: string | null;
+  policy_text: string | null;
+  s3_key: string | null;
+  char_count: number;
+  extraction_status: FREDividendPolicyExtractionStatus;
+  source_format: string | null;
+  extracted_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface FilingSummary {
   cd_cvm: number;
   denom_cia: string;

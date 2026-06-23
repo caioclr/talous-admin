@@ -2,6 +2,8 @@ import { apiClient } from "@/lib/services/client";
 import type {
   AdminPagedResponse,
   FREByCompanyResponse,
+  FREDividendPolicyDetail,
+  FREDividendPolicySummary,
   FREFilingDetail,
   FREFilingSummary,
   FRESyncStatusResponse,
@@ -29,6 +31,27 @@ export function listFREByCompany(
   return apiClient<FREByCompanyResponse>(
     `/admin/cvm/fre/by-company/${cdCvm}`,
     { params },
+  );
+}
+
+// S18: politicas de dividendos extraidas do FRE de uma empresa (resumo +
+// excerpt, sem policy_text). Envelope paginado
+// `AdminPagedResponse<FREDividendPolicySummary>`.
+export function listDividendPolicyByCompany(
+  cdCvm: string | number,
+  params?: { page?: number; page_size?: number },
+) {
+  return apiClient<AdminPagedResponse<FREDividendPolicySummary>>(
+    `/admin/cvm/fre/dividend-policy/by-company/${cdCvm}`,
+    { params },
+  );
+}
+
+// S18: detalhe de uma politica de dividendos (inclui policy_text). Buscado
+// LAZY, so ao abrir o item.
+export function getDividendPolicy(policyId: string) {
+  return apiClient<FREDividendPolicyDetail>(
+    `/admin/cvm/fre/dividend-policy/${policyId}`,
   );
 }
 

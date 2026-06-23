@@ -41,6 +41,8 @@ import type {
   FCADocumentoSummary,
   FCASyncStatusResponse,
   FREByCompanyResponse,
+  FREDividendPolicyDetail,
+  FREDividendPolicySummary,
   FREFilingDetail,
   FREFilingSummary,
   FRESyncStatusResponse,
@@ -1215,6 +1217,78 @@ export const FRE_BY_COMPANY_PETROBRAS: FREByCompanyResponse = {
       validation: VALIDATION_VALID,
     },
   ],
+};
+
+// ---------------------------------------------------------------------------
+// S18 — politica de dividendos (FRE) com texto extraido.
+// Lista by-company traz resumo + excerpt (sem policy_text); o detalhe traz o
+// policy_text completo, buscado lazy ao abrir o item. Status com 4 estados
+// (ok | not_found | no_text | failed).
+// ---------------------------------------------------------------------------
+
+export const DIVIDEND_POLICY_OK_SUMMARY: FREDividendPolicySummary = {
+  id: "pol00001-0000-0000-0000-000000000001",
+  fre_filing_id: "fff1111-1111-1111-1111-111111111111",
+  cd_cvm: 9512,
+  company_id: "comp0001-0000-0000-0000-000000000001",
+  reference_date: "2025-12-31",
+  extraction_status: "ok",
+  source_format: "html",
+  char_count: 8420,
+  extracted_at: "2026-04-29T08:05:00Z",
+  excerpt: "A Companhia adota politica de remuneracao aos acionistas baseada em...",
+};
+
+export const DIVIDEND_POLICY_NOT_FOUND_SUMMARY: FREDividendPolicySummary = {
+  id: "pol00002-0000-0000-0000-000000000002",
+  fre_filing_id: "fff3333-3333-3333-3333-333333333333",
+  cd_cvm: 9512,
+  company_id: "comp0001-0000-0000-0000-000000000001",
+  reference_date: "2024-12-31",
+  extraction_status: "not_found",
+  source_format: null,
+  char_count: 0,
+  extracted_at: "2025-04-29T08:05:00Z",
+  excerpt: null,
+};
+
+export const DIVIDEND_POLICY_FAILED_SUMMARY: FREDividendPolicySummary = {
+  id: "pol00003-0000-0000-0000-000000000003",
+  fre_filing_id: "fff4444-4444-4444-4444-444444444444",
+  cd_cvm: 9512,
+  company_id: "comp0001-0000-0000-0000-000000000001",
+  reference_date: "2023-12-31",
+  extraction_status: "failed",
+  source_format: null,
+  char_count: 0,
+  extracted_at: null,
+  excerpt: null,
+};
+
+export const DIVIDEND_POLICY_BY_COMPANY: AdminPagedResponse<FREDividendPolicySummary> = {
+  items: [
+    DIVIDEND_POLICY_OK_SUMMARY,
+    DIVIDEND_POLICY_NOT_FOUND_SUMMARY,
+    DIVIDEND_POLICY_FAILED_SUMMARY,
+  ],
+  pagination: { page: 1, page_size: 50, total: 3, total_pages: 1 },
+};
+
+export const DIVIDEND_POLICY_OK_DETAIL: FREDividendPolicyDetail = {
+  id: DIVIDEND_POLICY_OK_SUMMARY.id,
+  fre_filing_id: DIVIDEND_POLICY_OK_SUMMARY.fre_filing_id,
+  cd_cvm: 9512,
+  company_id: DIVIDEND_POLICY_OK_SUMMARY.company_id,
+  reference_date: DIVIDEND_POLICY_OK_SUMMARY.reference_date,
+  policy_text:
+    "POLITICA DE DIVIDENDOS\n\nA Companhia adota politica de remuneracao aos acionistas baseada na geracao de caixa livre e na disciplina de capital, distribuindo dividendos minimos obrigatorios nos termos da legislacao e do estatuto social.",
+  s3_key: "cvm/fre/dividend-policy/9512/2025-12-31.txt",
+  char_count: DIVIDEND_POLICY_OK_SUMMARY.char_count,
+  extraction_status: "ok",
+  source_format: "html",
+  extracted_at: DIVIDEND_POLICY_OK_SUMMARY.extracted_at,
+  created_at: "2026-04-29T08:05:00Z",
+  updated_at: "2026-04-29T08:05:00Z",
 };
 
 export const BUYBACK_BY_COMPANY_PETROBRAS: BuybackByCompanyResponse = {
