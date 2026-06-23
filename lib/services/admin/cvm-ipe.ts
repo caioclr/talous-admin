@@ -4,6 +4,8 @@ import type {
   IPECategoryCount,
   IPEDisclosureDetail,
   IPEDisclosureSummary,
+  IPEReleaseDetail,
+  IPEReleaseSummary,
   IPESyncStatusResponse,
   ListIPEDisclosuresParams,
   TriggerIPESyncResponse,
@@ -26,6 +28,25 @@ export function listIPEByCompany(cdCvm: string | number, params?: { categoria?: 
       params,
     },
   );
+}
+
+// S16: releases de resultados extraidos de uma empresa (resumo + excerpt, sem
+// full_text). Envelope paginado `AdminPagedResponse<IPEReleaseSummary>`.
+export function listReleasesByCompany(
+  cdCvm: string | number,
+  params?: { page?: number; page_size?: number },
+) {
+  return apiClient<AdminPagedResponse<IPEReleaseSummary>>(
+    `/admin/cvm/ipe/releases/by-company/${cdCvm}`,
+    {
+      params,
+    },
+  );
+}
+
+// S16: detalhe de um release (inclui full_text). Buscado LAZY, so ao abrir o item.
+export function getRelease(releaseId: string) {
+  return apiClient<IPEReleaseDetail>(`/admin/cvm/ipe/releases/${releaseId}`);
 }
 
 export function listIPECategories(days = 90) {

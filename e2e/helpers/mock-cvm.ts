@@ -95,6 +95,9 @@ export const CvmRoutes = {
   sectorMappingUnmapped: /\/api\/v1\/admin\/cvm\/sector-mapping\/unmapped$/,
   sectorMappingItem: /\/api\/v1\/admin\/cvm\/sector-mapping\/[^/?]+$/,
   ipeByCompany: /\/api\/v1\/admin\/cvm\/ipe\/disclosures\/by-company\/\d+(\?.*)?$/,
+  // S16 — releases de resultados extraidos. by-company e detalhe por id.
+  ipeReleasesByCompany: /\/api\/v1\/admin\/cvm\/ipe\/releases\/by-company\/\d+(\?.*)?$/,
+  ipeReleaseById: /\/api\/v1\/admin\/cvm\/ipe\/releases\/[^/?]+$/,
   ipeSyncStatus: /\/api\/v1\/admin\/cvm\/ipe\/sync-status$/,
   ipeSync: /\/api\/v1\/admin\/cvm\/ipe\/sync(\?.*)?$/,
   ipeCategories: /\/api\/v1\/admin\/cvm\/ipe\/categories(\?.*)?$/,

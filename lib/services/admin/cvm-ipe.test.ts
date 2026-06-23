@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  getRelease,
   listIPEByCompany,
   listIPEDisclosures,
+  listReleasesByCompany,
   triggerIPESync,
 } from "@/lib/services/admin/cvm-ipe";
 import { setAccessToken } from "@/lib/services/client";
@@ -98,6 +100,43 @@ describe("cvm-ipe service", () => {
       expect.objectContaining({
         credentials: "include",
       }),
+    );
+  });
+
+  it("builds releases by-company URL with paging window", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        items: [],
+        pagination: { page: 1, page_size: 50, total: 0, total_pages: 0 },
+      }),
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await listReleasesByCompany(9512, { page: 1, page_size: 50 });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://localhost:8001/api/v1/admin/cvm/ipe/releases/by-company/9512?page=1&page_size=50",
+      expect.objectContaining({ credentials: "include" }),
+    );
+  });
+
+  it("builds release detail URL by id", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ id: "rel-1", full_text: "x" }),
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await getRelease("rel00001-0000-0000-0000-000000000001");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://localhost:8001/api/v1/admin/cvm/ipe/releases/rel00001-0000-0000-0000-000000000001",
+      expect.objectContaining({ credentials: "include" }),
     );
   });
 
