@@ -12,6 +12,7 @@ import { formatDateTime, formatDuration } from "@/lib/formatters";
 import {
   JOB_LABELS,
   getOpsJobs,
+  getOpsWorkers,
   jobDescription,
   jobLabel,
 } from "@/lib/services/admin/ops-jobs";
@@ -163,6 +164,13 @@ export default function OpsJobsPage() {
       }),
   });
 
+  const workersQuery = useQuery({
+    queryKey: ["cvm", "ops", "workers"],
+    queryFn: getOpsWorkers,
+    refetchInterval: 30_000,
+  });
+  const workers = workersQuery.data?.workers ?? [];
+
   const jobs = useMemo(() => jobsQuery.data?.jobs ?? [], [jobsQuery.data]);
   const history = jobsQuery.data?.history ?? [];
 
@@ -209,6 +217,58 @@ export default function OpsJobsPage() {
           <SummaryTile label="Atrasados (stale)" value={String(summary.stale)} tone="warning" />
         </div>
       </section>
+
+      <Card>
+        <CardHeader className="flex-row items-center justify-between gap-2 space-y-0">
+          <div>
+            <CardTitle className="text-sm">Workers Celery</CardTitle>
+            <CardDescription className="text-[11px]">
+              Estado ao vivo dos workers (heartbeat, tarefas ativas/reservadas) e profundidade da fila.
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-3 text-[11px]">
+            <Badge variant={workersQuery.data?.online_count ? "default" : "destructive"} className="gap-1">
+              {workersQuery.data?.online_count ?? 0} online
+            </Badge>
+            <span className="text-muted-foreground">
+              Fila:{" "}
+              <span className="font-mono text-foreground">
+                {workersQuery.data?.queue_depth ?? "—"}
+              </span>
+            </span>
+          </div>
+        </CardHeader>
+        <CardContent className="text-[11px]">
+          {workersQuery.isLoading ? (
+            <p className="text-muted-foreground">Carregando…</p>
+          ) : workers.length === 0 ? (
+            <p className="text-destructive">Nenhum worker online.</p>
+          ) : (
+            <div className="flex flex-col gap-1">
+              {workers.map((w) => (
+                <div
+                  key={w.name}
+                  className="flex items-center justify-between gap-2 rounded border border-border px-2 py-1.5"
+                >
+                  <span className="flex items-center gap-2 font-mono">
+                    <span
+                      className={`size-1.5 rounded-full ${w.online ? "bg-emerald-500" : "bg-red-500"}`}
+                    />
+                    {w.name}
+                  </span>
+                  <span className="flex items-center gap-3 text-muted-foreground">
+                    <span>ativas: <span className="text-foreground">{w.active_tasks}</span></span>
+                    <span>reservadas: <span className="text-foreground">{w.reserved_tasks}</span></span>
+                    {w.concurrency != null && (
+                      <span>conc.: <span className="text-foreground">{w.concurrency}</span></span>
+                    )}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <section className="space-y-2">
         <h3 className="text-sm font-semibold text-foreground">Status por job</h3>

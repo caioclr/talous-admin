@@ -78,3 +78,26 @@ export function jobLabel(jobName: string): string {
 export function jobDescription(jobName: string): string {
   return JOB_DESCRIPTIONS[jobName] ?? "";
 }
+
+/**
+ * Estado dos workers Celery (Fase 4). `GET /admin/ops/workers` devolve os
+ * workers online, tarefas ativas/reservadas, concorrencia e a profundidade da
+ * fila. Somente leitura.
+ */
+export interface WorkerInfo {
+  name: string;
+  online: boolean;
+  active_tasks: number;
+  reserved_tasks: number;
+  concurrency: number | null;
+}
+
+export interface WorkersResponse {
+  workers: WorkerInfo[];
+  online_count: number;
+  queue_depth: number | null;
+}
+
+export function getOpsWorkers() {
+  return apiClient<WorkersResponse>("/admin/ops/workers");
+}
