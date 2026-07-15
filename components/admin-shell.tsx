@@ -37,6 +37,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { NotificationBell } from "@/components/notification-bell";
 import { logout } from "@/lib/services/auth";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { CvmAcronym } from "@/components/cvm-acronym";
@@ -261,6 +262,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
 
+          <div className="flex items-center gap-1">
+          <NotificationBell />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 rounded px-2 py-1 text-[11px] text-muted-foreground hover:bg-card-raised hover:text-foreground transition">
@@ -282,6 +285,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          </div>
         </header>
 
         {/* Content */}
