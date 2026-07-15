@@ -22,7 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatDate, formatDateTime, formatDuration } from "@/lib/formatters";
 import {
   ALERT_TYPE_LABELS,
-  ALERT_TYPE_ORIGIN,
+  alertOrigin,
   listOperationalAlerts,
 } from "@/lib/services/admin/cvm-alerts";
 import {
@@ -217,7 +217,7 @@ function AlertRow({ alert }: { alert: OperationalAlert }) {
     variant: "secondary" as const,
   };
   const typeLabel = ALERT_TYPE_LABELS[alert.alert_type] ?? alert.alert_type;
-  const origin = ALERT_TYPE_ORIGIN[alert.alert_type];
+  const origin = alertOrigin(alert);
 
   return (
     <div className="flex items-start gap-3 border-b border-border/60 px-4 py-3 last:border-b-0">
