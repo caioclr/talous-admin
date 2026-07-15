@@ -1,7 +1,9 @@
 # Multi-stage build for the Next.js admin panel (standalone output).
 # Builds natively for the host arch (arm64 on the Oracle Ampere VM).
-# The admin proxies the backend server-side via BACKEND_API_ORIGIN (runtime env),
-# so no backend URL needs to be baked at build time.
+# The admin proxies the backend server-side via a Next rewrite whose destination
+# is BACKEND_API_ORIGIN. Next resolves rewrites at BUILD time, so this must be a
+# build arg (not only a runtime env) — otherwise the default localhost:8001 gets
+# baked and the proxy fails (ECONNREFUSED) inside the compose network.
 FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
@@ -11,6 +13,8 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+ARG BACKEND_API_ORIGIN=http://api:8001
+ENV BACKEND_API_ORIGIN=$BACKEND_API_ORIGIN
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
