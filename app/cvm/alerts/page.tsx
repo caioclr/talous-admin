@@ -28,7 +28,7 @@ import { JsonViewer } from "@/components/json-viewer";
 import { formatDate, formatDateTime } from "@/lib/formatters";
 import {
   ALERT_TYPE_LABELS,
-  ALERT_TYPE_ORIGIN,
+  alertOrigin,
   getAlertsSummary,
   listOperationalAlerts,
 } from "@/lib/services/admin/cvm-alerts";
@@ -115,7 +115,7 @@ function buildColumns(
       key: "origin",
       header: "Origem",
       render: (row) => {
-        const origin = ALERT_TYPE_ORIGIN[row.alert_type];
+        const origin = alertOrigin(row);
         return origin ? (
           <Link
             className="inline-flex items-center gap-1 text-primary underline-offset-4 hover:underline"

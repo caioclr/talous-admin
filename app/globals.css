@@ -107,13 +107,3 @@ textarea {
   position: relative;
   overflow: hidden;
 }
-
-.metric-tile::after {
-  content: "";
-  position: absolute;
-  inset: auto -10% -20% auto;
-  width: 120px;
-  height: 120px;
-  border-radius: 999px;
-  background: radial-gradient(circle, var(--accent-dim), transparent 65%);
-}
