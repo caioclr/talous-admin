@@ -15,6 +15,12 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ARG BACKEND_API_ORIGIN=http://api:8001
 ENV BACKEND_API_ORIGIN=$BACKEND_API_ORIGIN
+# Client bundle base URL. Must be the RELATIVE same-origin path so the browser
+# calls https://admin.../api/v1/... and Next rewrites it server-side to
+# BACKEND_API_ORIGIN. NEXT_PUBLIC_* is inlined at build time — if left unset the
+# client falls back to http://localhost:8001 and every browser request fails.
+ARG NEXT_PUBLIC_API_URL=/api/v1
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
