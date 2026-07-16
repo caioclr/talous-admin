@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
+import { DEFAULT_PAGE_SIZE_OPTIONS } from "@/components/pagination";
 import {
   ParticipantesSyncCards,
   situacaoBadgeVariant,
@@ -88,6 +89,7 @@ const columns: DataTableColumn<IntermediarioRegistrySummary>[] = [
 
 export default function ParticipantesIntermediariosPage() {
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const [situacao, setSituacao] = useState("");
   const [tipoParticipante, setTipoParticipante] = useState("");
   const [validationStatus, setValidationStatus] = useState("");
@@ -97,12 +99,12 @@ export default function ParticipantesIntermediariosPage() {
       "cvm",
       "participantes",
       "intermediarios",
-      { page, situacao, tipoParticipante, validationStatus },
+      { page, pageSize, situacao, tipoParticipante, validationStatus },
     ],
     queryFn: () =>
       listIntermediarios({
         page,
-        page_size: 25,
+        page_size: pageSize,
         situacao: situacao || undefined,
         tipo_participante: tipoParticipante || undefined,
         validation_status: asValidationStatus(validationStatus),
@@ -180,6 +182,11 @@ export default function ParticipantesIntermediariosPage() {
         loading={intermediariosQuery.isLoading}
         pagination={intermediariosQuery.data?.pagination}
         onPageChange={setPage}
+        pageSizeOptions={DEFAULT_PAGE_SIZE_OPTIONS}
+        onPageSizeChange={(size) => {
+          setPage(1);
+          setPageSize(size);
+        }}
         getRowKey={(row) => row.id}
         emptyMessage="Nenhum intermediario encontrado para os filtros informados."
       />

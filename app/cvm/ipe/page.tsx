@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { BellRing, RefreshCcw, Search } from "lucide-react";
 import { toast } from "sonner";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
+import { DEFAULT_PAGE_SIZE_OPTIONS } from "@/components/pagination";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -129,6 +130,7 @@ function toIsoDate(value: string) {
 export default function IPEPage() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [search, setSearch] = useState("");
   const [cdCvm, setCdCvm] = useState("");
   const [categoria, setCategoria] = useState("");
@@ -157,6 +159,7 @@ export default function IPEPage() {
       "disclosures",
       {
         page,
+        pageSize,
         search,
         cdCvm,
         categoria,
@@ -171,7 +174,7 @@ export default function IPEPage() {
     queryFn: () =>
       listIPEDisclosures({
         page,
-        page_size: 20,
+        page_size: pageSize,
         search: search || undefined,
         cd_cvm: cdCvm ? Number(cdCvm) : undefined,
         categoria: categoria || undefined,
@@ -451,6 +454,11 @@ export default function IPEPage() {
         loading={disclosuresQuery.isLoading}
         pagination={disclosuresQuery.data?.pagination}
         onPageChange={setPage}
+        pageSizeOptions={DEFAULT_PAGE_SIZE_OPTIONS}
+        onPageSizeChange={(size) => {
+          setPage(1);
+          setPageSize(size);
+        }}
         getRowKey={(row) => row.id}
         emptyMessage="Nenhum disclosure encontrado."
       />

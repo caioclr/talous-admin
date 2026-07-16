@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
+import { DEFAULT_PAGE_SIZE_OPTIONS } from "@/components/pagination";
 import {
   ValidationBadge,
   ValidationStatusFilter,
@@ -128,6 +129,7 @@ const columns: DataTableColumn<FCADocumentoSummary>[] = [
 export default function FCAPage() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const [cdCvm, setCdCvm] = useState("");
   const [cnpj, setCnpj] = useState("");
   const [year, setYear] = useState("");
@@ -147,12 +149,12 @@ export default function FCAPage() {
       "cvm",
       "fca",
       "documentos",
-      { page, cdCvmNumber, cnpj, year, validationStatus },
+      { page, pageSize, cdCvmNumber, cnpj, year, validationStatus },
     ],
     queryFn: () =>
       listFCADocumentos({
         page,
-        page_size: 25,
+        page_size: pageSize,
         cd_cvm: cdCvmNumber,
         cnpj: cnpj || undefined,
         year: year ? Number(year) : undefined,
@@ -372,6 +374,11 @@ export default function FCAPage() {
         loading={documentosQuery.isLoading}
         pagination={documentosQuery.data?.pagination}
         onPageChange={setPage}
+        pageSizeOptions={DEFAULT_PAGE_SIZE_OPTIONS}
+        onPageSizeChange={(size) => {
+          setPage(1);
+          setPageSize(size);
+        }}
         getRowKey={(row) => row.id}
         emptyMessage="Nenhum documento FCA encontrado para os filtros informados."
       />

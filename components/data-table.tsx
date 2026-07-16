@@ -25,6 +25,8 @@ interface DataTableProps<T> {
   loading?: boolean;
   emptyMessage?: string;
   onPageChange?: (page: number) => void;
+  pageSizeOptions?: number[];
+  onPageSizeChange?: (size: number) => void;
   getRowKey?: (row: T, index: number) => string;
   onRowClick?: (row: T) => void;
 }
@@ -36,6 +38,8 @@ export function DataTable<T>({
   loading = false,
   emptyMessage = "Nenhum registro encontrado.",
   onPageChange,
+  pageSizeOptions,
+  onPageSizeChange,
   getRowKey,
   onRowClick,
 }: DataTableProps<T>) {
@@ -97,7 +101,12 @@ export function DataTable<T>({
       </div>
 
       {pagination && onPageChange ? (
-        <PaginationControls pagination={pagination} onPageChange={onPageChange} />
+        <PaginationControls
+          pagination={pagination}
+          onPageChange={onPageChange}
+          pageSizeOptions={pageSizeOptions}
+          onPageSizeChange={onPageSizeChange}
+        />
       ) : null}
     </div>
   );

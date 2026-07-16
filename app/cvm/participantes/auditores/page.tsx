@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
+import { DEFAULT_PAGE_SIZE_OPTIONS } from "@/components/pagination";
 import {
   ParticipantesSyncCards,
   situacaoBadgeVariant,
@@ -91,16 +92,17 @@ const columns: DataTableColumn<AuditorRegistrySummary>[] = [
 
 export default function ParticipantesAuditoresPage() {
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const [situacao, setSituacao] = useState("");
   const [tipo, setTipo] = useState("");
   const [validationStatus, setValidationStatus] = useState("");
 
   const auditoresQuery = useQuery({
-    queryKey: ["cvm", "participantes", "auditores", { page, situacao, tipo, validationStatus }],
+    queryKey: ["cvm", "participantes", "auditores", { page, pageSize, situacao, tipo, validationStatus }],
     queryFn: () =>
       listAuditores({
         page,
-        page_size: 25,
+        page_size: pageSize,
         situacao: situacao || undefined,
         tipo: tipo ? (tipo as "PJ" | "PF") : undefined,
         validation_status: asValidationStatus(validationStatus),
@@ -181,6 +183,11 @@ export default function ParticipantesAuditoresPage() {
         loading={auditoresQuery.isLoading}
         pagination={auditoresQuery.data?.pagination}
         onPageChange={setPage}
+        pageSizeOptions={DEFAULT_PAGE_SIZE_OPTIONS}
+        onPageSizeChange={(size) => {
+          setPage(1);
+          setPageSize(size);
+        }}
         getRowKey={(row) => row.id}
         emptyMessage="Nenhum auditor encontrado para os filtros informados."
       />
