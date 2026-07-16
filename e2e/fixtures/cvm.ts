@@ -89,11 +89,15 @@ export const COMPANY_PETROBRAS: AdminCompanySummary = {
   name: "Petroleo Brasileiro S.A. - Petrobras",
   cnpj: "33000167000101",
   sector_slug: "energy",
+  sector_name: "Energia",
+  subsector_slug: null,
+  subsector_name: null,
   cvm_situation: "ATIVO",
   cvm_category: "A",
   cvm_market_type: "BOLSA",
   is_active: true,
   primary_ticker: "PETR4",
+  tickers: ["PETR4", "PETR3"],
   cvm_last_synced_at: "2026-04-29T08:00:00Z",
 };
 
@@ -103,11 +107,15 @@ export const COMPANY_VALE: AdminCompanySummary = {
   name: "Vale S.A.",
   cnpj: "33592510000154",
   sector_slug: "materials",
+  sector_name: "Materiais Basicos",
+  subsector_slug: null,
+  subsector_name: null,
   cvm_situation: "ATIVO",
   cvm_category: "A",
   cvm_market_type: "BOLSA",
   is_active: true,
   primary_ticker: "VALE3",
+  tickers: ["VALE3"],
   cvm_last_synced_at: "2026-04-29T08:00:00Z",
 };
 

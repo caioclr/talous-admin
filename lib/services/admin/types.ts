@@ -81,11 +81,16 @@ export interface AdminCompanySummary {
   name: string;
   cnpj: string | null;
   sector_slug: string | null;
+  sector_name: string | null;
+  subsector_slug: string | null;
+  subsector_name: string | null;
   cvm_situation: string | null;
   cvm_category: string | null;
   cvm_market_type: string | null;
   is_active: boolean;
   primary_ticker: string | null;
+  // Todos os tickers ativos da empresa (primario primeiro).
+  tickers: string[];
   cvm_last_synced_at: string | null;
 }
 
@@ -97,6 +102,7 @@ export interface AdminCompanyDetail extends AdminCompanySummary {
   cvm_cancellation_reason: string | null;
   cvm_controlling_shareholder: string | null;
   cvm_setor_atividade: string | null;
+  // Detalhe traz o historico completo (inclui deslistados).
   tickers: string[];
 }
 
@@ -134,6 +140,9 @@ export interface ListCompaniesParams {
   category?: string;
   market_type?: string;
   sector_slug?: string;
+  // Filtro hierarquico multi setor/subsetor (CSV de slugs); combinam via OR.
+  sector_slugs?: string;
+  subsector_slugs?: string;
   is_active?: boolean;
   // Termo unico de busca: backend faz OR entre nome (acento-insensivel),
   // CNPJ (substring), ticker e cd_cvm (match exato quando numerico).
