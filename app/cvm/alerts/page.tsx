@@ -24,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
+import { DEFAULT_PAGE_SIZE_OPTIONS } from "@/components/pagination";
 import { JsonViewer } from "@/components/json-viewer";
 import { formatDate, formatDateTime } from "@/lib/formatters";
 import {
@@ -153,6 +154,7 @@ function buildColumns(
 
 export default function AlertsPage() {
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const [severity, setSeverity] = useState("");
   const [alertType, setAlertType] = useState("");
   const [cdCvm, setCdCvm] = useState("");
@@ -166,11 +168,11 @@ export default function AlertsPage() {
   });
 
   const alertsQuery = useQuery({
-    queryKey: ["cvm", "alerts", "list", { page, severity, alertType, cdCvmNumber }],
+    queryKey: ["cvm", "alerts", "list", { page, pageSize, severity, alertType, cdCvmNumber }],
     queryFn: () =>
       listOperationalAlerts({
         page,
-        page_size: 25,
+        page_size: pageSize,
         severity: severity || undefined,
         alert_type: alertType || undefined,
         cd_cvm: cdCvmNumber,
@@ -304,6 +306,11 @@ export default function AlertsPage() {
         loading={alertsQuery.isLoading}
         pagination={alertsQuery.data?.pagination}
         onPageChange={setPage}
+        pageSizeOptions={DEFAULT_PAGE_SIZE_OPTIONS}
+        onPageSizeChange={(size) => {
+          setPage(1);
+          setPageSize(size);
+        }}
         getRowKey={(row, index) => `${row.alert_type}-${row.detected_at}-${index}`}
         onRowClick={setSelected}
         emptyMessage="Nenhum alerta operacional encontrado para os filtros informados."

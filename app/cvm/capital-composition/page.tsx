@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
+import { DEFAULT_PAGE_SIZE_OPTIONS } from "@/components/pagination";
 import { CapitalCompositionChart } from "@/components/charts/capital-composition-chart";
 import {
   ValidationBadge,
@@ -113,6 +114,7 @@ const columns: DataTableColumn<CapitalCompositionSnapshotSummary>[] = [
 export default function CapitalCompositionPage() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [cdCvmInput, setCdCvmInput] = useState("");
   const [cnpj, setCnpj] = useState("");
   const [source, setSource] = useState("");
@@ -136,12 +138,12 @@ export default function CapitalCompositionPage() {
       "cvm",
       "capital-composition",
       "snapshots",
-      { page, cdCvm, cnpj, source, periodType, validationStatus },
+      { page, pageSize, cdCvm, cnpj, source, periodType, validationStatus },
     ],
     queryFn: () =>
       listCapitalCompositionSnapshots({
         page,
-        page_size: 20,
+        page_size: pageSize,
         cd_cvm: cdCvm,
         cnpj: cnpj || undefined,
         source: source || undefined,
@@ -374,6 +376,11 @@ export default function CapitalCompositionPage() {
         loading={snapshotsQuery.isLoading}
         pagination={snapshotsQuery.data?.pagination}
         onPageChange={setPage}
+        pageSizeOptions={DEFAULT_PAGE_SIZE_OPTIONS}
+        onPageSizeChange={(size) => {
+          setPage(1);
+          setPageSize(size);
+        }}
         getRowKey={(row) => row.id}
         emptyMessage="Nenhum snapshot encontrado para os filtros informados."
       />

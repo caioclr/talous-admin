@@ -6,6 +6,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { Check, RefreshCcw, Search } from "lucide-react";
 import { toast } from "sonner";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
+import { DEFAULT_PAGE_SIZE_OPTIONS } from "@/components/pagination";
 import { CvmAcronym } from "@/components/cvm-acronym";
 import {
   AlertDialog,
@@ -109,6 +110,7 @@ function toIsoDate(value: string) {
 
 export default function ITRDFPPage() {
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
   const [cdCvm, setCdCvm] = useState("");
   const [docType, setDocType] = useState("");
   const [grupoDfr, setGrupoDfr] = useState("");
@@ -123,12 +125,12 @@ export default function ITRDFPPage() {
       "cvm",
       "itr-dfp",
       "filings",
-      { page, cdCvm, docType, grupoDfr, validationStatus, refDateFrom, refDateTo },
+      { page, pageSize, cdCvm, docType, grupoDfr, validationStatus, refDateFrom, refDateTo },
     ],
     queryFn: () =>
       listITRDFPFilingsWithValidation({
         page,
-        page_size: 50,
+        page_size: pageSize,
         cd_cvm: cdCvm ? Number(cdCvm) : undefined,
         doc_type: docType || undefined,
         grupo_dfr: grupoDfr || undefined,
@@ -338,6 +340,11 @@ export default function ITRDFPPage() {
           loading={filingsQuery.isLoading}
           pagination={filingsQuery.data?.pagination}
           onPageChange={setPage}
+          pageSizeOptions={DEFAULT_PAGE_SIZE_OPTIONS}
+          onPageSizeChange={(size) => {
+            setPage(1);
+            setPageSize(size);
+          }}
           getRowKey={(row, index) =>
             `${row.cd_cvm}-${row.doc_type}-${row.reference_date}-${row.grupo_dfr}-${row.version}-${index}`
           }

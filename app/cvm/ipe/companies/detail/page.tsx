@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
+import { DEFAULT_PAGE_SIZE_OPTIONS } from "@/components/pagination";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { listIPEByCompany } from "@/lib/services/admin/cvm-ipe";
@@ -60,14 +61,15 @@ export default function IPECompanyHistoryPage() {
   const searchParams = useSearchParams();
   const cdCvm = searchParams.get("cd_cvm") ?? "";
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [categoria, setCategoria] = useState("");
 
   const historyQuery = useQuery({
-    queryKey: ["cvm", "ipe", "company", cdCvm, { page, categoria }],
+    queryKey: ["cvm", "ipe", "company", cdCvm, { page, pageSize, categoria }],
     queryFn: () =>
       listIPEByCompany(cdCvm, {
         page,
-        page_size: 20,
+        page_size: pageSize,
         categoria: categoria || undefined,
       }),
   });
@@ -109,6 +111,11 @@ export default function IPECompanyHistoryPage() {
         loading={historyQuery.isLoading}
         pagination={historyQuery.data?.pagination}
         onPageChange={setPage}
+        pageSizeOptions={DEFAULT_PAGE_SIZE_OPTIONS}
+        onPageSizeChange={(size) => {
+          setPage(1);
+          setPageSize(size);
+        }}
         getRowKey={(row) => row.id}
         emptyMessage="Nenhum disclosure IPE encontrado para esta empresa."
       />

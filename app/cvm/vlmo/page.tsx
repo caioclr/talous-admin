@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
+import { DEFAULT_PAGE_SIZE_OPTIONS } from "@/components/pagination";
 import { CvmAcronym } from "@/components/cvm-acronym";
 import { formatDate, formatDateTime, formatDecimal, truncateHash } from "@/lib/formatters";
 import {
@@ -119,6 +120,7 @@ const columns: DataTableColumn<VLMOMovimentacaoSummary>[] = [
 export default function VLMOPage() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const [cnpj, setCnpj] = useState("");
   const [tipoCargo, setTipoCargo] = useState("");
   const [tipoMovimentacao, setTipoMovimentacao] = useState("");
@@ -137,12 +139,12 @@ export default function VLMOPage() {
       "cvm",
       "vlmo",
       "movimentacoes",
-      { page, cnpj, tipoCargo, tipoMovimentacao, yearFilter, includeSnapshot },
+      { page, pageSize, cnpj, tipoCargo, tipoMovimentacao, yearFilter, includeSnapshot },
     ],
     queryFn: () =>
       listVLMOMovimentacoes({
         page,
-        page_size: 25,
+        page_size: pageSize,
         cnpj: cnpj || undefined,
         tipo_cargo: tipoCargo || undefined,
         tipo_movimentacao: tipoMovimentacao || undefined,
@@ -384,6 +386,11 @@ export default function VLMOPage() {
         loading={movQuery.isLoading}
         pagination={movQuery.data?.pagination}
         onPageChange={setPage}
+        pageSizeOptions={DEFAULT_PAGE_SIZE_OPTIONS}
+        onPageSizeChange={(size) => {
+          setPage(1);
+          setPageSize(size);
+        }}
         getRowKey={(row) => row.id}
         emptyMessage="Nenhuma movimentacao encontrada para os filtros informados."
       />

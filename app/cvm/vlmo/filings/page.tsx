@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
+import { DEFAULT_PAGE_SIZE_OPTIONS } from "@/components/pagination";
 import {
   ValidationBadge,
   ValidationStatusFilter,
@@ -84,6 +85,7 @@ const columns: DataTableColumn<VLMOFilingSummary>[] = [
 
 export default function VLMOFilingsPage() {
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const [cnpj, setCnpj] = useState("");
   const [cdCvm, setCdCvm] = useState("");
   const [yearFilter, setYearFilter] = useState("");
@@ -94,12 +96,12 @@ export default function VLMOFilingsPage() {
       "cvm",
       "vlmo",
       "filings",
-      { page, cnpj, cdCvm, yearFilter, validationStatus },
+      { page, pageSize, cnpj, cdCvm, yearFilter, validationStatus },
     ],
     queryFn: () =>
       listVLMOFilings({
         page,
-        page_size: 25,
+        page_size: pageSize,
         cnpj: cnpj || undefined,
         cd_cvm: cdCvm ? Number(cdCvm) : undefined,
         year: yearFilter ? Number(yearFilter) : undefined,
@@ -196,6 +198,11 @@ export default function VLMOFilingsPage() {
         loading={filingsQuery.isLoading}
         pagination={filingsQuery.data?.pagination}
         onPageChange={setPage}
+        pageSizeOptions={DEFAULT_PAGE_SIZE_OPTIONS}
+        onPageSizeChange={(size) => {
+          setPage(1);
+          setPageSize(size);
+        }}
         getRowKey={(row) => row.id}
         emptyMessage="Nenhum filing VLMO encontrado para os filtros informados."
       />

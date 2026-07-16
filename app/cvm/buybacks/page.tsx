@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
+import { DEFAULT_PAGE_SIZE_OPTIONS } from "@/components/pagination";
 import {
   ValidationBadge,
   ValidationStatusFilter,
@@ -120,6 +121,7 @@ const baseColumns: DataTableColumn<BuybackProgramSummary>[] = [
 export default function BuybacksPage() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [cdCvm, setCdCvm] = useState("");
   const [situacao, setSituacao] = useState("");
   const [tipoOperacao, setTipoOperacao] = useState("");
@@ -143,12 +145,12 @@ export default function BuybacksPage() {
       "cvm",
       "buybacks",
       "programs",
-      { page, cdCvmNumber, situacao, tipoOperacao, validationStatus },
+      { page, pageSize, cdCvmNumber, situacao, tipoOperacao, validationStatus },
     ],
     queryFn: () =>
       listBuybackPrograms({
         page,
-        page_size: 20,
+        page_size: pageSize,
         cd_cvm: cdCvmNumber,
         situacao: situacao || undefined,
         tipo_operacao: tipoOperacao || undefined,
@@ -335,6 +337,11 @@ export default function BuybacksPage() {
         loading={programsQuery.isLoading}
         pagination={programsQuery.data?.pagination}
         onPageChange={setPage}
+        pageSizeOptions={DEFAULT_PAGE_SIZE_OPTIONS}
+        onPageSizeChange={(size) => {
+          setPage(1);
+          setPageSize(size);
+        }}
         getRowKey={(row) => row.id}
         emptyMessage="Nenhum programa encontrado para os filtros informados."
       />
