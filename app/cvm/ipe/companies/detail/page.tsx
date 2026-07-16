@@ -6,6 +6,8 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { DEFAULT_PAGE_SIZE_OPTIONS } from "@/components/pagination";
+import { PageBreadcrumb } from "@/components/page-breadcrumb";
+import { DetailHeaderSkeleton } from "@/components/detail-skeleton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { listIPEByCompany } from "@/lib/services/admin/cvm-ipe";
@@ -74,8 +76,19 @@ export default function IPECompanyHistoryPage() {
       }),
   });
 
+  const companyName = historyQuery.data?.items[0]?.nome_companhia;
+
   return (
     <div className="flex flex-col gap-4">
+      <PageBreadcrumb
+        backHref="/cvm/ipe"
+        trail={[{ label: "IPE", href: "/cvm/ipe" }, { label: `Empresa ${cdCvm}` }]}
+        title={companyName}
+        subtitle={`cd_cvm ${cdCvm}`}
+      />
+
+      {historyQuery.isLoading ? <DetailHeaderSkeleton /> : null}
+
       <Card>
         <CardHeader>
           <CardTitle>Historico IPE da empresa {cdCvm}</CardTitle>

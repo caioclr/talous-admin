@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Check, RefreshCcw, Search } from "lucide-react";
+import { Check, RefreshCcw } from "lucide-react";
 import { toast } from "sonner";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
+import { FilterBar } from "@/components/filter-bar";
 import { DEFAULT_PAGE_SIZE_OPTIONS } from "@/components/pagination";
 import { CvmAcronym } from "@/components/cvm-acronym";
 import {
@@ -111,6 +112,7 @@ function toIsoDate(value: string) {
 export default function ITRDFPPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
+  const [search, setSearch] = useState("");
   const [cdCvm, setCdCvm] = useState("");
   const [docType, setDocType] = useState("");
   const [grupoDfr, setGrupoDfr] = useState("");
@@ -119,18 +121,20 @@ export default function ITRDFPPage() {
   const [refDateTo, setRefDateTo] = useState("");
   const [syncDocType, setSyncDocType] = useState("itr");
   const [syncYear, setSyncYear] = useState(new Date().getFullYear().toString());
+  const deferredSearch = useDeferredValue(search);
 
   const filingsQuery = useQuery({
     queryKey: [
       "cvm",
       "itr-dfp",
       "filings",
-      { page, pageSize, cdCvm, docType, grupoDfr, validationStatus, refDateFrom, refDateTo },
+      { page, pageSize, deferredSearch, cdCvm, docType, grupoDfr, validationStatus, refDateFrom, refDateTo },
     ],
     queryFn: () =>
       listITRDFPFilingsWithValidation({
         page,
         page_size: pageSize,
+        search: deferredSearch || undefined,
         cd_cvm: cdCvm ? Number(cdCvm) : undefined,
         doc_type: docType || undefined,
         grupo_dfr: grupoDfr || undefined,
@@ -244,18 +248,25 @@ export default function ITRDFPPage() {
         </div>
       </section>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Filtros de conferencia</CardTitle>
-          <CardDescription>
-            Filtre por status de validacao para amostrar pendentes ou revisar validados por periodo.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      {filingsQuery.isError ? (
+        <Card>
+          <CardContent className="p-6 text-sm text-destructive">
+            Nao foi possivel carregar os filings. {filingsQuery.error?.message}
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="flex flex-col gap-2">
+          <FilterBar
+            search={{
+              value: search,
+              onChange: (value) => {
+                setPage(1);
+                setSearch(value);
+              },
+              placeholder: "Buscar por empresa",
+            }}
+          >
             <Input
-              className="pl-10"
               type="number"
               placeholder="cd_cvm"
               aria-label="cd_cvm"
@@ -265,91 +276,83 @@ export default function ITRDFPPage() {
                 setCdCvm(event.target.value);
               }}
             />
-          </div>
 
-          <Select
-            aria-label="Status de validacao"
-            value={validationStatus}
-            onChange={(event) => {
-              setPage(1);
-              setValidationStatus(event.target.value);
-            }}
-          >
-            <option value="">Todos status</option>
-            <option value="pending">Pendente</option>
-            <option value="valid">Validado</option>
-          </Select>
+            <Select
+              aria-label="Status de validacao"
+              value={validationStatus}
+              onChange={(event) => {
+                setPage(1);
+                setValidationStatus(event.target.value);
+              }}
+            >
+              <option value="">Todos status</option>
+              <option value="pending">Pendente</option>
+              <option value="valid">Validado</option>
+            </Select>
 
-          <Select
-            aria-label="Doc type"
-            value={docType}
-            onChange={(event) => {
-              setPage(1);
-              setDocType(event.target.value);
-            }}
-          >
-            <option value="">Doc type</option>
-            <option value="itr">ITR</option>
-            <option value="dfp">DFP</option>
-          </Select>
+            <Select
+              aria-label="Doc type"
+              value={docType}
+              onChange={(event) => {
+                setPage(1);
+                setDocType(event.target.value);
+              }}
+            >
+              <option value="">Doc type</option>
+              <option value="itr">ITR</option>
+              <option value="dfp">DFP</option>
+            </Select>
 
-          <Select
-            aria-label="Grupo DFR"
-            value={grupoDfr}
-            onChange={(event) => {
-              setPage(1);
-              setGrupoDfr(event.target.value);
-            }}
-          >
-            <option value="">Grupo DFR</option>
-            <option value="consolidado">consolidado</option>
-            <option value="individual">individual</option>
-          </Select>
+            <Select
+              aria-label="Grupo DFR"
+              value={grupoDfr}
+              onChange={(event) => {
+                setPage(1);
+                setGrupoDfr(event.target.value);
+              }}
+            >
+              <option value="">Grupo DFR</option>
+              <option value="consolidado">consolidado</option>
+              <option value="individual">individual</option>
+            </Select>
 
-          <Input
-            type="date"
-            aria-label="Referencia de"
-            value={refDateFrom}
-            onChange={(event) => {
+            <Input
+              type="date"
+              aria-label="Referencia de"
+              value={refDateFrom}
+              onChange={(event) => {
+                setPage(1);
+                setRefDateFrom(event.target.value);
+              }}
+            />
+            <Input
+              type="date"
+              aria-label="Referencia ate"
+              value={refDateTo}
+              onChange={(event) => {
+                setPage(1);
+                setRefDateTo(event.target.value);
+              }}
+            />
+          </FilterBar>
+
+          <DataTable
+            columns={columns}
+            data={filingsQuery.data?.items ?? []}
+            loading={filingsQuery.isLoading}
+            pagination={filingsQuery.data?.pagination}
+            onPageChange={setPage}
+            pageSizeOptions={DEFAULT_PAGE_SIZE_OPTIONS}
+            onPageSizeChange={(size) => {
               setPage(1);
-              setRefDateFrom(event.target.value);
+              setPageSize(size);
             }}
+            getRowKey={(row, index) =>
+              `${row.cd_cvm}-${row.doc_type}-${row.reference_date}-${row.grupo_dfr}-${row.version}-${index}`
+            }
+            emptyMessage="Nenhum filing encontrado para os filtros informados."
           />
-          <Input
-            type="date"
-            aria-label="Referencia ate"
-            value={refDateTo}
-            onChange={(event) => {
-              setPage(1);
-              setRefDateTo(event.target.value);
-            }}
-          />
-        </CardContent>
-      </Card>
-
-      {filingsQuery.isError ? (
-        <Card>
-          <CardContent className="p-6 text-sm text-destructive">
-            Nao foi possivel carregar os filings. {filingsQuery.error?.message}
-          </CardContent>
-        </Card>
-      ) : (
-        <DataTable
-          columns={columns}
-          data={filingsQuery.data?.items ?? []}
-          loading={filingsQuery.isLoading}
-          pagination={filingsQuery.data?.pagination}
-          onPageChange={setPage}
-          pageSizeOptions={DEFAULT_PAGE_SIZE_OPTIONS}
-          onPageSizeChange={(size) => {
-            setPage(1);
-            setPageSize(size);
-          }}
-          getRowKey={(row, index) =>
-            `${row.cd_cvm}-${row.doc_type}-${row.reference_date}-${row.grupo_dfr}-${row.version}-${index}`
-          }
-          emptyMessage="Nenhum filing encontrado para os filtros informados."
-        />
+        </div>
       )}
     </div>
   );
