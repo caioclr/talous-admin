@@ -6,8 +6,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
+import { DEFAULT_PAGE_SIZE_OPTIONS } from "@/components/pagination";
 import {
   ValidationBadge,
   ValidationStatusFilter,
@@ -86,6 +86,7 @@ function toIsoDateTime(value: string) {
 export default function SnapshotsPage() {
   const router = useRouter();
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [cdCvm, setCdCvm] = useState("");
   const [capturedAtFrom, setCapturedAtFrom] = useState("");
   const [capturedAtTo, setCapturedAtTo] = useState("");
@@ -95,12 +96,12 @@ export default function SnapshotsPage() {
     queryKey: [
       "cvm",
       "snapshots",
-      { page, cdCvm, capturedAtFrom, capturedAtTo, validationStatus },
+      { page, pageSize, cdCvm, capturedAtFrom, capturedAtTo, validationStatus },
     ],
     queryFn: () =>
       listSnapshots({
         page,
-        page_size: 20,
+        page_size: pageSize,
         cd_cvm: cdCvm ? Number(cdCvm) : undefined,
         captured_at_from: toIsoDateTime(capturedAtFrom),
         captured_at_to: toIsoDateTime(capturedAtTo),
@@ -143,17 +144,14 @@ export default function SnapshotsPage() {
               setCapturedAtTo(event.target.value);
             }}
           />
-          <div className="space-y-1.5">
-            <Label htmlFor="filter-validation-status">Status de validacao</Label>
-            <ValidationStatusFilter
-              id="filter-validation-status"
-              value={validationStatus}
-              onChange={(value) => {
-                setPage(1);
-                setValidationStatus(value);
-              }}
-            />
-          </div>
+          <ValidationStatusFilter
+            id="filter-validation-status"
+            value={validationStatus}
+            onChange={(value) => {
+              setPage(1);
+              setValidationStatus(value);
+            }}
+          />
         </CardContent>
       </Card>
 
@@ -163,8 +161,15 @@ export default function SnapshotsPage() {
         loading={snapshotsQuery.isLoading}
         pagination={snapshotsQuery.data?.pagination}
         onPageChange={setPage}
+        pageSizeOptions={DEFAULT_PAGE_SIZE_OPTIONS}
+        onPageSizeChange={(size) => {
+          setPage(1);
+          setPageSize(size);
+        }}
         getRowKey={(row) => row.id}
-        onRowClick={(row) => router.push(`/cvm/snapshots/detail?id=${row.id}`)}
+        onRowClick={(row) =>
+          router.push(`/cvm/snapshots/validate?id=${encodeURIComponent(row.id)}`)
+        }
         emptyMessage="Nenhum snapshot encontrado."
       />
     </div>

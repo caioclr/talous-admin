@@ -9,6 +9,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
+import { DEFAULT_PAGE_SIZE_OPTIONS } from "@/components/pagination";
+import {
+  SectorMultiSelect,
+  type SectorSelection,
+} from "@/components/sector-multi-select";
 import { formatDateTime } from "@/lib/formatters";
 import { listAdminCompanies } from "@/lib/services/admin/cvm-registry";
 import type { AdminCompanySummary } from "@/lib/services/admin/types";
@@ -27,12 +32,33 @@ const columns: DataTableColumn<AdminCompanySummary>[] = [
   {
     key: "ticker",
     header: "Ticker",
-    render: (row) => <Badge>{row.primary_ticker ?? "—"}</Badge>,
+    render: (row) =>
+      row.tickers.length === 0 ? (
+        "—"
+      ) : (
+        <div className="flex flex-wrap gap-1">
+          {row.tickers.map((ticker) => (
+            <Badge
+              key={ticker}
+              variant={ticker === row.primary_ticker ? "default" : "secondary"}
+            >
+              {ticker}
+            </Badge>
+          ))}
+        </div>
+      ),
   },
   {
     key: "sector",
     header: "Setor",
-    render: (row) => row.sector_slug ?? "—",
+    render: (row) => (
+      <div className="space-y-1">
+        <p>{row.sector_name ?? row.sector_slug ?? "—"}</p>
+        {row.subsector_name ? (
+          <p className="text-xs text-muted-foreground">{row.subsector_name}</p>
+        ) : null}
+      </div>
+    ),
   },
   {
     key: "status",
@@ -68,11 +94,14 @@ const columns: DataTableColumn<AdminCompanySummary>[] = [
 export default function CompaniesPage() {
   const router = useRouter();
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [search, setSearch] = useState("");
   const [situation, setSituation] = useState("");
-  const [category, setCategory] = useState("");
   const [marketType, setMarketType] = useState("");
-  const [sectorSlug, setSectorSlug] = useState("");
+  const [sectorSelection, setSectorSelection] = useState<SectorSelection>({
+    sectorSlugs: [],
+    subsectorSlugs: [],
+  });
   const [active, setActive] = useState("");
   // Default ON: o admin opera so com empresas da B3. Enviado explicitamente
   // porque o backend tem default false.
@@ -83,17 +112,17 @@ export default function CompaniesPage() {
     queryKey: [
       "cvm",
       "companies",
-      { page, deferredSearch, situation, category, marketType, sectorSlug, active, b3Only },
+      { page, pageSize, deferredSearch, situation, marketType, sectorSelection, active, b3Only },
     ],
     queryFn: () =>
       listAdminCompanies({
         page,
-        page_size: 20,
+        page_size: pageSize,
         search: deferredSearch || undefined,
         situation: situation || undefined,
-        category: category || undefined,
         market_type: marketType || undefined,
-        sector_slug: sectorSlug || undefined,
+        sector_slugs: sectorSelection.sectorSlugs.join(",") || undefined,
+        subsector_slugs: sectorSelection.subsectorSlugs.join(",") || undefined,
         is_active:
           active === "" ? undefined : active === "true",
         b3_only: b3Only,
@@ -136,18 +165,6 @@ export default function CompaniesPage() {
             <option value="SUSPENSO">SUSPENSO</option>
           </Select>
 
-          <Select
-            value={category}
-            onChange={(event) => {
-              setPage(1);
-              setCategory(event.target.value);
-            }}
-          >
-            <option value="">Categoria</option>
-            <option value="A">A</option>
-            <option value="B">B</option>
-          </Select>
-
           <Input
             value={marketType}
             placeholder="Tipo de mercado"
@@ -157,12 +174,11 @@ export default function CompaniesPage() {
             }}
           />
 
-          <Input
-            value={sectorSlug}
-            placeholder="Sector slug"
-            onChange={(event) => {
+          <SectorMultiSelect
+            value={sectorSelection}
+            onChange={(value) => {
               setPage(1);
-              setSectorSlug(event.target.value);
+              setSectorSelection(value);
             }}
           />
 
@@ -208,6 +224,11 @@ export default function CompaniesPage() {
           loading={companiesQuery.isLoading}
           pagination={companiesQuery.data?.pagination}
           onPageChange={setPage}
+          pageSizeOptions={DEFAULT_PAGE_SIZE_OPTIONS}
+          onPageSizeChange={(size) => {
+            setPage(1);
+            setPageSize(size);
+          }}
           getRowKey={(row) => row.id}
           onRowClick={(row) => {
             if (row.cd_cvm) {
