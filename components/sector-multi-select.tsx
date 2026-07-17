@@ -68,7 +68,10 @@ export function SectorMultiSelect({ value, onChange }: SectorMultiSelectProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="w-full justify-between font-normal">
+        <Button
+          variant="outline"
+          className="h-11 w-full justify-between rounded-2xl bg-background px-4 text-sm font-normal"
+        >
           <span className={totalSelected === 0 ? "text-muted-foreground" : undefined}>
             {label}
           </span>
