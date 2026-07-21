@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
+import { PageBreadcrumb } from "@/components/page-breadcrumb";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ValidationActionPanel, ValidationBadge } from "@/components/validation";
 import { formatDate, formatDateTime, formatDecimal, formatList } from "@/lib/formatters";
@@ -462,34 +463,30 @@ export default function CompanyDetailPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                <Link href="/cvm/companies" className="hover:text-foreground">
-                  Empresas
-                </Link>
-                <span>/</span>
-                <span className="font-mono">{company?.primary_ticker ?? cdCvm}</span>
-              </div>
-              <CardTitle className="mt-1">{company?.name ?? `Empresa ${cdCvm}`}</CardTitle>
-              <CardDescription className="mt-1">
-                {company ? formatList(company.tickers) : "Carregando tickers..."}
-                {company?.cvm_setor_atividade ? ` · ${company.cvm_setor_atividade}` : ""}
-              </CardDescription>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <Badge>{company?.cvm_situation ?? "—"}</Badge>
-              <Badge variant={company?.is_active ? "success" : "warning"}>
-                {company?.is_active ? "Ativa" : "Inativa"}
-              </Badge>
-              <Badge variant="secondary">Codigo CVM: {company?.cd_cvm ?? cdCvm}</Badge>
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
+      <PageBreadcrumb
+        backHref="/cvm/companies"
+        trail={[
+          { label: "Empresas", href: "/cvm/companies" },
+          { label: String(company?.primary_ticker ?? cdCvm) },
+        ]}
+        title={company?.name ?? `Empresa ${cdCvm}`}
+        subtitle={
+          company
+            ? `${formatList(company.tickers)}${
+                company.cvm_setor_atividade ? ` · ${company.cvm_setor_atividade}` : ""
+              }`
+            : "Carregando tickers..."
+        }
+        actions={
+          <>
+            <Badge>{company?.cvm_situation ?? "—"}</Badge>
+            <Badge variant={company?.is_active ? "success" : "warning"}>
+              {company?.is_active ? "Ativa" : "Inativa"}
+            </Badge>
+            <Badge variant="secondary">Codigo CVM: {company?.cd_cvm ?? cdCvm}</Badge>
+          </>
+        }
+      />
 
       <Tabs value={tab} onValueChange={(value) => setTab(value as TopTab)}>
         <TabsList>

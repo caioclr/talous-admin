@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useDeferredValue, useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { RefreshCcw } from "lucide-react";
@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
+import { FilterBar } from "@/components/filter-bar";
 import { DEFAULT_PAGE_SIZE_OPTIONS } from "@/components/pagination";
 import {
   ValidationBadge,
@@ -122,6 +123,7 @@ export default function BuybacksPage() {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
+  const [search, setSearch] = useState("");
   const [cdCvm, setCdCvm] = useState("");
   const [situacao, setSituacao] = useState("");
   const [tipoOperacao, setTipoOperacao] = useState("");
@@ -129,6 +131,7 @@ export default function BuybacksPage() {
   const [forceSync, setForceSync] = useState(false);
 
   const cdCvmNumber = Number(cdCvm) || undefined;
+  const deferredSearch = useDeferredValue(search);
 
   const syncStatusQuery = useQuery({
     queryKey: ["cvm", "buybacks", "sync-status"],
@@ -145,12 +148,13 @@ export default function BuybacksPage() {
       "cvm",
       "buybacks",
       "programs",
-      { page, pageSize, cdCvmNumber, situacao, tipoOperacao, validationStatus },
+      { page, pageSize, deferredSearch, cdCvmNumber, situacao, tipoOperacao, validationStatus },
     ],
     queryFn: () =>
       listBuybackPrograms({
         page,
         page_size: pageSize,
+        search: deferredSearch || undefined,
         cd_cvm: cdCvmNumber,
         situacao: situacao || undefined,
         tipo_operacao: tipoOperacao || undefined,
@@ -268,14 +272,17 @@ export default function BuybacksPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Todos os programas</CardTitle>
-          <CardDescription>
-            Use os filtros para buscar por empresa, situacao ou tipo de operacao.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-3">
+      <div className="flex flex-col gap-2">
+        <FilterBar
+          search={{
+            value: search,
+            onChange: (value) => {
+              setPage(1);
+              setSearch(value);
+            },
+            placeholder: "Buscar por empresa",
+          }}
+        >
           <div className="space-y-1.5">
             <Label htmlFor="filter-cd-cvm">cd_cvm</Label>
             <Input
@@ -328,23 +335,23 @@ export default function BuybacksPage() {
               }}
             />
           </div>
-        </CardContent>
-      </Card>
+        </FilterBar>
 
-      <DataTable
-        columns={baseColumns}
-        data={programsQuery.data?.items ?? []}
-        loading={programsQuery.isLoading}
-        pagination={programsQuery.data?.pagination}
-        onPageChange={setPage}
-        pageSizeOptions={DEFAULT_PAGE_SIZE_OPTIONS}
-        onPageSizeChange={(size) => {
-          setPage(1);
-          setPageSize(size);
-        }}
-        getRowKey={(row) => row.id}
-        emptyMessage="Nenhum programa encontrado para os filtros informados."
-      />
+        <DataTable
+          columns={baseColumns}
+          data={programsQuery.data?.items ?? []}
+          loading={programsQuery.isLoading}
+          pagination={programsQuery.data?.pagination}
+          onPageChange={setPage}
+          pageSizeOptions={DEFAULT_PAGE_SIZE_OPTIONS}
+          onPageSizeChange={(size) => {
+            setPage(1);
+            setPageSize(size);
+          }}
+          getRowKey={(row) => row.id}
+          emptyMessage="Nenhum programa encontrado para os filtros informados."
+        />
+      </div>
     </div>
   );
 }

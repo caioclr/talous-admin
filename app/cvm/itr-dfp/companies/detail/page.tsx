@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
+import { PageBreadcrumb } from "@/components/page-breadcrumb";
+import { DetailHeaderSkeleton } from "@/components/detail-skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select } from "@/components/ui/select";
@@ -144,8 +146,19 @@ export default function ITRDFPCompanyExplorerPage() {
     enabled: Boolean(selectedFiling?.reference_date),
   });
 
+  const companyName = filingsQuery.data?.items[0]?.denom_cia;
+
   return (
     <div className="flex flex-col gap-4">
+      <PageBreadcrumb
+        backHref="/cvm/itr-dfp"
+        trail={[{ label: "ITR/DFP", href: "/cvm/itr-dfp" }, { label: `Empresa ${cdCvm}` }]}
+        title={companyName}
+        subtitle={`cd_cvm ${cdCvm}`}
+      />
+
+      {filingsQuery.isLoading ? <DetailHeaderSkeleton /> : null}
+
       <Card>
         <CardHeader>
           <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">

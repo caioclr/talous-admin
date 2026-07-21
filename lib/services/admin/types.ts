@@ -366,6 +366,8 @@ export interface ListFilingsParams {
   ref_date_from?: string;
   ref_date_to?: string;
   grupo_dfr?: string;
+  // Busca por nome da empresa (acento-insensivel) no endpoint de filings.
+  search?: string;
   // S09 T02: `limit` foi removido do backend; a listagem agora e paginada
   // (`page` >= 1 default 1, `page_size` 1..200 default 50).
   page?: number;
@@ -608,6 +610,8 @@ export interface ListBuybackProgramsParams {
   cnpj?: string;
   situacao?: string;
   tipo_operacao?: string;
+  // Busca por nome da empresa (acento-insensivel) no endpoint de programas.
+  search?: string;
   // S02 T02: filtro de amostragem pendente/validado (resolvido em lote no backend).
   validation_status?: ValidationStatus;
   page?: number;

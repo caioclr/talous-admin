@@ -198,7 +198,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                         key={item.href}
                         aria-disabled="true"
                         title="Em breve"
-                        className="flex items-center gap-2 rounded px-2 py-1.5 text-[11px] text-muted-foreground/50"
+                        className="flex items-center gap-2 rounded px-2 py-1.5 text-[13px] text-muted-foreground/50"
                       >
                         <item.icon className="size-3.5 opacity-40" />
                         <NavLabel label={item.label} />
@@ -216,7 +216,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                       onClick={() => setMobileOpen(false)}
                       aria-current={active ? "page" : undefined}
                       className={cn(
-                        "flex items-center gap-2 rounded px-2 py-1.5 text-[11px] font-medium transition",
+                        "flex items-center gap-2 rounded px-2 py-1.5 text-[13px] font-medium transition",
                         active
                           ? "bg-accent-dim text-foreground"
                           : "text-muted-foreground hover:bg-card-raised hover:text-foreground",

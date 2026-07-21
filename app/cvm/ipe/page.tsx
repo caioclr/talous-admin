@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useDeferredValue, useState } from "react";
 import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { BellRing, RefreshCcw, Search } from "lucide-react";
+import { BellRing, RefreshCcw } from "lucide-react";
 import { toast } from "sonner";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
+import { FilterBar } from "@/components/filter-bar";
 import { DEFAULT_PAGE_SIZE_OPTIONS } from "@/components/pagination";
 import {
   AlertDialog,
@@ -141,6 +142,7 @@ export default function IPEPage() {
   const [deliveredFrom, setDeliveredFrom] = useState("");
   const [deliveredTo, setDeliveredTo] = useState("");
   const [syncYear, setSyncYear] = useState(new Date().getFullYear().toString());
+  const deferredSearch = useDeferredValue(search);
 
   const syncStatusQuery = useQuery({
     queryKey: ["cvm", "ipe", "sync-status"],
@@ -160,7 +162,7 @@ export default function IPEPage() {
       {
         page,
         pageSize,
-        search,
+        deferredSearch,
         cdCvm,
         categoria,
         tipoApresentacao,
@@ -175,7 +177,7 @@ export default function IPEPage() {
       listIPEDisclosures({
         page,
         page_size: pageSize,
-        search: search || undefined,
+        search: deferredSearch || undefined,
         cd_cvm: cdCvm ? Number(cdCvm) : undefined,
         categoria: categoria || undefined,
         tipo_apresentacao: tipoApresentacao || undefined,
@@ -278,116 +280,7 @@ export default function IPEPage() {
         </div>
       </section>
 
-      <div className="grid gap-4 xl:grid-cols-[1.3fr_0.7fr]">
-        <Card>
-          <CardHeader>
-            <CardTitle>Filtros de disclosures</CardTitle>
-            <CardDescription>
-              Busca textual por assunto e recortes por empresa, categoria, tipo, sinal e notificacao.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <div className="relative md:col-span-2 xl:col-span-2">
-              <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                className="pl-10"
-                placeholder="Buscar no assunto"
-                value={search}
-                onChange={(event) => {
-                  setPage(1);
-                  setSearch(event.target.value);
-                }}
-              />
-            </div>
-
-            <Input
-              type="number"
-              placeholder="cd_cvm"
-              value={cdCvm}
-              onChange={(event) => {
-                setPage(1);
-                setCdCvm(event.target.value);
-              }}
-            />
-
-            <Input
-              placeholder="Categoria"
-              value={categoria}
-              onChange={(event) => {
-                setPage(1);
-                setCategoria(event.target.value);
-              }}
-            />
-
-            <Select
-              value={tipoApresentacao}
-              onChange={(event) => {
-                setPage(1);
-                setTipoApresentacao(event.target.value);
-              }}
-            >
-              <option value="">Tipo apresentacao</option>
-              <option value="AP">AP</option>
-              <option value="RE">RE</option>
-            </Select>
-
-            <Select
-              value={signal}
-              onChange={(event) => {
-                setPage(1);
-                setSignal(event.target.value);
-              }}
-            >
-              <option value="">Signal</option>
-              <option value="material_fact">material_fact</option>
-              <option value="communication_critical">communication_critical</option>
-              <option value="general">general</option>
-            </Select>
-
-            <Select
-              value={notified}
-              onChange={(event) => {
-                setPage(1);
-                setNotified(event.target.value);
-              }}
-            >
-              <option value="">Notificado?</option>
-              <option value="true">Sim</option>
-              <option value="false">Nao</option>
-            </Select>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="filter-validation-status">Status de validacao</Label>
-              <ValidationStatusFilter
-                id="filter-validation-status"
-                value={validationStatus}
-                onChange={(value) => {
-                  setPage(1);
-                  setValidationStatus(value);
-                }}
-              />
-            </div>
-
-            <Input
-              type="date"
-              value={deliveredFrom}
-              onChange={(event) => {
-                setPage(1);
-                setDeliveredFrom(event.target.value);
-              }}
-            />
-
-            <Input
-              type="date"
-              value={deliveredTo}
-              onChange={(event) => {
-                setPage(1);
-                setDeliveredTo(event.target.value);
-              }}
-            />
-          </CardContent>
-        </Card>
-
+      <div className="grid gap-4 xl:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>Categorias mais recentes</CardTitle>
@@ -413,55 +306,154 @@ export default function IPEPage() {
             ) : null}
           </CardContent>
         </Card>
-      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Classificacao por sinal</CardTitle>
-          <CardDescription>
-            Agregado atual retornado por `GET /admin/cvm/ipe/sync-status`.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-3">
-          {syncStatus
-            ? Object.entries(syncStatus.by_signal_classification).map(([key, value]) => (
-                <div
-                  key={key}
-                  className="rounded-2xl border border-border/80 bg-background/70 px-4 py-4"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-full bg-primary/10 p-2 text-primary">
-                      <BellRing className="size-4" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                        {key}
-                      </p>
-                      <p className="mt-1 text-2xl font-semibold text-foreground">{value}</p>
+        <Card>
+          <CardHeader>
+            <CardTitle>Classificacao por sinal</CardTitle>
+            <CardDescription>
+              Agregado atual retornado por `GET /admin/cvm/ipe/sync-status`.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-3 md:grid-cols-3">
+            {syncStatus
+              ? Object.entries(syncStatus.by_signal_classification).map(([key, value]) => (
+                  <div
+                    key={key}
+                    className="rounded-2xl border border-border/80 bg-background/70 px-4 py-4"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="rounded-full bg-primary/10 p-2 text-primary">
+                        <BellRing className="size-4" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                          {key}
+                        </p>
+                        <p className="mt-1 text-2xl font-semibold text-foreground">{value}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
-            : (
-              <p className="text-sm text-muted-foreground">Carregando classificacoes...</p>
-            )}
-        </CardContent>
-      </Card>
+                ))
+              : (
+                <p className="text-sm text-muted-foreground">Carregando classificacoes...</p>
+              )}
+          </CardContent>
+        </Card>
+      </div>
 
-      <DataTable
-        columns={columns}
-        data={disclosuresQuery.data?.items ?? []}
-        loading={disclosuresQuery.isLoading}
-        pagination={disclosuresQuery.data?.pagination}
-        onPageChange={setPage}
-        pageSizeOptions={DEFAULT_PAGE_SIZE_OPTIONS}
-        onPageSizeChange={(size) => {
-          setPage(1);
-          setPageSize(size);
-        }}
-        getRowKey={(row) => row.id}
-        emptyMessage="Nenhum disclosure encontrado."
-      />
+      <div className="flex flex-col gap-2">
+        <FilterBar
+          search={{
+            value: search,
+            onChange: (value) => {
+              setPage(1);
+              setSearch(value);
+            },
+            placeholder: "Buscar por empresa ou assunto",
+          }}
+        >
+          <Input
+            type="number"
+            placeholder="cd_cvm"
+            value={cdCvm}
+            onChange={(event) => {
+              setPage(1);
+              setCdCvm(event.target.value);
+            }}
+          />
+
+          <Input
+            placeholder="Categoria"
+            value={categoria}
+            onChange={(event) => {
+              setPage(1);
+              setCategoria(event.target.value);
+            }}
+          />
+
+          <Select
+            value={tipoApresentacao}
+            onChange={(event) => {
+              setPage(1);
+              setTipoApresentacao(event.target.value);
+            }}
+          >
+            <option value="">Tipo apresentacao</option>
+            <option value="AP">AP</option>
+            <option value="RE">RE</option>
+          </Select>
+
+          <Select
+            value={signal}
+            onChange={(event) => {
+              setPage(1);
+              setSignal(event.target.value);
+            }}
+          >
+            <option value="">Signal</option>
+            <option value="material_fact">material_fact</option>
+            <option value="communication_critical">communication_critical</option>
+            <option value="general">general</option>
+          </Select>
+
+          <Select
+            value={notified}
+            onChange={(event) => {
+              setPage(1);
+              setNotified(event.target.value);
+            }}
+          >
+            <option value="">Notificado?</option>
+            <option value="true">Sim</option>
+            <option value="false">Nao</option>
+          </Select>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="filter-validation-status">Status de validacao</Label>
+            <ValidationStatusFilter
+              id="filter-validation-status"
+              value={validationStatus}
+              onChange={(value) => {
+                setPage(1);
+                setValidationStatus(value);
+              }}
+            />
+          </div>
+
+          <Input
+            type="date"
+            value={deliveredFrom}
+            onChange={(event) => {
+              setPage(1);
+              setDeliveredFrom(event.target.value);
+            }}
+          />
+
+          <Input
+            type="date"
+            value={deliveredTo}
+            onChange={(event) => {
+              setPage(1);
+              setDeliveredTo(event.target.value);
+            }}
+          />
+        </FilterBar>
+
+        <DataTable
+          columns={columns}
+          data={disclosuresQuery.data?.items ?? []}
+          loading={disclosuresQuery.isLoading}
+          pagination={disclosuresQuery.data?.pagination}
+          onPageChange={setPage}
+          pageSizeOptions={DEFAULT_PAGE_SIZE_OPTIONS}
+          onPageSizeChange={(size) => {
+            setPage(1);
+            setPageSize(size);
+          }}
+          getRowKey={(row) => row.id}
+          emptyMessage="Nenhum disclosure encontrado."
+        />
+      </div>
     </div>
   );
 }

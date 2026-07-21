@@ -6,6 +6,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
+import { PageBreadcrumb } from "@/components/page-breadcrumb";
+import { DetailHeaderSkeleton, FieldGridSkeleton } from "@/components/detail-skeleton";
 import { JsonViewer } from "@/components/json-viewer";
 import { formatDate, formatDateTime, formatDecimal, truncateHash } from "@/lib/formatters";
 import { getBuybackProgram } from "@/lib/services/admin/cvm-buybacks";
@@ -92,62 +94,65 @@ export default function BuybackProgramDetailPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <CardTitle>{program?.nome_companhia ?? "Programa de recompra"}</CardTitle>
-              <CardDescription className="mt-1">
-                <span className="font-mono">id_programa</span> {idPrograma}
-              </CardDescription>
-            </div>
+      <PageBreadcrumb
+        backHref="/cvm/buybacks"
+        trail={[{ label: "Recompras", href: "/cvm/buybacks" }, { label: "Programa" }]}
+        title={program?.nome_companhia}
+        subtitle={`id_programa ${idPrograma}`}
+        actions={
+          program ? (
+            <>
+              <Badge variant={program.situacao === "ATIVO" ? "success" : "secondary"}>
+                {program.situacao ?? "—"}
+              </Badge>
+              {program.tipo_operacao ? (
+                <Badge variant="secondary">{program.tipo_operacao}</Badge>
+              ) : null}
+              {program.cd_cvm ? (
+                <Link
+                  className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+                  href={`/cvm/companies/detail?cd_cvm=${program.cd_cvm}`}
+                >
+                  Ir para empresa
+                </Link>
+              ) : null}
+            </>
+          ) : undefined
+        }
+      />
 
-            {program ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge variant={program.situacao === "ATIVO" ? "success" : "secondary"}>
-                  {program.situacao ?? "—"}
-                </Badge>
-                {program.tipo_operacao ? (
-                  <Badge variant="secondary">{program.tipo_operacao}</Badge>
-                ) : null}
-                {program.cd_cvm ? (
-                  <Link
-                    className="text-sm font-medium text-primary underline-offset-4 hover:underline"
-                    href={`/cvm/companies/detail?cd_cvm=${program.cd_cvm}`}
-                  >
-                    Ir para empresa
-                  </Link>
-                ) : null}
-              </div>
-            ) : null}
-          </div>
-        </CardHeader>
-      </Card>
+      {programQuery.isLoading ? <DetailHeaderSkeleton /> : null}
 
       <Card>
         <CardHeader>
           <CardTitle>Programa</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          <DetailRow label="cd_cvm" value={program?.cd_cvm} mono />
-          <DetailRow label="CNPJ" value={program?.cnpj_companhia} mono />
-          <DetailRow label="Deliberacao" value={formatDate(program?.data_deliberacao)} />
-          <DetailRow label="Final do prazo" value={formatDate(program?.data_final_prazo)} />
-          <DetailRow label="Tipo de operacao" value={program?.tipo_operacao} />
-          <DetailRow label="Finalidade" value={program?.finalidade_compra} />
-          <DetailRow
-            label="ON anunciadas"
-            value={formatDecimal(program?.qt_acoes_ordinarias, { maximumFractionDigits: 0 })}
-            mono
-          />
-          <DetailRow
-            label="PN anunciadas"
-            value={formatDecimal(program?.qt_acoes_preferenciais, { maximumFractionDigits: 0 })}
-            mono
-          />
-          <DetailRow label="Capturado em" value={formatDateTime(program?.captured_at)} />
-          <DetailRow label="File hash" value={truncateHash(program?.file_version_hash, 10)} mono />
-          <DetailRow label="Motivo" value={program?.motivo} />
+        <CardContent>
+          {programQuery.isLoading ? (
+            <FieldGridSkeleton rows={9} />
+          ) : (
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              <DetailRow label="cd_cvm" value={program?.cd_cvm} mono />
+              <DetailRow label="CNPJ" value={program?.cnpj_companhia} mono />
+              <DetailRow label="Deliberacao" value={formatDate(program?.data_deliberacao)} />
+              <DetailRow label="Final do prazo" value={formatDate(program?.data_final_prazo)} />
+              <DetailRow label="Tipo de operacao" value={program?.tipo_operacao} />
+              <DetailRow label="Finalidade" value={program?.finalidade_compra} />
+              <DetailRow
+                label="ON anunciadas"
+                value={formatDecimal(program?.qt_acoes_ordinarias, { maximumFractionDigits: 0 })}
+                mono
+              />
+              <DetailRow
+                label="PN anunciadas"
+                value={formatDecimal(program?.qt_acoes_preferenciais, { maximumFractionDigits: 0 })}
+                mono
+              />
+              <DetailRow label="Capturado em" value={formatDateTime(program?.captured_at)} />
+              <DetailRow label="File hash" value={truncateHash(program?.file_version_hash, 10)} mono />
+              <DetailRow label="Motivo" value={program?.motivo} />
+            </div>
+          )}
         </CardContent>
       </Card>
 

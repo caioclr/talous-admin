@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { JsonViewer } from "@/components/json-viewer";
+import { PageBreadcrumb } from "@/components/page-breadcrumb";
+import { DetailHeaderSkeleton, FieldGridSkeleton } from "@/components/detail-skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDate, formatDateTime, truncateHash } from "@/lib/formatters";
@@ -21,51 +23,59 @@ export default function IPEDisclosureDetailPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <CardTitle>{disclosure?.nome_companhia ?? "Disclosure IPE"}</CardTitle>
-              <CardDescription className="mt-1">
-                {disclosure?.assunto ?? "Carregando assunto..."}
-              </CardDescription>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <Badge>{disclosure?.categoria ?? "—"}</Badge>
-              <Badge variant={disclosure?.notification_dispatched ? "success" : "warning"}>
-                {disclosure?.notification_dispatched ? "Notificado" : "Pendente"}
+      <PageBreadcrumb
+        backHref="/cvm/ipe"
+        trail={[{ label: "IPE", href: "/cvm/ipe" }, { label: "Disclosure" }]}
+        title={disclosure?.nome_companhia}
+        subtitle={disclosure?.assunto}
+        actions={
+          disclosure ? (
+            <>
+              <Badge>{disclosure.categoria}</Badge>
+              <Badge variant={disclosure.notification_dispatched ? "success" : "warning"}>
+                {disclosure.notification_dispatched ? "Notificado" : "Pendente"}
               </Badge>
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
+            </>
+          ) : undefined
+        }
+      />
 
-      <div className="grid gap-4 xl:grid-cols-2">
-        <DisclosureSection
-          title="Metadados"
-          items={[
-            ["cd_cvm", String(disclosure?.cd_cvm ?? "—")],
-            ["CNPJ", disclosure?.cnpj_cia ?? "—"],
-            ["Categoria", disclosure?.categoria ?? "—"],
-            ["Tipo", disclosure?.tipo ?? "—"],
-            ["Especie", disclosure?.especie ?? "—"],
-            ["Tipo apresentacao", disclosure?.tipo_apresentacao ?? "—"],
-          ]}
-        />
+      {disclosureQuery.isLoading ? (
+        <>
+          <DetailHeaderSkeleton />
+          <Card>
+            <CardContent className="py-6">
+              <FieldGridSkeleton rows={6} />
+            </CardContent>
+          </Card>
+        </>
+      ) : (
+        <div className="grid gap-4 xl:grid-cols-2">
+          <DisclosureSection
+            title="Metadados"
+            items={[
+              ["cd_cvm", String(disclosure?.cd_cvm ?? "—")],
+              ["CNPJ", disclosure?.cnpj_cia ?? "—"],
+              ["Categoria", disclosure?.categoria ?? "—"],
+              ["Tipo", disclosure?.tipo ?? "—"],
+              ["Especie", disclosure?.especie ?? "—"],
+              ["Tipo apresentacao", disclosure?.tipo_apresentacao ?? "—"],
+            ]}
+          />
 
-        <DisclosureSection
-          title="Entrega e processamento"
-          items={[
-            ["Data entrega", formatDate(disclosure?.data_entrega)],
-            ["Data referencia", formatDate(disclosure?.data_referencia)],
-            ["Capturado em", formatDateTime(disclosure?.captured_at)],
-            ["Processado em", formatDateTime(disclosure?.processed_at)],
-            ["Versao", String(disclosure?.versao ?? "—")],
-            ["Hash", truncateHash(disclosure?.file_version_hash, 10)],
-          ]}
-        />
-      </div>
+          <DisclosureSection
+            title="Entrega e processamento"
+            items={[
+              ["Data entrega", formatDate(disclosure?.data_entrega)],
+              ["Data referencia", formatDate(disclosure?.data_referencia)],
+              ["Capturado em", formatDateTime(disclosure?.captured_at)],
+              ["Processado em", formatDateTime(disclosure?.processed_at)],
+              ["Versao", String(disclosure?.versao ?? "—")],
+              ["Hash", truncateHash(disclosure?.file_version_hash, 10)],
+            ]}
+          />
+        </div>
+      )}
 
       <Card>
         <CardHeader>
