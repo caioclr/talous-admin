@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import {
   ArrowUpRight,
   CheckCircle2,
@@ -47,6 +48,7 @@ import type {
 
 const ALERTS_PREVIEW_SIZE = 6;
 
+// TODO i18n: rotulos de severidade derivados de dados (migracao progressiva).
 const SEVERITY_BADGES: Record<
   AlertSeverity,
   { label: string; variant: "destructive" | "warning" | "secondary" }
@@ -57,11 +59,12 @@ const SEVERITY_BADGES: Record<
 };
 
 function JobStatusBadge({ run }: { run: OpsJobRun }) {
+  const t = useTranslations("admin.dashboard");
   if (run.status === "running") {
     return (
       <Badge variant="default" className="gap-1">
         <Loader2 className="size-3 animate-spin" />
-        Rodando
+        {t("jobRunning")}
       </Badge>
     );
   }
@@ -69,7 +72,7 @@ function JobStatusBadge({ run }: { run: OpsJobRun }) {
     return (
       <Badge variant="destructive" className="gap-1">
         <CircleAlert className="size-3" />
-        Falha
+        {t("jobFailed")}
       </Badge>
     );
   }
@@ -77,14 +80,14 @@ function JobStatusBadge({ run }: { run: OpsJobRun }) {
     return (
       <Badge variant="warning" className="gap-1">
         <CircleAlert className="size-3" />
-        Atrasado
+        {t("jobStale")}
       </Badge>
     );
   }
   return (
     <Badge variant="success" className="gap-1">
       <CheckCircle2 className="size-3" />
-      OK
+      {t("jobOk")}
     </Badge>
   );
 }
@@ -114,17 +117,20 @@ function formatInteger(value: number | null | undefined) {
   return new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 }).format(value);
 }
 
-function freshnessBadge(freshness: string) {
+function FreshnessBadge({ freshness }: { freshness: string }) {
+  const t = useTranslations("admin.dashboard");
   if (freshness === "em_dia") {
-    return <Badge variant="success">em dia</Badge>;
+    return <Badge variant="success">{t("freshnessOnTime")}</Badge>;
   }
   if (freshness === "atraso") {
-    return <Badge variant="warning">atraso</Badge>;
+    return <Badge variant="warning">{t("freshnessLate")}</Badge>;
   }
+  // TODO i18n: freshness desconhecido renderiza o valor cru do backend (progressivo).
   return <Badge variant="secondary">{freshness}</Badge>;
 }
 
 function DocTypeCard({ item }: { item: DashboardByType }) {
+  const t = useTranslations("admin.dashboard");
   const label = dashboardTypeLabel(item.report_type);
   const description = dashboardTypeDescription(item.report_type);
   const route = dashboardTypeRoute(item.report_type);
@@ -133,19 +139,19 @@ function DocTypeCard({ item }: { item: DashboardByType }) {
     <Card className="metric-tile h-full transition hover:border-primary/40">
       <CardHeader className="flex-row items-center justify-between gap-2 space-y-0">
         <CardTitle className="font-mono">{label}</CardTitle>
-        {freshnessBadge(item.freshness)}
+        <FreshnessBadge freshness={item.freshness} />
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex gap-6">
           <div className="space-y-1">
-            <p className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">Total</p>
+            <p className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">{t("total")}</p>
             <p className="font-mono text-base font-medium tabular-nums text-foreground">
               {formatInteger(item.total)}
             </p>
           </div>
           <div className="space-y-1">
             <p className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-              Validados
+              {t("validated")}
             </p>
             <p className="font-mono text-base font-medium tabular-nums text-success">
               {formatInteger(item.validated)}
@@ -153,7 +159,7 @@ function DocTypeCard({ item }: { item: DashboardByType }) {
           </div>
           <div className="space-y-1">
             <p className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-              Pendentes
+              {t("pending")}
             </p>
             <p className="font-mono text-base font-medium tabular-nums text-warning">
               {formatInteger(item.pending)}
@@ -212,6 +218,8 @@ function KpiCard({
 }
 
 function AlertRow({ alert }: { alert: OperationalAlert }) {
+  const t = useTranslations("admin.dashboard");
+  // TODO i18n: severity e ALERT_TYPE_LABELS derivam de dados do backend (progressivo).
   const badge = SEVERITY_BADGES[alert.severity] ?? {
     label: alert.severity,
     variant: "secondary" as const,
@@ -237,7 +245,7 @@ function AlertRow({ alert }: { alert: OperationalAlert }) {
         <Link
           href={origin}
           className="shrink-0 text-muted-foreground transition hover:text-foreground"
-          aria-label={`Abrir origem do alerta ${typeLabel}`}
+          aria-label={t("openAlertOrigin", { type: typeLabel })}
         >
           <ArrowUpRight className="size-4" />
         </Link>
@@ -247,6 +255,8 @@ function AlertRow({ alert }: { alert: OperationalAlert }) {
 }
 
 export default function CVMDashboardPage() {
+  const t = useTranslations("admin.dashboard");
+
   const dashboardQuery = useQuery({
     queryKey: ["cvm", "dashboard"],
     queryFn: getCVMDashboard,
@@ -284,13 +294,10 @@ export default function CVMDashboardPage() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary">
-              Moderação CVM
+              {t("kicker")}
             </p>
-            <h2 className="text-2xl font-semibold text-foreground">Dashboard CVM</h2>
-            <p className="max-w-2xl text-sm text-muted-foreground">
-              Visão consolidada dos documentos CVM, status de moderação e alertas operacionais.
-              Painel interno de inspeção — os números são calculados no backend.
-            </p>
+            <h2 className="text-2xl font-semibold text-foreground">{t("title")}</h2>
+            <p className="max-w-2xl text-sm text-muted-foreground">{t("description")}</p>
           </div>
 
           <Button
@@ -304,7 +311,7 @@ export default function CVMDashboardPage() {
             disabled={dashboardQuery.isFetching}
           >
             <RefreshCcw className="size-4" />
-            {dashboardQuery.isFetching ? "Atualizando..." : "Atualizar"}
+            {dashboardQuery.isFetching ? t("refreshing") : t("refresh")}
           </Button>
         </div>
       </section>
@@ -313,7 +320,7 @@ export default function CVMDashboardPage() {
         {dashboardQuery.isError ? (
           <Card className="metric-tile">
             <CardContent className="p-6 text-sm text-destructive">
-              Não foi possível carregar o dashboard CVM. {dashboardQuery.error?.message}
+              {t("dashboardError")} {dashboardQuery.error?.message}
             </CardContent>
           </Card>
         ) : dashboardQuery.isLoading ? (
@@ -329,19 +336,19 @@ export default function CVMDashboardPage() {
           </div>
         ) : kpis ? (
           <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
-            <KpiCard label="Total filings" value={formatInteger(kpis.total_filings)} />
-            <KpiCard label="Validados" value={formatInteger(kpis.validated)} tone="success" />
-            <KpiCard label="Pendentes" value={formatInteger(kpis.pending)} tone="warning" />
+            <KpiCard label={t("kpiTotalFilings")} value={formatInteger(kpis.total_filings)} />
+            <KpiCard label={t("validated")} value={formatInteger(kpis.validated)} tone="success" />
+            <KpiCard label={t("pending")} value={formatInteger(kpis.pending)} tone="warning" />
             <KpiCard
-              label="Alertas ativos"
+              label={t("kpiActiveAlerts")}
               value={formatInteger(kpis.active_alerts)}
               tone={kpis.active_alerts > 0 ? "destructive" : undefined}
             />
-            <KpiCard label="Empresas" value={formatInteger(kpis.companies)} />
+            <KpiCard label={t("kpiCompanies")} value={formatInteger(kpis.companies)} />
             <KpiCard
-              label="Última EOD"
+              label={t("kpiLastEod")}
               value={kpis.last_eod ? formatDate(kpis.last_eod) : "—"}
-              hint={kpis.last_eod ? undefined : "Nenhuma EOD registrada"}
+              hint={kpis.last_eod ? undefined : t("kpiNoEod")}
             />
           </div>
         ) : null}
@@ -349,7 +356,7 @@ export default function CVMDashboardPage() {
 
       <section className="space-y-2">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-foreground">Documentos por tipo</h3>
+          <h3 className="text-sm font-semibold text-foreground">{t("docByTypeTitle")}</h3>
         </div>
         {dashboardQuery.isError ? null : dashboardQuery.isLoading ? (
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -367,7 +374,7 @@ export default function CVMDashboardPage() {
         ) : byType.length === 0 ? (
           <Card className="metric-tile">
             <CardContent className="p-6 text-sm text-muted-foreground">
-              Nenhum documento CVM agregado ainda.
+              {t("noDocs")}
             </CardContent>
           </Card>
         ) : (
@@ -382,18 +389,18 @@ export default function CVMDashboardPage() {
       <div className="grid gap-4 xl:grid-cols-2">
         <section className="space-y-2">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-foreground">Alertas operacionais</h3>
+            <h3 className="text-sm font-semibold text-foreground">{t("alertsTitle")}</h3>
             <Link
               href="/cvm/alerts"
               className="font-mono text-[11px] text-primary underline-offset-4 hover:underline"
             >
-              Ver todos →
+              {t("seeAll")}
             </Link>
           </div>
           <Card className="panel-surface overflow-hidden p-0">
             {alertsQuery.isError ? (
               <div className="p-6 text-sm text-destructive">
-                Não foi possível carregar os alertas. {alertsQuery.error?.message}
+                {t("alertsError")} {alertsQuery.error?.message}
               </div>
             ) : alertsQuery.isLoading ? (
               <div className="space-y-3 p-4">
@@ -403,7 +410,7 @@ export default function CVMDashboardPage() {
               </div>
             ) : (alertsQuery.data?.items.length ?? 0) === 0 ? (
               <div className="p-6 text-sm text-muted-foreground">
-                Nenhum alerta operacional ativo.
+                {t("noActiveAlerts")}
               </div>
             ) : (
               <div>
@@ -417,18 +424,18 @@ export default function CVMDashboardPage() {
 
         <section className="space-y-2">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-foreground">Status do pipeline</h3>
+            <h3 className="text-sm font-semibold text-foreground">{t("pipelineTitle")}</h3>
             <Link
               href="/cvm/jobs"
               className="font-mono text-[11px] text-primary underline-offset-4 hover:underline"
             >
-              Ver jobs →
+              {t("seeJobs")}
             </Link>
           </div>
           <Card className="panel-surface overflow-hidden p-0">
             {opsQuery.isError ? (
               <div className="p-6 text-sm text-destructive">
-                Não foi possível carregar o status do pipeline. {opsQuery.error?.message}
+                {t("pipelineError")} {opsQuery.error?.message}
               </div>
             ) : opsQuery.isLoading ? (
               <div className="space-y-3 p-4">
@@ -438,7 +445,7 @@ export default function CVMDashboardPage() {
               </div>
             ) : pipelineJobs.length === 0 ? (
               <div className="p-6 text-sm text-muted-foreground">
-                Nenhum job do pipeline registrado ainda.
+                {t("noPipelineJobs")}
               </div>
             ) : (
               <div>
@@ -451,13 +458,13 @@ export default function CVMDashboardPage() {
                     className="flex items-center justify-between gap-3 px-4 py-3 text-[11px] text-muted-foreground transition hover:bg-card-raised hover:text-foreground"
                   >
                     <span>
-                      Syncs CVM ({cvmSyncJobs.length})
-                      {cvmSyncAttention > 0 ? ` · ${cvmSyncAttention} requer atenção` : ""}
+                      {t("syncs", { count: cvmSyncJobs.length })}
+                      {cvmSyncAttention > 0 ? ` · ${t("syncsAttention", { count: cvmSyncAttention })}` : ""}
                     </span>
                     {cvmSyncAttention > 0 ? (
                       <Badge variant="warning">{cvmSyncAttention}</Badge>
                     ) : (
-                      <Badge variant="secondary">ver detalhe</Badge>
+                      <Badge variant="secondary">{t("seeDetail")}</Badge>
                     )}
                   </Link>
                 ) : null}

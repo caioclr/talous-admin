@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   AlertTriangle,
   BellRing,
@@ -38,6 +39,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/notification-bell";
+import { LanguageSelector } from "@/components/language-selector";
 import { logout } from "@/lib/services/auth";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { CvmAcronym } from "@/components/cvm-acronym";
@@ -58,65 +60,67 @@ function NavLabel({ label }: { label: string }) {
 type NavStatus = "available" | "soon";
 
 interface NavItem {
-  label: string;
+  /** Chave i18n relativa ao namespace `admin.shell` (ex.: `nav.dashboard`). */
+  labelKey: string;
   href: string;
   icon: LucideIcon;
   status: NavStatus;
 }
 
 interface NavGroup {
-  label: string;
+  /** Chave i18n relativa ao namespace `admin.shell` (ex.: `nav.groupOverview`). */
+  labelKey: string;
   items: NavItem[];
 }
 
 const navigation: NavGroup[] = [
   {
-    label: "Visao Geral",
+    labelKey: "nav.groupOverview",
     items: [
-      { label: "Dashboard CVM", href: "/cvm", icon: LayoutDashboard, status: "available" },
-      { label: "Alertas", href: "/cvm/alerts", icon: AlertTriangle, status: "available" },
+      { labelKey: "nav.dashboard", href: "/cvm", icon: LayoutDashboard, status: "available" },
+      { labelKey: "nav.alerts", href: "/cvm/alerts", icon: AlertTriangle, status: "available" },
     ],
   },
   {
-    label: "Empresas",
+    labelKey: "nav.groupCompanies",
     items: [
-      { label: "Lista", href: "/cvm/companies", icon: Building2, status: "available" },
-      { label: "Snapshots cadastrais", href: "/cvm/snapshots", icon: History, status: "available" },
-      { label: "Setores", href: "/cvm/sector-mapping", icon: Network, status: "available" },
+      { labelKey: "nav.companiesList", href: "/cvm/companies", icon: Building2, status: "available" },
+      { labelKey: "nav.snapshots", href: "/cvm/snapshots", icon: History, status: "available" },
+      { labelKey: "nav.sectors", href: "/cvm/sector-mapping", icon: Network, status: "available" },
     ],
   },
   {
-    label: "Documentos & Eventos",
+    labelKey: "nav.groupDocuments",
     items: [
-      { label: "IPE", href: "/cvm/ipe", icon: BellRing, status: "available" },
-      { label: "ITR/DFP", href: "/cvm/itr-dfp", icon: FileStack, status: "available" },
-      { label: "FRE", href: "/cvm/fre", icon: FileText, status: "available" },
-      { label: "FCA", href: "/cvm/fca", icon: FileSpreadsheet, status: "available" },
+      { labelKey: "nav.ipe", href: "/cvm/ipe", icon: BellRing, status: "available" },
+      { labelKey: "nav.itrDfp", href: "/cvm/itr-dfp", icon: FileStack, status: "available" },
+      { labelKey: "nav.fre", href: "/cvm/fre", icon: FileText, status: "available" },
+      { labelKey: "nav.fca", href: "/cvm/fca", icon: FileSpreadsheet, status: "available" },
     ],
   },
   {
-    label: "Mercado & Capital",
+    labelKey: "nav.groupMarket",
     items: [
-      { label: "Recompras", href: "/cvm/buybacks", icon: Repeat, status: "available" },
-      { label: "VLMO", href: "/cvm/vlmo", icon: TrendingUp, status: "available" },
-      { label: "Composicao de capital", href: "/cvm/capital-composition", icon: PieChart, status: "available" },
+      { labelKey: "nav.buybacks", href: "/cvm/buybacks", icon: Repeat, status: "available" },
+      { labelKey: "nav.vlmo", href: "/cvm/vlmo", icon: TrendingUp, status: "available" },
+      { labelKey: "nav.capitalComposition", href: "/cvm/capital-composition", icon: PieChart, status: "available" },
     ],
   },
   {
-    label: "Governanca",
-    items: [{ label: "ICBGC", href: "/cvm/icbgc", icon: ShieldCheck, status: "available" }],
+    labelKey: "nav.groupGovernance",
+    items: [{ labelKey: "nav.icbgc", href: "/cvm/icbgc", icon: ShieldCheck, status: "available" }],
   },
   {
-    label: "Cadastros de Mercado",
+    labelKey: "nav.groupRegistries",
     items: [
-      { label: "Auditores", href: "/cvm/participantes/auditores", icon: UserCheck, status: "available" },
-      { label: "Intermediarios", href: "/cvm/participantes/intermediarios", icon: Briefcase, status: "available" },
-      { label: "Adm de carteira", href: "/cvm/participantes/adm-carteira", icon: Wallet, status: "available" },
+      { labelKey: "nav.auditores", href: "/cvm/participantes/auditores", icon: UserCheck, status: "available" },
+      { labelKey: "nav.intermediarios", href: "/cvm/participantes/intermediarios", icon: Briefcase, status: "available" },
+      { labelKey: "nav.admCarteira", href: "/cvm/participantes/adm-carteira", icon: Wallet, status: "available" },
     ],
   },
   {
-    label: "Operacao",
-    items: [{ label: "Jobs / Sync", href: "/cvm/jobs", icon: Cog, status: "available" }],
+    labelKey: "nav.groupOps",
+    items: [{ labelKey: "nav.jobs", href: "/cvm/jobs", icon: Cog, status: "available" }],
   },
 ];
 
@@ -139,12 +143,13 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
   const clearAuth = useAuthStore((state) => state.clearAuth);
+  const t = useTranslations("admin.shell");
 
   async function handleLogout() {
     try {
       await logout();
     } catch {
-      toast.error("Nao foi possivel encerrar a sessao no backend.");
+      toast.error(t("logoutError"));
     } finally {
       clearAuth();
       router.replace("/login");
@@ -166,7 +171,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             T
           </div>
           <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-primary">
-            Talous Admin
+            {t("brand")}
           </span>
           <Button
             type="button"
@@ -176,34 +181,35 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             onClick={() => setMobileOpen(false)}
           >
             <X className="size-3.5" />
-            <span className="sr-only">Fechar menu</span>
+            <span className="sr-only">{t("closeMenu")}</span>
           </Button>
         </div>
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto px-2 py-3">
           {navigation.map((group) => (
-            <div key={group.label} className="mb-3">
+            <div key={group.labelKey} className="mb-3">
               <p className="px-2 py-1 font-mono text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/60">
-                {group.label}
+                {t(group.labelKey)}
               </p>
               <div className="flex flex-col gap-px">
                 {group.items.map((item) => {
                   const active = isItemActive(pathname, item);
                   const isSoon = item.status === "soon";
+                  const label = t(item.labelKey);
 
                   if (isSoon) {
                     return (
                       <span
                         key={item.href}
                         aria-disabled="true"
-                        title="Em breve"
+                        title={t("soonTitle")}
                         className="flex items-center gap-2 rounded px-2 py-1.5 text-[13px] text-muted-foreground/50"
                       >
                         <item.icon className="size-3.5 opacity-40" />
-                        <NavLabel label={item.label} />
+                        <NavLabel label={label} />
                         <span className="ml-auto rounded border border-border/60 bg-background px-1 py-px font-mono text-[8px] uppercase tracking-wider text-muted-foreground/50">
-                          em breve
+                          {t("soon")}
                         </span>
                       </span>
                     );
@@ -223,7 +229,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                       )}
                     >
                       <item.icon className={cn("size-3.5", active ? "text-primary" : "opacity-50")} />
-                      <NavLabel label={item.label} />
+                      <NavLabel label={label} />
                     </Link>
                   );
                 })}
@@ -255,14 +261,16 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               onClick={() => setMobileOpen(true)}
             >
               <Menu className="size-3.5" />
-              <span className="sr-only">Abrir menu</span>
+              <span className="sr-only">{t("openMenu")}</span>
             </Button>
+            {/* TODO i18n: breadcrumb decorativo de caminho (admin/cvm) — migracao progressiva. */}
             <div className="font-mono text-[11px] text-muted-foreground">
               admin/<span className="text-foreground">cvm</span>
             </div>
           </div>
 
           <div className="flex items-center gap-1">
+          <LanguageSelector />
           <NotificationBell />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -270,18 +278,18 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 <span className="size-5 rounded-full bg-card-raised border border-border grid place-items-center font-mono text-[9px] font-medium">
                   {user?.name?.charAt(0)?.toUpperCase() ?? "A"}
                 </span>
-                <span className="hidden sm:inline">{user?.name ?? user?.email ?? "Admin"}</span>
+                <span className="hidden sm:inline">{user?.name ?? user?.email ?? t("accountFallback")}</span>
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel className="text-[11px]">Conta administrativa</DropdownMenuLabel>
+              <DropdownMenuLabel className="text-[11px]">{t("account")}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <div className="px-2 py-1 font-mono text-[10px] text-muted-foreground">
-                {user?.email ?? "Sem e-mail carregado"}
+                {user?.email ?? t("noEmail")}
               </div>
               <DropdownMenuItem onClick={handleLogout} className="text-[11px]">
                 <LogOut className="mr-2 size-3.5" />
-                Sair
+                {t("logout")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

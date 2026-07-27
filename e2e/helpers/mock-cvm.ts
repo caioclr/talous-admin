@@ -91,6 +91,7 @@ export const CvmRoutes = {
   companyDetail: /\/api\/v1\/admin\/cvm\/companies\/\d+$/,
   companyHistory: /\/api\/v1\/admin\/cvm\/companies\/\d+\/history$/,
   companyChanges: /\/api\/v1\/admin\/cvm\/companies\/\d+\/changes$/,
+  companyTicker: /\/api\/v1\/admin\/cvm\/companies\/\d+\/tickers\/[^/?]+$/,
   sectorMappingList: /\/api\/v1\/admin\/cvm\/sector-mapping(\?.*)?$/,
   sectorMappingUnmapped: /\/api\/v1\/admin\/cvm\/sector-mapping\/unmapped$/,
   sectorMappingItem: /\/api\/v1\/admin\/cvm\/sector-mapping\/[^/?]+$/,

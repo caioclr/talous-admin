@@ -114,6 +114,24 @@ export interface RegistryChangeEventResponse {
   captured_at: string;
 }
 
+// ---------------------------------------------------------------------------
+// Ticker toggle (habilitar/desabilitar) — espelha TickerToggleRequest/Response
+// do backend em PATCH /admin/cvm/companies/{cd_cvm}/tickers/{ticker}.
+// Desabilitar (is_active=false) carimba delisted_at; reabilitar (true) zera.
+// ---------------------------------------------------------------------------
+
+export interface AdminTicker {
+  ticker: string;
+  is_active: boolean;
+  is_primary: boolean;
+  // Carimbo de saida do universo B3: preenchido ao desativar, null ao reativar.
+  delisted_at: string | null;
+}
+
+export interface TickerToggleRequest {
+  is_active: boolean;
+}
+
 export interface CVMSectorMappingRequest {
   cvm_setor_atividade: string;
   internal_sector_slug: string;
