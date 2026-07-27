@@ -1,6 +1,7 @@
 import {
   listAdminCompanies,
   listSnapshots,
+  setTickerActive,
   triggerRegistrySync,
 } from "@/lib/services/admin/cvm-registry";
 import { setAccessToken } from "@/lib/services/client";
@@ -90,6 +91,38 @@ describe("cvm-registry service", () => {
       "http://localhost:8001/api/v1/admin/cvm/registry/snapshots?page=1&page_size=20&cd_cvm=9512&validation_status=pending",
       expect.objectContaining({ credentials: "include" }),
     );
+  });
+
+  it("sends PATCH with is_active body to toggle a ticker (delisting manual)", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        ticker: "PETR3",
+        is_active: false,
+        is_primary: false,
+        delisted_at: "2026-07-26T12:00:00Z",
+      }),
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await setTickerActive(9512, "PETR3", false);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://localhost:8001/api/v1/admin/cvm/companies/9512/tickers/PETR3",
+      expect.objectContaining({
+        method: "PATCH",
+        body: JSON.stringify({ is_active: false }),
+        credentials: "include",
+      }),
+    );
+    expect(result).toEqual({
+      ticker: "PETR3",
+      is_active: false,
+      is_primary: false,
+      delisted_at: "2026-07-26T12:00:00Z",
+    });
   });
 
   it("sends POST for registry sync trigger", async () => {

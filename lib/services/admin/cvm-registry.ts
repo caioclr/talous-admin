@@ -3,6 +3,7 @@ import type {
   AdminCompanyDetail,
   AdminCompanySummary,
   AdminPagedResponse,
+  AdminTicker,
   CVMSectorMappingRequest,
   CVMSectorMappingResponse,
   CVMSnapshotDetail,
@@ -11,6 +12,7 @@ import type {
   ListSnapshotsParams,
   RegistryChangeEventResponse,
   SyncStatusResponse,
+  TickerToggleRequest,
   TriggerSyncResponse,
   UnmappedSectorResponse,
 } from "./types";
@@ -42,6 +44,23 @@ export function getCompanyHistory(cdCvm: string | number) {
 
 export function getCompanyChanges(cdCvm: string | number) {
   return apiClient<RegistryChangeEventResponse[]>(`/admin/cvm/companies/${cdCvm}/changes`);
+}
+
+/**
+ * Habilita/desabilita um ticker manualmente (delisting manual). Ao desativar
+ * (`is_active=false`) o backend carimba `delisted_at = agora` e o ticker some do
+ * Rastreador do app; ao reativar (`true`) zera `delisted_at`. Retorna o ticker
+ * persistido. PATCH /admin/cvm/companies/{cd_cvm}/tickers/{ticker}.
+ */
+export function setTickerActive(cdCvm: string | number, ticker: string, isActive: boolean) {
+  const body: TickerToggleRequest = { is_active: isActive };
+  return apiClient<AdminTicker>(
+    `/admin/cvm/companies/${cdCvm}/tickers/${encodeURIComponent(ticker)}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    },
+  );
 }
 
 export function listSnapshots(params: ListSnapshotsParams) {

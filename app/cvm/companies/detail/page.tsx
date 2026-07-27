@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { PageBreadcrumb } from "@/components/page-breadcrumb";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CompanyTickerControls } from "@/components/cvm/company-ticker-controls";
 import { ValidationActionPanel, ValidationBadge } from "@/components/validation";
 import { formatDate, formatDateTime, formatDecimal, formatList } from "@/lib/formatters";
 import {
@@ -53,7 +54,7 @@ import type {
 // janela serve para nao puxar centenas de linhas de uma vez.
 const BY_COMPANY_PAGE_SIZE = 50;
 
-type TopTab = "info" | "history" | "changes" | "moderar" | "verificar";
+type TopTab = "info" | "tickers" | "history" | "changes" | "moderar" | "verificar";
 type ModerarTab = "ipe" | "itr-dfp" | "fre" | "fca";
 type VerificarTab = "buybacks" | "vlmo" | "capital" | "icbgc";
 
@@ -491,6 +492,7 @@ export default function CompanyDetailPage() {
       <Tabs value={tab} onValueChange={(value) => setTab(value as TopTab)}>
         <TabsList>
           <TabsTrigger value="info">Info</TabsTrigger>
+          <TabsTrigger value="tickers">Tickers</TabsTrigger>
           <TabsTrigger value="history">Historico</TabsTrigger>
           <TabsTrigger value="changes">Mudancas</TabsTrigger>
           <TabsTrigger value="moderar">Moderar</TabsTrigger>
@@ -518,6 +520,31 @@ export default function CompanyDetailPage() {
               <DetailItem label="Cancelamento" value={formatDate(company?.cvm_cancellation_date)} />
               <DetailItem label="Motivo do cancelamento" value={company?.cvm_cancellation_reason} />
               <DetailItem label="Ultimo sync" value={formatDateTime(company?.cvm_last_synced_at)} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="tickers">
+          <Card>
+            <CardHeader>
+              <CardTitle>Tickers da empresa</CardTitle>
+              <CardDescription>
+                Estado de cada ticker e delisting manual. Desabilitar marca o ticker como
+                deslistado (via <span className="font-mono">PATCH</span> em{" "}
+                <span className="font-mono">/admin/cvm/companies/{cdCvm}/tickers</span>) e o
+                esconde do Rastreador do app. A acao e reversivel.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {company ? (
+                <CompanyTickerControls
+                  cdCvm={cdCvm}
+                  tickers={company.tickers}
+                  primaryTicker={company.primary_ticker}
+                />
+              ) : (
+                <p className="text-sm text-muted-foreground">Carregando tickers...</p>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

@@ -110,6 +110,61 @@ test.describe("CVM company detail — header e abas", () => {
   });
 });
 
+test.describe("CVM company detail — Tickers (delisting manual)", () => {
+  test.beforeEach(async ({ page }) => {
+    await mockAuth(page, { authenticated: true });
+  });
+
+  test("desabilita e reabilita um ticker pela aba Tickers", async ({ page }) => {
+    mockCompanyDetail(page);
+
+    // Eco do PATCH: reflete o is_active enviado e carimba delisted_at ao desativar.
+    const patchCalls: Array<{ ticker: string; is_active: boolean }> = [];
+    await page.route(CvmRoutes.companyTicker, async (route) => {
+      if (route.request().method() !== "PATCH") {
+        await route.fallback();
+        return;
+      }
+      const ticker = decodeURIComponent(new URL(route.request().url()).pathname.split("/").pop() ?? "");
+      const body = JSON.parse(route.request().postData() ?? "{}") as { is_active: boolean };
+      patchCalls.push({ ticker, is_active: body.is_active });
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          ticker,
+          is_active: body.is_active,
+          is_primary: ticker === COMPANY_DETAIL_PETROBRAS.primary_ticker,
+          delisted_at: body.is_active ? null : "2026-07-26T12:00:00Z",
+        }),
+      });
+    });
+
+    await page.goto(DETAIL_URL);
+    await page.getByRole("tab", { name: "Tickers" }).click();
+
+    const petr3Row = page.getByRole("main").getByRole("listitem").filter({ hasText: "PETR3" });
+    await expect(petr3Row.getByText("Ativo", { exact: true })).toBeVisible();
+
+    // Desabilitar exige confirmacao explicita (AlertDialog).
+    await petr3Row.getByRole("button", { name: "Desabilitar" }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Desabilitar" }).click();
+
+    await expect.poll(() => patchCalls.length).toBe(1);
+    expect(patchCalls[0]).toEqual({ ticker: "PETR3", is_active: false });
+
+    // Estado reflete o retorno do PATCH na hora (badge + botao invertem).
+    await expect(petr3Row.getByText("Desabilitado", { exact: true })).toBeVisible();
+    await expect(petr3Row.getByRole("button", { name: "Reabilitar" })).toBeVisible();
+
+    // Reabilitar e acao direta (sem confirmacao).
+    await petr3Row.getByRole("button", { name: "Reabilitar" }).click();
+    await expect.poll(() => patchCalls.length).toBe(2);
+    expect(patchCalls[1]).toEqual({ ticker: "PETR3", is_active: true });
+    await expect(petr3Row.getByText("Ativo", { exact: true })).toBeVisible();
+  });
+});
+
 test.describe("CVM company detail — Moderar (validar/reverter)", () => {
   test.beforeEach(async ({ page }) => {
     await mockAuth(page, { authenticated: true });
