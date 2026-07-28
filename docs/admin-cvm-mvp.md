@@ -1,5 +1,37 @@
 # Bootstrap do talous-admin — MVP CVM completo
 
+> ## 📌 DOCUMENTO HISTÓRICO — não descreve o painel atual
+>
+> **Congelado em 2026-04-29. Superado em 2026-07-27.**
+>
+> Este é o **plano de bootstrap** do repositório, escrito quando o `talous-admin`
+> ainda estava vazio. Ele foi executado e a entrega está concluída há muito tempo.
+> Mantido **sem reescrita** porque registra o *porquê* das decisões fundadoras
+> (stack espelhando o `talous-frontend`, dev login antes de OAuth, shadcn fresh,
+> porta 6001, escopo dos 12 endpoints do Sprint 1).
+>
+> **Por que banner em vez de atualizar a tabela de status:** atualizar
+> transformaria um plano de execução num inventário do painel — papel que já é
+> de [`admin-panel.md`](./admin-panel.md), que é a **doc viva**. Manter dois
+> inventários garante drift. Aqui fica o passado; lá fica o presente.
+>
+> **O que abaixo já não vale para o código de hoje:**
+>
+> - "O repositório está hoje vazio" — contexto de abril/2026.
+> - Route groups `(auth)` / `(admin)` e segmentos dinâmicos `[cdCvm]` / `[id]`:
+>   **nunca ficaram no repo**. A convenção atual é **sem route groups e sem
+>   segmentos dinâmicos**; detalhe é `.../detail/page.tsx` + query string
+>   (`/cvm/companies/detail?cd_cvm=9512`).
+> - O painel foi muito além do MVP: hoje há ~48 rotas cobrindo IPE, ITR/DFP, FRE,
+>   FCA, ICBGC, recompras, VLMO, composição de capital, participantes, alertas,
+>   jobs/workers e um fluxo genérico de moderação por `(report_type, ref)`.
+> - Scripts: `lint` hoje é `eslint .` (não `next lint`) e `test` é `vitest run`.
+>   Há também `e2e` / `e2e:real` (Playwright), inexistentes à época.
+> - `@tanstack/react-query-devtools` não é dependência do projeto.
+> - i18n (next-intl por cookie) não existia e não aparece aqui.
+>
+> **Para o estado atual, leia [`admin-panel.md`](./admin-panel.md).**
+
 ## Status da implementação (2026-04-29)
 
 > Convenção: ✅ implementado · 🟡 parcial · ⏳ pendente · ➕ entregue além do escopo original.

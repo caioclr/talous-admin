@@ -1,5 +1,63 @@
 # Talous Admin — Fase 2 (expansão CVM)
 
+> ## 📌 PLANO — executado só em parte. **Não leia como descrição do painel atual.**
+>
+> **Escrito em 2026-05-03. Conferido contra o código em 2026-07-27.**
+>
+> Mantido sem reescrita porque registra o *porquê* das decisões de fase. O que
+> está abaixo é **intenção**, não inventário. O inventário do que existe está em
+> [`admin-panel.md`](./admin-panel.md).
+>
+> ### ✅ Executado
+>
+> - **Estrutura da sidebar** — os 7 grupos foram implementados praticamente como
+>   descritos (`components/admin-shell.tsx`).
+>   Uma divergência: **Snapshots cadastrais ganhou item próprio** na sidebar (em
+>   "Empresas"), ao contrário do que o plano dizia ("sem item na sidebar").
+> - **Todas as fases de dataset 2.1 → 2.7 foram entregues**, incluindo as que a
+>   tabela abaixo ainda marca `⏳ pendente`: **ICBGC (2.4)**, **FCA (2.5)**,
+>   **Participantes (2.6)** e **Alertas Operacionais (2.7)** têm telas hoje. A
+>   tabela de status está congelada em maio/2026 — não confie nela.
+> - **Operação / Jobs** deixou de ser "futuro": existe `/cvm/jobs`, alimentado por
+>   `/admin/ops/jobs` e `/admin/ops/workers` (inclui painel de workers Celery).
+>
+> ### ❌ **NÃO executado — o "hub de 5 lentes" não existe**
+>
+> A seção "Hub da empresa — 5 lentes em uma página" descreve uma tela que **nunca
+> foi construída**. Verificado em `app/cvm/companies/detail/page.tsx`
+> (2026-07-27): o hub continua sendo **`<Tabs>`**, hoje com **6 abas**
+> (`Info · Tickers · Historico · Mudancas · Moderar · Verificar`), com **lazy
+> load por aba** — o oposto do "tudo renderizado na mesma página com sub-tabs
+> como âncoras / scroll-spy". Não há âncora, nem scroll-spy, nem lente.
+>
+> Parte do conteúdo previsto nas lentes foi reagrupado nas abas **Moderar**
+> (sub-abas IPE · ITR/DFP · FRE · FCA) e **Verificar** (sub-abas Recompras ·
+> VLMO · Capital · ICBGC), mais a aba **Tickers**, que o plano nem previa. A
+> reconciliação CVM × provider vive em `/cvm/itr-dfp/companies/detail`, não no hub.
+>
+> ### 🟡 Parcial — "Restrição transversal: periodicidade"
+>
+> A regra de que **toda** tela com dado periódico ofereça seletor de período +
+> visualização gráfica **não** foi cumprida de forma transversal. Só duas telas
+> têm gráfico Recharts hoje: composição de capital
+> (`components/charts/capital-composition-chart.tsx`) e net flow VLMO
+> (`components/charts/vlmo-net-flow-chart.tsx`). As demais expõem período como
+> filtro/coluna de tabela, sem série temporal nem diff visual.
+>
+> ### Vocabulário desatualizado
+>
+> Onde o texto abaixo diz **"CVM × Brapi"**, leia "CVM × provider de mercado". O
+> provider **brapi foi removido** do backend (hoje é bolsai para EOD/fundamentos).
+> O endpoint `/admin/cvm/itr-dfp/reconciliation/{cd_cvm}/{ref_date}` continua
+> existindo e compara os valores CVM contra `CompanyFundamentals` — seja qual for
+> o provider que preencheu a tabela. A tela chama isso de "Reconciliação entre
+> fontes", sem citar provider.
+>
+> ### Ainda fora
+>
+> Google OAuth, `admin_audit_log`, rate limiting e as páginas de Usuários /
+> Planos / Score / AI Usage continuam **não implementados**.
+
 Continuação de [admin-cvm-mvp.md](./admin-cvm-mvp.md). Cobre os Sprints 4-10 do backend (38 endpoints / 7 datasets adicionais), com decisões de IA acordadas em 2026-05-03 após consulta ao especialista CVM.
 
 ## Estrutura da sidebar

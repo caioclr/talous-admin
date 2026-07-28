@@ -16,34 +16,37 @@ Leia [PROJECT_CONTEXT.md](../PROJECT_CONTEXT.md) e
 
 ## Escopo das funcionalidades
 
-### Gestão de Usuários
-- Listar usuários, visualizar plano e consumo de tokens
-- Alterar plano manualmente
-- Desativar/reativar conta
-- Executar exclusão LGPD (`AccountDeletionService`)
+Inventário completo e atualizado das telas: [`docs/admin-panel.md`](docs/admin-panel.md).
 
-### Gestão de Planos
-- Editar configurações de `plan_config` (talous-tokens, janela de edição de teses)
-- Sem necessidade de redeploy para alterar limites
+### Implementado hoje (tudo sob `/cvm`, mais `/login`)
 
-### Notificações do Sistema
-- Enviar broadcast do tipo `system` para todos os usuários ou grupo específico
+- **Dashboard CVM** e **alertas operacionais**
+- **Empresas**: lista, hub de detalhe com 6 abas (Info · Tickers · Historico ·
+  Mudancas · Moderar · Verificar), snapshots cadastrais
+- **Setores**: taxonomia setor/subsetor (CRUD), mapeamento `cvm_setor_atividade`
+  → setor interno, reatribuição de empresa
+- **Documentos CVM**: IPE, ITR/DFP, FRE, FCA, ICBGC — lista, detalhe e moderação
+- **Mercado & capital**: recompras, VLMO (insider), composição de capital
+- **Participantes**: auditores, intermediários, administradores de carteira
+- **Curadoria de ticker**: `PATCH /admin/cvm/companies/{cd_cvm}/tickers/{ticker}`
+  (desabilitar carimba `delisted_at`; reabilitar zera)
+- **Moderação genérica** por `(report_type, ref)` via
+  `/admin/cvm/validations/{validate,invalidate}`
+- **Operação**: `/cvm/jobs` (jobs Celery + painel de workers, somente leitura) e
+  sino de notificações do operador na topbar
+- **i18n parcial**: next-intl sem routing, locale por cookie `NEXT_LOCALE`;
+  só shell, Dashboard CVM e Alertas migrados — o resto é hard-coded em pt-BR
 
-### Configuração de Score e DCF
-- Editar pesos de score por setor (`sector_score_weights`)
-- Editar parâmetros DCF por setor (`sector_dcf_params`)
-- Mudanças aplicadas no próximo ciclo EOD
+### Planejado — **sem tela hoje** (não descrever como existente)
 
-### Monitoramento de Jobs
-- Status e histórico de execução dos jobs Celery (Intraday, EOD, Release, Selic)
-
-### Seed de Empresas
-- Upload de `seeds/companies.csv` e trigger do script de seed
-- Visualizar empresas com `needs_data_refresh = true`
-
-### Uso de AI
-- Relatório de consumo de AI por usuário, engine e período
-- Custo total em USD
+- Gestão de usuários (plano, consumo de tokens, desativar, exclusão LGPD)
+- Gestão de planos / `plan_config`
+- Broadcast de notificação `system` para usuários finais
+- Pesos de score por setor (`sector_score_weights`) e parâmetros DCF
+  (`sector_dcf_params`)
+- Seed de empresas por upload de CSV
+- Relatório de uso de AI (`ai_usage`, custo em USD)
+- Google OAuth (o login é dev login por e-mail), audit log, rate limiting
 
 ---
 
@@ -68,6 +71,7 @@ O admin e uma aplicacao separada em `talous-admin/`.
 - Zustand
 - React Hook Form + Zod
 - Recharts
+- next-intl (sem i18n routing — locale por cookie `NEXT_LOCALE`)
 - Vitest + Testing Library
 - Playwright
 
@@ -80,7 +84,11 @@ dinamicos `[...]`; paginas de detalhe usam `/detail/page.tsx` com query string.
 
 ## Documentação local
 
-- [Painel admin — escopo detalhado](docs/admin-panel.md)
+- [Painel admin — doc viva: telas, padrões, i18n, aba Tickers](docs/admin-panel.md)
+- [Como rodar e verificar](README.md)
+- [Contrato canônico da API admin](../talous-backend/docs/Architecture/admin-api-reference.md)
+- [Bootstrap do MVP CVM](docs/admin-cvm-mvp.md) — **histórico**, não descreve o painel atual
+- [Fase 2 (expansão CVM)](docs/admin-cvm-phase2.md) — **plano parcialmente executado** (o hub de "5 lentes" nunca existiu)
 - [Planos e plan_config](../docs/Product/plans.md)
 - [Fórmula de score e pesos](../docs/Data/score_formula.md)
 - [Modelo DCF e parâmetros](../docs/Data/dcf_model.md)
