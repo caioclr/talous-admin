@@ -124,6 +124,10 @@ export const COMPANIES_LIST: AdminPagedResponse<AdminCompanySummary> = {
   pagination: { page: 1, page_size: 20, total: 2, total_pages: 1 },
 };
 
+/**
+ * Detalhe da empresa no contrato vigente: `tickers` sao objetos com estado
+ * (`AdminTicker`), ordenados primario > ativos asc > inativos asc.
+ */
 export const COMPANY_DETAIL_PETROBRAS: AdminCompanyDetail = {
   ...COMPANY_PETROBRAS,
   cvm_situation_started_at: "2010-05-12",
@@ -133,7 +137,33 @@ export const COMPANY_DETAIL_PETROBRAS: AdminCompanyDetail = {
   cvm_cancellation_reason: null,
   cvm_controlling_shareholder: "Uniao Federal",
   cvm_setor_atividade: "PETROLEO E GAS",
-  tickers: ["PETR3", "PETR4"],
+  tickers: [
+    { ticker: "PETR4", is_active: true, is_primary: true, delisted_at: null },
+    { ticker: "PETR3", is_active: true, is_primary: false, delisted_at: null },
+  ],
+};
+
+/** Mesma empresa com PETR3 ja desabilitado (deslistado) no payload. */
+export const COMPANY_DETAIL_PETROBRAS_DELISTED: AdminCompanyDetail = {
+  ...COMPANY_DETAIL_PETROBRAS,
+  tickers: [
+    { ticker: "PETR4", is_active: true, is_primary: true, delisted_at: null },
+    {
+      ticker: "PETR3",
+      is_active: false,
+      is_primary: false,
+      delisted_at: "2026-07-30T12:00:00Z",
+    },
+  ],
+};
+
+/**
+ * Forma ANTIGA do detalhe (backend anterior ao enriquecimento): `tickers` como
+ * `string[]`. Existe para provar que o admin novo nao quebra contra ele.
+ */
+export const COMPANY_DETAIL_PETROBRAS_LEGACY_TICKERS: AdminCompanyDetail = {
+  ...COMPANY_DETAIL_PETROBRAS,
+  tickers: ["PETR4", "PETR3"],
 };
 
 export const HISTORY_PETROBRAS: CVMSnapshotSummary[] = [

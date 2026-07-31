@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CompanyTickerControls } from "@/components/cvm/company-ticker-controls";
 import { ValidationActionPanel, ValidationBadge } from "@/components/validation";
 import { formatDate, formatDateTime, formatDecimal, formatList } from "@/lib/formatters";
+import { tickerSymbols } from "@/lib/tickers";
 import {
   getAdminCompany,
   getCompanyChanges,
@@ -473,7 +474,7 @@ export default function CompanyDetailPage() {
         title={company?.name ?? `Empresa ${cdCvm}`}
         subtitle={
           company
-            ? `${formatList(company.tickers)}${
+            ? `${formatList(tickerSymbols(company.tickers))}${
                 company.cvm_setor_atividade ? ` · ${company.cvm_setor_atividade}` : ""
               }`
             : "Carregando tickers..."

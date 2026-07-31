@@ -94,7 +94,7 @@ export interface AdminCompanySummary {
   cvm_last_synced_at: string | null;
 }
 
-export interface AdminCompanyDetail extends AdminCompanySummary {
+export interface AdminCompanyDetail extends Omit<AdminCompanySummary, "tickers"> {
   cvm_situation_started_at: string | null;
   cvm_registration_date: string | null;
   cvm_constitution_date: string | null;
@@ -102,8 +102,11 @@ export interface AdminCompanyDetail extends AdminCompanySummary {
   cvm_cancellation_reason: string | null;
   cvm_controlling_shareholder: string | null;
   cvm_setor_atividade: string | null;
-  // Detalhe traz o historico completo (inclui deslistados).
-  tickers: string[];
+  // Historico completo de tickers (inclui deslistados), com estado por ticker:
+  // objetos `AdminTicker` (primario > ativos por ticker asc > inativos asc).
+  // A uniao com `string` cobre a janela de deploy: backend antigo devolve so os
+  // simbolos. Ver `lib/tickers.ts` e docs/admin-panel.md secao 7.
+  tickers: AdminDetailTicker[];
 }
 
 export interface RegistryChangeEventResponse {
@@ -127,6 +130,16 @@ export interface AdminTicker {
   // Carimbo de saida do universo B3: preenchido ao desativar, null ao reativar.
   delisted_at: string | null;
 }
+
+/**
+ * Forma de cada item em `AdminCompanyDetail.tickers`.
+ *
+ * O contrato vigente e `AdminTicker` (estado por ticker). `string` continua no
+ * tipo porque um backend anterior a essa mudanca devolve apenas os simbolos —
+ * o admin tolera as duas formas para nao depender da ordem de deploy. Quando a
+ * janela de transicao fechar, a uniao pode ser estreitada para `AdminTicker`.
+ */
+export type AdminDetailTicker = string | AdminTicker;
 
 export interface TickerToggleRequest {
   is_active: boolean;
