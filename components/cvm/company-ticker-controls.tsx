@@ -19,34 +19,19 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDateTime } from "@/lib/formatters";
 import { setTickerActive } from "@/lib/services/admin/cvm-registry";
-import type { AdminTicker } from "@/lib/services/admin/types";
-
-/**
- * Aceita tanto a forma atual do detalhe (`string[]` — so os simbolos) quanto a
- * forma enriquecida (`AdminTicker[]`, com is_active/delisted_at). Hoje o backend
- * devolve apenas os simbolos em `AdminCompanyDetail.tickers`; se/quando o
- * detalhe passar a expor estado por ticker, a UI reflete o estado inicial sem
- * mudanca aqui.
- */
-type TickerInput = string | AdminTicker;
-
-function normalize(tickers: TickerInput[], primaryTicker: string | null): AdminTicker[] {
-  return tickers.map((t) =>
-    typeof t === "string"
-      ? {
-          ticker: t,
-          is_active: true,
-          is_primary: t === primaryTicker,
-          delisted_at: null,
-        }
-      : t,
-  );
-}
+import { normalizeDetailTickers } from "@/lib/tickers";
+import type { AdminDetailTicker, AdminTicker } from "@/lib/services/admin/types";
 
 /**
  * Lista os tickers da empresa com estado (Ativo / Desabilitado) e o controle de
  * delisting manual: desabilitar (esconde do Rastreador do app) e reabilitar.
  * Chama PATCH /admin/cvm/companies/{cd_cvm}/tickers/{ticker}.
+ *
+ * O detalhe da empresa materializa o estado por ticker (`AdminTicker`), entao a
+ * aba abre ja mostrando quem esta desabilitado e desde quando — sem depender de
+ * nenhum clique. `normalizeDetailTickers` tambem aceita a forma antiga
+ * (`string[]`, so os simbolos), caso o backend em producao ainda seja o anterior
+ * a essa mudanca; nesse caso todo ticker aparece como Ativo, como antes.
  */
 export function CompanyTickerControls({
   cdCvm,
@@ -54,15 +39,21 @@ export function CompanyTickerControls({
   primaryTicker,
 }: {
   cdCvm: string;
-  tickers: TickerInput[];
+  tickers: AdminDetailTicker[];
   primaryTicker: string | null;
 }) {
-  const base = useMemo(() => normalize(tickers, primaryTicker), [tickers, primaryTicker]);
+  const base = useMemo(
+    () => normalizeDetailTickers(tickers, primaryTicker),
+    [tickers, primaryTicker],
+  );
 
-  // Override local por ticker, definido SO pelo retorno do PATCH. Necessario
-  // porque o detalhe nao materializa is_active/delisted_at por ticker (mesmo
-  // padrao do ValidationActionPanel): sem isso a badge/botao nao refletiriam a
-  // acao ate um refetch que ainda traz so os simbolos.
+  // Override local por ticker, definido SO pelo retorno do PATCH. Continua
+  // necessario mesmo com o detalhe expondo o estado real: o
+  // `invalidateQueries` abaixo dispara um refetch, e enquanto ele nao volta o
+  // react-query serve o dado anterior — a badge/botao ficariam no estado
+  // errado por esse intervalo. O override da o feedback imediato; o refetch
+  // depois confirma com o servidor. Contra um backend antigo (tickers como
+  // strings) ele e a UNICA coisa que mantem a acao visivel.
   const [overrides, setOverrides] = useState<Record<string, AdminTicker>>({});
   const rows = base.map((t) => overrides[t.ticker] ?? t);
 

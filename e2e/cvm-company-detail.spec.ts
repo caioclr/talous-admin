@@ -6,6 +6,8 @@ import {
   CAPITAL_BY_COMPANY_PETROBRAS,
   CHANGES_PETROBRAS,
   COMPANY_DETAIL_PETROBRAS,
+  COMPANY_DETAIL_PETROBRAS_DELISTED,
+  COMPANY_DETAIL_PETROBRAS_LEGACY_TICKERS,
   DIVIDEND_POLICY_BY_COMPANY,
   DIVIDEND_POLICY_OK_DETAIL,
   FCA_BY_COMPANY_PETROBRAS,
@@ -18,6 +20,7 @@ import {
   ITR_DFP_FILINGS_WITH_VALIDATION,
   VLMO_BY_COMPANY_PETROBRAS,
 } from "./fixtures/cvm";
+import type { AdminCompanyDetail } from "@/lib/services/admin/types";
 
 const DETAIL_URL = "/cvm/companies/detail?cd_cvm=9512";
 
@@ -36,9 +39,12 @@ const VALIDATED_BLOCK = {
  * carregadas LAZY (so quando a aba/sub-aba e ativada), mas registrar tudo aqui e
  * inofensivo — o `captured` de cada rota prova se/quando foi chamada.
  */
-function mockCompanyDetail(page: import("@playwright/test").Page) {
+function mockCompanyDetail(
+  page: import("@playwright/test").Page,
+  detail: AdminCompanyDetail = COMPANY_DETAIL_PETROBRAS,
+) {
   return {
-    company: mockGet(page, CvmRoutes.companyDetail, COMPANY_DETAIL_PETROBRAS),
+    company: mockGet(page, CvmRoutes.companyDetail, detail),
     history: mockGet(page, CvmRoutes.companyHistory, HISTORY_PETROBRAS),
     changes: mockGet(page, CvmRoutes.companyChanges, CHANGES_PETROBRAS),
     ipe: mockGet(page, CvmRoutes.ipeByCompany, IPE_DISCLOSURES_LIST),
@@ -75,7 +81,9 @@ test.describe("CVM company detail — header e abas", () => {
 
     await expect(page.getByRole("heading", { name: COMPANY_DETAIL_PETROBRAS.name })).toBeVisible();
     await expect(page.getByRole("link", { name: "Empresas" })).toBeVisible();
-    await expect(page.getByText("PETR3, PETR4")).toBeVisible();
+    // Subtitulo lista os SIMBOLOS mesmo com `tickers` vindo como objetos.
+    await expect(page.getByText("PETR4, PETR3")).toBeVisible();
+    await expect(page.getByText("object Object")).toHaveCount(0);
     await expect(page.getByText("Codigo CVM: 9512")).toBeVisible();
   });
 
@@ -113,6 +121,41 @@ test.describe("CVM company detail — header e abas", () => {
 test.describe("CVM company detail — Tickers (delisting manual)", () => {
   test.beforeEach(async ({ page }) => {
     await mockAuth(page, { authenticated: true });
+  });
+
+  test("abre com o estado real de cada ticker (deslistado inclusive), sem clique", async ({
+    page,
+  }) => {
+    mockCompanyDetail(page, COMPANY_DETAIL_PETROBRAS_DELISTED);
+    await page.goto(DETAIL_URL);
+    await page.getByRole("tab", { name: "Tickers" }).click();
+
+    const main = page.getByRole("main");
+    const petr4Row = main.getByRole("listitem").filter({ hasText: "PETR4" });
+    await expect(petr4Row.getByText("Ativo", { exact: true })).toBeVisible();
+    await expect(petr4Row.getByRole("button", { name: "Desabilitar" })).toBeVisible();
+
+    // Nenhum clique aconteceu: o estado vem do proprio payload do detalhe.
+    const petr3Row = main.getByRole("listitem").filter({ hasText: "PETR3" });
+    await expect(petr3Row.getByText("Desabilitado", { exact: true })).toBeVisible();
+    await expect(petr3Row.getByRole("button", { name: "Reabilitar" })).toBeVisible();
+    await expect(petr3Row.getByText(/Desabilitado em \d{2}\/\d{2}\/\d{4}/)).toBeVisible();
+  });
+
+  test("tolera o contrato antigo (tickers como strings) sem quebrar a tela", async ({ page }) => {
+    mockCompanyDetail(page, COMPANY_DETAIL_PETROBRAS_LEGACY_TICKERS);
+    await page.goto(DETAIL_URL);
+
+    // Subtitulo do breadcrumb: simbolos, nunca "[object Object]".
+    await expect(page.getByText("PETR4, PETR3")).toBeVisible();
+    await expect(page.getByText("object Object")).toHaveCount(0);
+
+    await page.getByRole("tab", { name: "Tickers" }).click();
+    const rows = page.getByRole("main").getByRole("listitem");
+    await expect(rows).toHaveCount(2);
+    // Sem is_active no payload nao ha como distinguir: todos como Ativo.
+    await expect(rows.getByText("Ativo", { exact: true })).toHaveCount(2);
+    await expect(page.getByRole("main").getByText("Desabilitado")).toHaveCount(0);
   });
 
   test("desabilita e reabilita um ticker pela aba Tickers", async ({ page }) => {

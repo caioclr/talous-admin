@@ -221,8 +221,11 @@ do operador. Não "simplifique" removendo esse override.
 Aba do hub da empresa (`/cvm/companies/detail?cd_cvm=…`), implementada em
 `components/cvm/company-ticker-controls.tsx`.
 
-**O que faz.** Lista os tickers da empresa com badge **Ativo** / **Desabilitado**
-(e badge `Primario` no primário). Cada linha tem um botão que chama:
+**O que faz.** Lista **todo o histórico de tickers** da empresa (deslistados
+inclusive) com badge **Ativo** / **Desabilitado** (e badge `Primario` no
+primário). A aba abre já mostrando o **estado real** de cada ticker — quem está
+desabilitado e desde quando (`Desabilitado em …`), sem depender de nenhum clique.
+Cada linha tem um botão que chama:
 
 ```
 PATCH /admin/cvm/companies/{cd_cvm}/tickers/{ticker}
@@ -245,17 +248,40 @@ ticker que ainda negocia e não deveria aparecer, ou ticker que voltou. A aba d�
 ao operador o controle manual sobre o mesmo flag `is_active` que o filtro do
 Rastreador respeita.
 
-**⚠ Limitação conhecida (follow-up aberto).** O `GET /admin/cvm/companies/{cd_cvm}`
-ainda devolve `tickers` como **`list[str]`** — só os símbolos, sem `is_active`
-nem `delisted_at` (o detalhe já inclui os deslistados, mas indistinguíveis dos
-ativos). Consequência prática: **ao abrir a aba, todo ticker aparece como Ativo**;
-o estado real de um ticker já desabilitado só acende **depois** do PATCH, via
-override local em memória. Recarregar a página perde essa distinção de novo.
+**Contrato que sustenta a aba.** `GET /admin/cvm/companies/{cd_cvm}` devolve
+`tickers` como **objetos com estado**, não como lista de símbolos:
 
-O componente já aceita `AdminTicker[]` (formato rico) além de `string[]` —
-quando o backend enriquecer o detalhe, a UI passa a refletir o estado inicial
-**sem mudança no admin**. O follow-up é do backend: expor
-`tickers: list[TickerToggleResponse]` (ou equivalente) em `AdminCompanyDetail`.
+```json
+"tickers": [
+  { "ticker": "PETR3", "is_active": true,  "is_primary": true,  "delisted_at": null },
+  { "ticker": "PETR4", "is_active": false, "is_primary": false, "delisted_at": "2026-07-30T12:00:00Z" }
+]
+```
+
+Ordem: primário primeiro, depois ativos por ticker asc, depois inativos por
+ticker asc. A lista continua sendo o histórico completo — a diferença é que agora
+dá para **distinguir** ativo de deslistado. No admin isso é o tipo
+`AdminTicker`; a lista do detalhe é `AdminDetailTicker[]`
+(`lib/services/admin/types.ts`).
+
+> `AdminCompanySummary.tickers` (coluna da **lista** em `/cvm/companies`) é outra
+> coisa: continua `string[]` e **só ativos**. Não confundir os dois.
+
+**Tolerância à ordem de deploy.** `AdminDetailTicker` é `string | AdminTicker` e
+todo consumidor do detalhe passa por `lib/tickers.ts` (`tickerSymbols` para
+rótulos/contagens, `normalizeDetailTickers` para o estado por linha). Contra um
+backend anterior a esse contrato — que responde `string[]` — a tela não quebra:
+volta ao comportamento antigo (todo ticker como Ativo, porque o payload não
+permite distinguir) e o subtítulo do breadcrumb continua listando símbolos em vez
+de `[object Object]`. Quando a janela de transição fechar, a união pode ser
+estreitada para `AdminTicker`; a normalização em runtime é que não deve sair.
+
+**O override local do PATCH continua existindo** (mesmo padrão do
+`ValidationActionPanel`): `invalidateQueries(["cvm","company",cdCvm])` dispara um
+refetch, e enquanto ele não volta o react-query serve o dado anterior — a badge
+ficaria no estado errado nesse intervalo. O override é alimentado **só** pela
+resposta do PATCH e dá o feedback imediato; o refetch depois confirma com o
+servidor.
 
 ---
 
