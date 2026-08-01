@@ -34,8 +34,6 @@ Inventário completo e atualizado das telas: [`docs/admin-panel.md`](docs/admin-
   `/admin/cvm/validations/{validate,invalidate}`
 - **Operação**: `/cvm/jobs` (jobs Celery + painel de workers, somente leitura) e
   sino de notificações do operador na topbar
-- **i18n parcial**: next-intl sem routing, locale por cookie `NEXT_LOCALE`;
-  só shell, Dashboard CVM e Alertas migrados — o resto é hard-coded em pt-BR
 
 ### Planejado — **sem tela hoje** (não descrever como existente)
 
@@ -71,11 +69,20 @@ O admin e uma aplicacao separada em `talous-admin/`.
 - Zustand
 - React Hook Form + Zod
 - Recharts
-- next-intl (sem i18n routing — locale por cookie `NEXT_LOCALE`)
 - Vitest + Testing Library
 - Playwright
 
 Porta local: `6001`.
+
+**Idioma: pt-BR, sem camada de i18n.** Não há `next-intl`, catálogo nem seletor
+de idioma — copy nova entra como literal no componente. A decisão e o custo de
+reverter estão em [ADR-002](../docs/Decisions/ADR-002-admin-sem-i18n.md) e na §9
+de [`docs/admin-panel.md`](docs/admin-panel.md). A regra **diverge** do
+`talous-frontend`, onde a copy vai para o catálogo.
+
+A grafia sem acento existente ("Sincronizacao", "Situacao") é preservada: as
+suítes casam texto literal, então normalizar acento é PR própria, com
+atualização coordenada de asserção.
 
 Rotas seguem o padrao atual do repo: sem route groups `(...)` e sem segmentos
 dinamicos `[...]`; paginas de detalhe usam `/detail/page.tsx` com query string.
@@ -84,7 +91,7 @@ dinamicos `[...]`; paginas de detalhe usam `/detail/page.tsx` com query string.
 
 ## Documentação local
 
-- [Painel admin — doc viva: telas, padrões, i18n, aba Tickers](docs/admin-panel.md)
+- [Painel admin — doc viva: telas, padrões, aba Tickers, política de idioma](docs/admin-panel.md)
 - [Como rodar e verificar](README.md)
 - [Contrato canônico da API admin](../talous-backend/docs/Architecture/admin-api-reference.md)
 - [Bootstrap do MVP CVM](docs/admin-cvm-mvp.md) — **histórico**, não descreve o painel atual

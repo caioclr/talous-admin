@@ -1,6 +1,6 @@
 # Painel Admin — Talous AI
 
-> **Doc viva.** Descreve o painel `talous-admin` **como ele existe em 2026-07-27**.
+> **Doc viva.** Descreve o painel `talous-admin` **como ele existe em 2026-08-01**.
 > Fonte de verdade para o comportamento é o código deste repositório; para
 > contratos de endpoint é
 > [`talous-backend/docs/Architecture/admin-api-reference.md`](../../talous-backend/docs/Architecture/admin-api-reference.md).
@@ -52,7 +52,7 @@ de notificação — **ainda não existe** neste repositório. Ver §11.
 | Client state | Zustand (só auth) |
 | Forms | React Hook Form + Zod |
 | Gráficos | Recharts |
-| i18n | next-intl 4 (ver §9) |
+| Idioma | **pt-BR congelado**, sem camada de i18n (ver §9 e ADR-002) |
 | Testes | Vitest + Testing Library; Playwright (`mock` e `real`) |
 | Porta | **6001** (dev, build e start) |
 
@@ -314,55 +314,67 @@ query param mesmo sem paginar a resposta; por isso a página usa a janela fixa
 
 ---
 
-## 9. Internacionalização (i18n)
+## 9. Idioma: pt-BR congelado, por decisão
 
-**next-intl 4, SEM i18n routing.** Mesmo padrão do `talous-frontend`.
+**O painel não é internacionalizado.** Não há `next-intl`, catálogo de mensagens,
+provider, cookie de locale nem seletor de idioma. A copy vive nos componentes,
+em português, e é assim de propósito.
 
-| Aspecto | Como é |
+A decisão está registrada em [ADR-002 — O painel administrativo não é
+internacionalizado](../../docs/Decisions/ADR-002-admin-sem-i18n.md), e o escopo do
+princípio de i18n da constituição foi emendado (versão 1.1.0) para dizer
+explicitamente que ele vale para o **app do usuário final**. Isto aqui não é
+exceção silenciosa a um princípio — é uma fronteira escrita nele.
+
+### Por que, em três números
+
+Até 2026-08-01 existia uma camada de i18n **parcial**: `next-intl` sem routing,
+locale por cookie `NEXT_LOCALE`, catálogos `pt-BR`/`en`/`es` e um seletor na
+topbar. O levantamento de 2026-07-31 mediu o que ela entregava:
+
+| Medição | Valor |
 |---|---|
-| Fonte do locale | cookie **`NEXT_LOCALE`** |
-| URL | **sem prefixo de locale** — as rotas planas do admin ficam intactas |
-| Locales | `LOCALES = ["pt-BR", "en", "es"]` |
-| Default | `pt-BR` — cookie ausente **ou inválido** cai no default |
-| Config | `i18n/request.ts` (+ `createNextIntlPlugin` em `next.config.ts`) |
-| Entrega | `app/layout.tsx` lê locale/messages no servidor e envolve tudo em `NextIntlClientProvider` |
-| Troca de idioma | `components/language-selector.tsx` na topbar: grava o cookie e faz `router.refresh()` |
+| Arquivos `.tsx` que consumiam i18n | **3 de 91** (shell, Dashboard CVM, Alertas) |
+| Valores de `en.json` e `es.json` idênticos ao pt-BR | **90 de 90** |
+| Copy hard-coded, fora da camada | **1.721 strings em 70 arquivos** |
 
-**Trade-off aceito: as rotas viram dinâmicas.** Ler cookie no layout raiz tira o
-admin da renderização estática. Para um painel interno atrás de login isso não
-custa nada — mas é a razão de não haver rota estática no build.
+Trocar o idioma mudava **apenas o atributo `lang` do `<html>`**. O seletor
+oferecia três idiomas e não entregava nenhum.
 
-### ⚠ Cobertura: parcial, e pequena
+Completar a internacionalização custaria as 1.721 strings mais um pré-requisito
+estrutural que é o número que de fato decide: **288 definições de coluna de
+tabela, 280 com rótulo literal, em 39 arrays em escopo de módulo**.
+`useTranslations` é um hook — não existe fora do componente. São **39 refactors
+de arquivo antes da primeira tradução**.
 
-Migrados para `useTranslations` hoje: **shell (`components/admin-shell.tsx`),
-Dashboard CVM (`app/cvm/page.tsx`) e Alertas (`app/cvm/alerts/page.tsx`)** — e
-mais nada. **Todas as outras ~45 páginas seguem com strings hard-coded em
-português**, assim como os componentes compartilhados (`FilterBar`,
-`PaginationControls`, `PageBreadcrumb`, `NotificationBell`,
-`CompanyTickerControls`, painel de validação).
+E o operador de moderação lê `assunto`, `categoria`, `situacao`: **dados da CVM
+em português**, que nenhuma camada de i18n no cliente alcança. Traduzir o cromo
+em volta de conteúdo em português produz uma tela pior que a tela toda em
+português.
 
-Onde a migração parou dentro das telas já migradas, há `TODO i18n:` inline
-explicando o motivo (rótulo derivado de dado do backend, rich text, breadcrumb
-decorativo).
+### Consequências que valem para quem escreve código aqui
 
-`messages/en.json` e `messages/es.json` **são placeholders**: os valores espelham
-o pt-BR, com um bloco `_meta` declarando `"status": "placeholder"`. Trocar o
-idioma hoje não traduz nada — só exercita o caminho. Tradução profissional é
-trabalho futuro.
+- **Copy nova entra como literal no componente.** Não há catálogo para onde
+  mandá-la, e criar um só para uma tela reintroduz a inconsistência.
+- **A regra diverge do `talous-frontend`**, onde a copy vai para o catálogo. Quem
+  trabalha nos dois repos precisa lembrar disso — está escrito aqui e no
+  `CLAUDE.md`, não na cabeça de ninguém.
+- **A grafia sem acento existente foi preservada.** O painel tem 116 strings
+  escritas sem acento ("Sincronizacao", "Situacao", "Governanca") convivendo com
+  strings acentuadas. As suítes casam texto literal e funcionam como *lock* de
+  copy: normalizar acento é trabalho próprio, com atualização coordenada de
+  asserção, nunca de carona em outra mudança.
+- **As rotas voltaram a ser estáticas.** A leitura de cookie no layout raiz era o
+  que forçava renderização dinâmica; sem ela, as 50 rotas do build passaram de
+  `ƒ (Dynamic)` para `○ (Static)`.
 
-### Padrão para migrar uma tela
+### O problema de idioma que o painel realmente tem — e este doc não resolve
 
-1. Adicionar o namespace em `messages/pt-BR.json` sob `admin.<tela>` (o arquivo
-   tem hoje `admin.shell`, `admin.dashboard`, `admin.alerts`).
-2. Espelhar as mesmas chaves em `en.json` e `es.json` — **com o texto pt-BR**,
-   mantendo `_meta.status = "placeholder"`. Chave faltando em um locale quebra em
-   runtime.
-3. Na página: `const t = useTranslations("admin.<tela>")` e trocar cada literal
-   por `t("chave")`.
-4. Rótulo que vem de **dado do backend** (severidade, `*_LABELS` de service) não
-   se traduz no componente: deixar `TODO i18n:` no lugar, como as telas migradas
-   fazem, até o backend ou o service resolverem.
-5. Rodar `npm run test` e o e2e da tela — asserts por texto quebram fácil.
+Dos 35 `detail=` dos endpoints admin do backend, **32 estão em inglês**
+("Company not found", "Filing not found") e chegam crus ao operador via
+`toast.error(error.message)` em ~20 pontos do painel. O painel já é bilíngue
+**contra** o operador, hoje, e nenhuma camada de i18n no cliente resolveria isso.
+É follow-up de `talous-backend`.
 
 ---
 
@@ -382,8 +394,7 @@ nenhum deles. A tela é **somente leitura**: não dispara nem faz retry de job.
 
 ### Sino de notificações do operador
 
-`components/notification-bell.tsx`, na topbar do shell, ao lado do seletor de
-idioma. Consome `/admin/notifications` (feed + `unread_count`) com **polling de
+`components/notification-bell.tsx`, à direita da topbar do shell. Consome `/admin/notifications` (feed + `unread_count`) com **polling de
 60s**, badge de não lidas (`99+` como teto), marcar uma como lida
 (`POST /admin/notifications/{id}/read`) e marcar todas
 (`POST /admin/notifications/read-all`).
