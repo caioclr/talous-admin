@@ -83,6 +83,7 @@ Dois projetos: **`mock`** (`e2e/`, MSW + fixtures, determinista, é o default de
   `lib/services/admin/types.ts`). Não inventar endpoint: conferir no contrato do
   backend.
 - Listas paginadas usam `PaginationControls` com seletor de itens-por-página.
-- i18n é **parcial** (next-intl por cookie `NEXT_LOCALE`; só shell, Dashboard e
-  Alertas migrados) — ver a seção de i18n em
+- O painel é **pt-BR, sem camada de i18n** — decisão registrada em
+  [ADR-002](../docs/Decisions/ADR-002-admin-sem-i18n.md); copy nova entra como
+  literal no componente. Ver §9 de
   [`docs/admin-panel.md`](docs/admin-panel.md).
