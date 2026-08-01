@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { useTranslations } from "next-intl";
 import { ArrowUpRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,7 +35,6 @@ import {
 } from "@/lib/services/admin/cvm-alerts";
 import type { AlertSeverity, OperationalAlert } from "@/lib/services/admin/types";
 
-// TODO i18n: rotulos de severidade derivados de dados (migracao progressiva).
 const SEVERITY_BADGES: Record<
   AlertSeverity,
   { label: string; variant: "destructive" | "warning" | "secondary" }
@@ -49,7 +47,6 @@ const SEVERITY_BADGES: Record<
 const SEVERITY_ORDER: AlertSeverity[] = ["alta", "media", "baixa"];
 
 export default function AlertsPage() {
-  const t = useTranslations("admin.alerts");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [severity, setSeverity] = useState("");
@@ -76,14 +73,12 @@ export default function AlertsPage() {
       }),
   });
 
-  // Colunas construidas dentro do componente para acessar `t` (i18n) via closure.
   const columns = useMemo<DataTableColumn<OperationalAlert>[]>(
     () => [
       {
         key: "severity",
-        header: t("colSeverity"),
+        header: "Severidade",
         render: (row) => {
-          // TODO i18n: rotulo de severidade derivado de dados (progressivo).
           const badge = SEVERITY_BADGES[row.severity] ?? {
             label: row.severity,
             variant: "secondary" as const,
@@ -93,15 +88,14 @@ export default function AlertsPage() {
       },
       {
         key: "type",
-        header: t("colType"),
-        // TODO i18n: ALERT_TYPE_LABELS vem do service (migracao progressiva).
+        header: "Tipo",
         render: (row) => (
           <p className="text-sm">{ALERT_TYPE_LABELS[row.alert_type] ?? row.alert_type}</p>
         ),
       },
       {
         key: "company",
-        header: t("colCompany"),
+        header: "Empresa",
         render: (row) =>
           row.cd_cvm !== null ? (
             <Link
@@ -126,7 +120,7 @@ export default function AlertsPage() {
       },
       {
         key: "message",
-        header: t("colMessage"),
+        header: "Mensagem",
         render: (row) => (
           <p className="line-clamp-2 max-w-md text-sm" title={row.message}>
             {row.message}
@@ -135,17 +129,17 @@ export default function AlertsPage() {
       },
       {
         key: "reference",
-        header: t("colReference"),
+        header: "Referencia",
         render: (row) => formatDate(row.reference_date),
       },
       {
         key: "detected",
-        header: t("colDetected"),
+        header: "Detectado em",
         render: (row) => formatDateTime(row.detected_at),
       },
       {
         key: "origin",
-        header: t("colOrigin"),
+        header: "Origem",
         render: (row) => {
           const origin = alertOrigin(row);
           return origin ? (
@@ -154,7 +148,7 @@ export default function AlertsPage() {
               href={origin}
               onClick={(event) => event.stopPropagation()}
             >
-              {t("cellOrigin")}
+              Origem
               <ArrowUpRight className="size-3.5" />
             </Link>
           ) : (
@@ -164,7 +158,7 @@ export default function AlertsPage() {
       },
       {
         key: "details",
-        header: t("colPayload"),
+        header: "Payload",
         render: (row) => (
           <Button
             type="button"
@@ -176,12 +170,12 @@ export default function AlertsPage() {
               setSelected(row);
             }}
           >
-            {t("cellDetails")}
+            Detalhes
           </Button>
         ),
       },
     ],
-    [t],
+    [],
   );
 
   const summary = summaryQuery.data;
@@ -190,14 +184,14 @@ export default function AlertsPage() {
     <div className="flex flex-col gap-4">
       <Card className="metric-tile">
         <CardHeader>
-          <CardTitle>{t("title")}</CardTitle>
-          <CardDescription>{t("description")}</CardDescription>
+          <CardTitle>Alertas operacionais (CVM)</CardTitle>
+          <CardDescription>Inconsistencias e atrasos detectados entre os datasets CVM — derivados dos dados ja sincronizados, ordenados por severidade.</CardDescription>
         </CardHeader>
 
         <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <Card className="metric-tile">
             <CardHeader>
-              <CardDescription>{t("totalCard")}</CardDescription>
+              <CardDescription>Total de alertas</CardDescription>
               <CardTitle>{summary?.total ?? "—"}</CardTitle>
             </CardHeader>
           </Card>
@@ -205,7 +199,6 @@ export default function AlertsPage() {
             <Card key={sev} className="metric-tile">
               <CardHeader>
                 <div>
-                  {/* TODO i18n: rotulo de severidade derivado de dados (progressivo). */}
                   <Badge variant={SEVERITY_BADGES[sev].variant}>
                     {SEVERITY_BADGES[sev].label}
                   </Badge>
@@ -219,8 +212,7 @@ export default function AlertsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>{t("byTypeTitle")}</CardTitle>
-          {/* TODO i18n: descricao com markup inline (rich text) — migracao progressiva. */}
+          <CardTitle>Por tipo</CardTitle>
           <CardDescription>
             Distribuicao do <span className="font-mono">/summary.by_type</span> — cada tipo
             aponta para o dataset de origem.
@@ -234,25 +226,24 @@ export default function AlertsPage() {
                   key={type}
                   className="flex items-center justify-between gap-3 rounded-2xl border border-border/80 bg-background/70 px-4 py-3"
                 >
-                  {/* TODO i18n: ALERT_TYPE_LABELS vem do service (progressivo). */}
                   <p className="text-sm">{ALERT_TYPE_LABELS[type] ?? type}</p>
                   <p className="font-mono text-lg text-foreground">{count}</p>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">{t("noByType")}</p>
+            <p className="text-sm text-muted-foreground">Nenhum alerta por tipo no momento.</p>
           )}
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>{t("filtersTitle")}</CardTitle>
+          <CardTitle>Filtros</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           <div className="space-y-1.5">
-            <Label htmlFor="filter-severity">{t("filterSeverity")}</Label>
+            <Label htmlFor="filter-severity">Severidade</Label>
             <Select
               id="filter-severity"
               value={severity}
@@ -261,17 +252,16 @@ export default function AlertsPage() {
                 setSeverity(event.target.value);
               }}
             >
-              <option value="">{t("optionAllFem")}</option>
+              <option value="">todas</option>
               {SEVERITY_ORDER.map((sev) => (
                 <option key={sev} value={sev}>
-                  {/* TODO i18n: rotulo de severidade derivado de dados (progressivo). */}
                   {SEVERITY_BADGES[sev].label}
                 </option>
               ))}
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="filter-alert-type">{t("filterType")}</Label>
+            <Label htmlFor="filter-alert-type">Tipo</Label>
             <Select
               id="filter-alert-type"
               value={alertType}
@@ -280,8 +270,7 @@ export default function AlertsPage() {
                 setAlertType(event.target.value);
               }}
             >
-              <option value="">{t("optionAllMasc")}</option>
-              {/* TODO i18n: ALERT_TYPE_LABELS vem do service (progressivo). */}
+              <option value="">todos</option>
               {Object.entries(ALERT_TYPE_LABELS).map(([type, label]) => (
                 <option key={type} value={type}>
                   {label}
@@ -290,7 +279,7 @@ export default function AlertsPage() {
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="filter-cd-cvm">{t("filterCdCvm")}</Label>
+            <Label htmlFor="filter-cd-cvm">cd_cvm</Label>
             <Input
               id="filter-cd-cvm"
               inputMode="numeric"
@@ -318,7 +307,7 @@ export default function AlertsPage() {
         }}
         getRowKey={(row, index) => `${row.alert_type}-${row.detected_at}-${index}`}
         onRowClick={setSelected}
-        emptyMessage={t("emptyMessage")}
+        emptyMessage="Nenhum alerta operacional encontrado para os filtros informados."
       />
 
       <Dialog
@@ -331,7 +320,6 @@ export default function AlertsPage() {
       >
         <DialogContent>
           <DialogHeader>
-            {/* TODO i18n: titulo derivado de ALERT_TYPE_LABELS (service) — progressivo. */}
             <DialogTitle>
               {selected ? ALERT_TYPE_LABELS[selected.alert_type] ?? selected.alert_type : ""}
             </DialogTitle>
