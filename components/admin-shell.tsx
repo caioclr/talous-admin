@@ -39,7 +39,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/notification-bell";
-import { LanguageSelector } from "@/components/language-selector";
 import { logout } from "@/lib/services/auth";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { CvmAcronym } from "@/components/cvm-acronym";
@@ -270,7 +269,6 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="flex items-center gap-1">
-          <LanguageSelector />
           <NotificationBell />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

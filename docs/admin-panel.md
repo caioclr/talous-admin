@@ -326,7 +326,7 @@ query param mesmo sem paginar a resposta; por isso a página usa a janela fixa
 | Default | `pt-BR` — cookie ausente **ou inválido** cai no default |
 | Config | `i18n/request.ts` (+ `createNextIntlPlugin` em `next.config.ts`) |
 | Entrega | `app/layout.tsx` lê locale/messages no servidor e envolve tudo em `NextIntlClientProvider` |
-| Troca de idioma | `components/language-selector.tsx` na topbar: grava o cookie e faz `router.refresh()` |
+| Troca de idioma | **não existe** — o seletor da topbar foi removido (Spec 003, FR-015). O locale só muda por cookie `NEXT_LOCALE` gravado à mão |
 
 **Trade-off aceito: as rotas viram dinâmicas.** Ler cookie no layout raiz tira o
 admin da renderização estática. Para um painel interno atrás de login isso não
