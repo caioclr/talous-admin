@@ -11,6 +11,8 @@ import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { PageBreadcrumb } from "@/components/page-breadcrumb";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CompanyTickerControls } from "@/components/cvm/company-ticker-controls";
+import { CuratedFieldsPanel } from "@/components/curated/curated-fields-panel";
+import { DocumentTextViewer } from "@/components/curated/document-text-viewer";
 import { ValidationActionPanel, ValidationBadge } from "@/components/validation";
 import { formatDate, formatDateTime, formatDecimal, formatList } from "@/lib/formatters";
 import { tickerSymbols } from "@/lib/tickers";
@@ -117,6 +119,15 @@ export default function CompanyDetailPage() {
   // Controle de aba (lazy load): so a query da aba ativa e disparada.
   const [tab, setTab] = useState<TopTab>("info");
   const [moderarSub, setModerarSub] = useState<ModerarTab>("ipe");
+  /**
+   * Trecho trazido de um release para o painel de curadoria, com o documento de
+   * origem. E o que liga o documento ao campo sem copiar e colar entre telas — e
+   * o backend recusa origem "release" sem o documento, porque essa proveniencia
+   * e publicada ao usuario.
+   */
+  const [curadoria, setCuradoria] = useState<{ releaseId: string; trecho: string } | null>(
+    null,
+  );
   const [verificarSub, setVerificarSub] = useState<VerificarTab>("buybacks");
 
   const companyQuery = useQuery({
@@ -603,7 +614,33 @@ export default function CompanyDetailPage() {
                     />
                   </TabSection>
 
-                  <ReleasesSection query={releasesQuery} />
+                  <ReleasesSection
+                    query={releasesQuery}
+                    onCurate={(releaseId, trecho) => setCuradoria({ releaseId, trecho })}
+                  />
+
+                  {/* Painel de curadoria: aparece quando o operador leva um
+                      trecho do release para ca. Salvar cria RASCUNHO — publicar e
+                      um segundo ato, porque `published_at` nulo e o default e
+                      nada chega ao usuario sem alguem decidir. */}
+                  {company?.id && (
+                    <section className="space-y-3 pt-2" aria-label="Conteudo curado">
+                      <div className="space-y-1">
+                        <h3 className="text-sm font-semibold text-foreground">
+                          Conteudo curado
+                        </h3>
+                        <p className="text-xs text-muted-foreground">
+                          O que for publicado aqui aparece nas secoes Visao Geral e
+                          Negocio da empresa, com a proveniencia do documento.
+                        </p>
+                      </div>
+                      <CuratedFieldsPanel
+                        companyId={company.id}
+                        sourceReleaseId={curadoria?.releaseId ?? null}
+                        initialText={curadoria?.trecho}
+                      />
+                    </section>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="itr-dfp">
@@ -786,8 +823,11 @@ function ReleaseStatusBadge({ status }: { status: IPEReleaseSummary["extraction_
  */
 function ReleasesSection({
   query,
+  onCurate,
 }: {
   query: UseQueryResult<AdminPagedResponse<IPEReleaseSummary>>;
+  /** Leva o trecho selecionado ao painel de curadoria, com a proveniencia. */
+  onCurate?: (releaseId: string, trecho: string) => void;
 }) {
   const releases = query.data?.items ?? [];
 
@@ -810,7 +850,7 @@ function ReleasesSection({
         ) : (
           <ul className="space-y-3">
             {releases.map((release) => (
-              <ReleaseRow key={release.id} release={release} />
+              <ReleaseRow key={release.id} release={release} onCurate={onCurate} />
             ))}
           </ul>
         )}
@@ -825,7 +865,13 @@ function ReleasesSection({
  * abre o item (`enabled: open`). Quando `extraction_status != "ok"` mostramos um
  * aviso claro em vez de viewer vazio.
  */
-function ReleaseRow({ release }: { release: IPEReleaseSummary }) {
+function ReleaseRow({
+  release,
+  onCurate,
+}: {
+  release: IPEReleaseSummary;
+  onCurate?: (releaseId: string, trecho: string) => void;
+}) {
   const [open, setOpen] = useState(false);
   const hasText = release.extraction_status === "ok";
 
@@ -877,9 +923,16 @@ function ReleaseRow({ release }: { release: IPEReleaseSummary }) {
               </Button>
             </div>
           ) : detailQuery.data?.full_text ? (
-            <pre className="max-h-[28rem] overflow-auto whitespace-pre-wrap break-words rounded-xl bg-muted/40 p-4 font-mono text-xs leading-relaxed text-foreground">
-              {detailQuery.data.full_text}
-            </pre>
+            // O viewer saiu para componente proprio: o mesmo `<pre>` estava
+            // duplicado aqui e em `DividendPolicyRow`, cujo docstring admite
+            // "espelha o viewer de release". E ele ganhou busca, porque achar
+            // "GMV" a olho em ~44 mil caracteres e o gargalo de quem cura.
+            <DocumentTextViewer
+              text={detailQuery.data.full_text}
+              onCopySelection={
+                onCurate ? (trecho) => onCurate(release.id, trecho) : undefined
+              }
+            />
           ) : (
             <p className="text-sm text-muted-foreground">Texto vazio para este release.</p>
           )}

@@ -1328,3 +1328,55 @@ export interface ListOpsJobsParams {
   job_name?: string;
   history_limit?: number;
 }
+
+
+// ---------------------------------------------------------------------------
+// Conteudo curado por empresa — o que o admin escreve e o app do usuario le.
+//
+// `published` e o unico portao: rascunho existe na tabela e NAO chega a tela.
+// `source_release_id` e a proveniencia, e ela e PUBLICA — o usuario ve "do
+// release do 2T26". Sem isso o numero viraria afirmacao da plataforma, e a
+// plataforma nao apurou nada: leu um documento da companhia.
+// ---------------------------------------------------------------------------
+
+/** Item de `GET /admin/curated-fields/catalog` — o que existe para curar. */
+export interface CuratedFieldCatalogItem {
+  key: string;
+  label: string;
+  kind: "text" | "number";
+  section: "visao_geral" | "negocio";
+  /** Sem periodo o numero nao significa nada (GMV de quando?). */
+  requires_period: boolean;
+  unit: string | null;
+  /**
+   * O conteudo e fala da companhia (destaques do trimestre, projecao). A tela do
+   * usuario atribui explicitamente: atribuir o que a empresa disse nao e
+   * recomendar; apagar a atribuicao seria.
+   */
+  is_company_statement: boolean;
+  help_text: string;
+}
+
+export interface CuratedFieldUpsertRequest {
+  period?: string | null;
+  value_text?: string | null;
+  value_num?: number | null;
+  unit?: string | null;
+  source_kind?: "cvm_fca" | "release" | "admin";
+  source_release_id?: string | null;
+}
+
+export interface CuratedFieldResponse {
+  field_key: string;
+  label: string;
+  kind: "text" | "number";
+  section: "visao_geral" | "negocio";
+  period: string | null;
+  value_text: string | null;
+  value_num: number | null;
+  unit: string | null;
+  source_kind: string;
+  source_release_id: string | null;
+  is_company_statement: boolean;
+  published: boolean;
+}
