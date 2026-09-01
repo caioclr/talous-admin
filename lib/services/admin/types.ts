@@ -1214,6 +1214,14 @@ export interface SubsectorResponse {
   name: string;
   slug: string;
   company_count: number;
+  /**
+   * Tem pares bastantes para servir de regua de comparacao
+   * (`company_count >= MIN_SUBSECTOR_PEERS`, hoje 5). Vem do backend em vez de a
+   * tela duplicar a constante: 33 subsetores tem uma companhia so, e o curador
+   * precisa ver por que juntar subsetores importa. Opcional para nao quebrar
+   * contra backend antigo.
+   */
+  peer_eligible?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -1224,6 +1232,10 @@ export interface SectorWithSubsectorsResponse {
   name: string;
   slug: string;
   company_count: number;
+  /** Empresas do setor SEM subsetor — o no "(sem subsetor)" da arvore. */
+  unassigned_company_count?: number;
+  /** De qual universo as contagens sao: "all" | "b3" | "active" | "b3+active". */
+  counts_basis?: string;
   created_at: string;
   subsectors: SubsectorResponse[];
 }
@@ -1284,6 +1296,35 @@ export interface CompanyAssignmentResponse {
   sector_slug: string;
   subsector_id: string | null;
   subsector_slug: string | null;
+  /**
+   * Um humano decidiu a taxonomia — o job semanal da B3 nao toca nesta empresa.
+   * Ate 2026-09-01 o job reatribuia o subsetor SEM CONDICAO todo domingo, e
+   * apagava a curadoria feita aqui.
+   */
+  taxonomy_curated?: boolean;
+  taxonomy_curated_at?: string | null;
+  taxonomy_curated_by_name?: string | null;
+  /**
+   * So na reversao. `false` quando o setor anterior foi apagado desde a
+   * curadoria: o setor ATUAL foi mantido, e a tela precisa dizer isso em vez de
+   * deixar o operador achar que restaurou.
+   */
+  previous_sector_restored?: boolean | null;
+}
+
+/** Body de `PUT /admin/sectors/companies/{id}/peer-exclusion`. */
+export interface PeerExclusionRequest {
+  reason: string;
+}
+
+/** Retorno da exclusao de par. */
+export interface PeerExclusionResponse {
+  id: string;
+  name: string;
+  peer_excluded: boolean;
+  reason: string | null;
+  excluded_at: string | null;
+  excluded_by_name: string | null;
 }
 
 // ----------------------------------------------------------------------------

@@ -20,6 +20,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { SectorTree } from "@/components/sectors/sector-tree";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
@@ -565,65 +566,23 @@ export default function SectorMappingPage() {
         </CardContent>
       </Card>
 
-      {/* ============ Reatribuicao de empresa ============ */}
+      {/* ============ Arvore: Setor -> Subsetor -> Empresas ============ */}
+      {/* Substitui o card "Reatribuir empresa", que achava a empresa por texto,
+          uma a uma. Aquele fluxo nunca revelaria o que medimos: 37 empresas com
+          setor provavelmente errado (a RANI3, que e papel, dentro de "Bancos"),
+          98 sem subsetor, 25 nomes de subsetor repetidos entre setores. Para ver
+          isso e preciso ver o conjunto. */}
       <Card>
         <CardHeader>
-          <CardTitle>Reatribuir empresa</CardTitle>
+          <CardTitle>Empresas por setor e subsetor</CardTitle>
           <CardDescription>
-            Busque a empresa por nome, CNPJ ou ticker e mova-a para outro setor/subsetor.
-            O subsetor escolhido deve pertencer ao setor final.
+            Expanda um setor para ver as empresas agrupadas por subsetor, incluindo as
+            que estao sem subsetor. Mover uma empresa daqui carimba a curadoria: o job
+            semanal da B3 deixa de reatribuir o subsetor dela.
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col gap-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="reassign-search">Buscar empresa</Label>
-            <Input
-              id="reassign-search"
-              placeholder="Nome, CNPJ ou ticker (min. 2 caracteres)"
-              value={companySearch}
-              onChange={(event) => setCompanySearch(event.target.value)}
-            />
-          </div>
-
-          {deferredCompanySearch.trim().length < 2 ? (
-            <p className="text-sm text-muted-foreground">
-              Digite ao menos 2 caracteres para buscar empresas.
-            </p>
-          ) : companiesQuery.isLoading ? (
-            <p className="text-sm text-muted-foreground">Buscando...</p>
-          ) : companiesQuery.isError ? (
-            <p className="text-sm text-destructive">
-              Falha na busca: {(companiesQuery.error as Error).message}
-            </p>
-          ) : (companiesQuery.data?.items.length ?? 0) === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhuma empresa encontrada.</p>
-          ) : (
-            <ul className="flex flex-col gap-2">
-              {companiesQuery.data?.items.map((company) => (
-                <li
-                  key={company.id}
-                  className="flex items-center justify-between rounded-2xl border border-border/60 bg-background/60 px-3 py-2"
-                  data-testid="reassign-company-row"
-                >
-                  <span className="text-sm text-foreground">
-                    {company.name}{" "}
-                    <span className="text-xs text-muted-foreground">
-                      {company.primary_ticker ?? "—"} · setor {company.sector_slug ?? "—"}
-                    </span>
-                  </span>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => openReassign(company)}
-                  >
-                    <ArrowLeftRight className="size-4" />
-                    Reatribuir
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          )}
+        <CardContent>
+          <SectorTree sectors={sectors} loading={sectorsQuery.isLoading} />
         </CardContent>
       </Card>
 
