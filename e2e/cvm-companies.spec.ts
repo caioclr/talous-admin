@@ -28,7 +28,11 @@ test.describe("CVM companies — list", () => {
     await expect(page.getByText(COMPANY_PETROBRAS.name)).toBeVisible();
     await expect(page.getByText("Vale S.A.")).toBeVisible();
     await expect(page.getByText("PETR4")).toBeVisible();
-    await expect(page.getByText("Pagina 1 de 1 · 2 itens")).toBeVisible();
+    // 3, nao 2: a fixture COMPANIES_LIST e compartilhada e ganhou a Refinaria.
+    // O numero sai da propria fixture para nao envelhecer de novo.
+    await expect(
+      page.getByText(`Pagina 1 de 1 · ${COMPANIES_LIST.pagination.total} itens`),
+    ).toBeVisible();
   });
 
   test("filtering by situation forwards the query param to the backend", async ({ page }) => {
@@ -37,7 +41,7 @@ test.describe("CVM companies — list", () => {
     await page.goto("/cvm/companies");
     await expect.poll(() => captured.length).toBeGreaterThanOrEqual(1);
 
-    await page.getByRole("combobox").nth(0).selectOption("ATIVO");
+    await page.getByLabel("Situacao").selectOption("ATIVO");
 
     await expect.poll(() => captured.at(-1)?.query.situation).toBe("ATIVO");
     expect(captured.at(-1)?.query.page).toBe("1");
@@ -49,9 +53,9 @@ test.describe("CVM companies — list", () => {
     await page.goto("/cvm/companies");
     await expect.poll(() => captured.length).toBeGreaterThanOrEqual(1);
 
-    // 4 selects: situation, category, active. The active one is the last.
-    const selects = page.getByRole("combobox");
-    await selects.nth(2).selectOption("true");
+    // Por nome, nao por posicao: o indice apontava para o filtro de categoria,
+    // que saiu da tela, e passou a acertar o seletor de itens-por-pagina.
+    await page.getByLabel("Ativa?").selectOption("true");
 
     await expect.poll(() => captured.at(-1)?.query.is_active).toBe("true");
   });

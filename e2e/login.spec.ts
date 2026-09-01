@@ -5,6 +5,7 @@ import {
   mockAuth,
   tokenResponse,
 } from "./helpers/mock-api";
+import { CVM_DASHBOARD_EMPTY } from "./fixtures/cvm";
 
 test.describe("Login screen", () => {
   test("renders the dev-login form when unauthenticated", async ({ page }) => {
@@ -82,19 +83,17 @@ test.describe("Login screen", () => {
     await mockAuth(page);
     await mockAdminEndpointsEmpty(page);
 
+    // Escuta o /dashboard, que e o que /cvm chama hoje. Antes escutava
+    // `registry/sync-status`, endpoint que a home do admin deixou de pedir — e um
+    // observador que nunca dispara nao prova nada: o teste passava a falhar por
+    // "cabecalho nulo" sem que houvesse requisicao alguma para inspecionar.
     let observedAuthHeader: string | null = null;
-    await page.route("**/api/v1/admin/cvm/registry/sync-status", async (route) => {
+    await page.route("**/api/v1/admin/cvm/dashboard", async (route) => {
       observedAuthHeader = route.request().headers()["authorization"] ?? null;
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({
-          last_captured_at: null,
-          last_file_hash: null,
-          total_snapshots: 0,
-          situation_counts: {},
-          unmapped_sectors_count: 0,
-        }),
+        body: JSON.stringify(CVM_DASHBOARD_EMPTY),
       });
     });
 

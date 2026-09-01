@@ -153,6 +153,7 @@ export default function CompaniesPage() {
           </div>
 
           <Select
+            aria-label="Situacao"
             value={situation}
             onChange={(event) => {
               setPage(1);
@@ -183,6 +184,7 @@ export default function CompaniesPage() {
           />
 
           <Select
+            aria-label="Ativa?"
             value={active}
             onChange={(event) => {
               setPage(1);
