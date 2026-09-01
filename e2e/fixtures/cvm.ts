@@ -35,6 +35,8 @@ import type {
   IPECategoryCount,
   IPEReleaseDetail,
   IPEReleaseSummary,
+  CuratedFieldCatalogItem,
+  CuratedFieldResponse,
   IPESyncStatusResponse,
   FCAByCompanyResponse,
   FCADocumentoDetail,
@@ -2027,4 +2029,78 @@ export const OPS_JOBS_SELIC_FILTERED: OpsJobsResponse = {
 export const OPS_JOBS_EMPTY: OpsJobsResponse = {
   jobs: [],
   history: [],
+};
+
+// ---------------------------------------------------------------------------
+// Conteudo curado — o catalogo, a lista por empresa e o release que serve de
+// origem. O texto do release espelha o do 2T26 da BHIA3 (Grupo Casas Bahia),
+// documento real de 41 mil caracteres: "GMV R$ 10,5 Bi total (+0,5% a/a)".
+// Cita-se o formato, com os numeros reais, porque e ele que expoe o que o
+// viewer tem de resolver — busca com parentese, virgula decimal, e duas
+// ocorrencias da mesma sigla.
+// ---------------------------------------------------------------------------
+
+export const IPE_RELEASE_GMV_DETAIL: IPEReleaseDetail = {
+  ...IPE_RELEASE_OK_DETAIL,
+  full_text:
+    "RESULTADOS 2T26\n\nReceita Liquida +1,6% a/a\n" +
+    "GMV R$ 10,5 Bi total (+0,5% a/a)\n" +
+    "R$ 2,8 Bi 1P Online (+15,3% a/a)\n" +
+    "EBITDA Ajustado R$ 518 MM, margem EBITDA 7,4% vs 8,3% no 2T25\n" +
+    "Continuidade do avanco do GMV 1P online (+15,3% a/a)",
+};
+
+export const CURATED_CATALOG: CuratedFieldCatalogItem[] = [
+  {
+    key: "business_summary",
+    label: "Resumo do negocio",
+    kind: "text",
+    section: "visao_geral",
+    requires_period: false,
+    unit: null,
+    is_company_statement: false,
+    help_text: "Narrativa curta sobre o que a companhia faz.",
+  },
+  {
+    key: "gmv",
+    label: "GMV",
+    kind: "number",
+    section: "negocio",
+    requires_period: true,
+    unit: "BRL",
+    is_company_statement: false,
+    help_text: "Volume bruto de mercadorias do trimestre.",
+  },
+  {
+    key: "quarter_highlights",
+    label: "Destaques do trimestre",
+    kind: "text",
+    section: "negocio",
+    requires_period: true,
+    unit: null,
+    is_company_statement: true,
+    help_text: "Destaques como a propria companhia os apresentou.",
+  },
+];
+
+export const CURATED_FIELDS_EMPTY: CuratedFieldResponse[] = [];
+
+export const CURATED_GMV_DRAFT: CuratedFieldResponse = {
+  field_key: "gmv",
+  label: "GMV",
+  kind: "number",
+  section: "negocio",
+  period: "2T26",
+  value_text: null,
+  value_num: 10_500_000_000,
+  unit: "BRL",
+  source_kind: "release",
+  source_release_id: IPE_RELEASE_OK_SUMMARY.id,
+  is_company_statement: false,
+  published: false,
+};
+
+export const CURATED_GMV_PUBLISHED: CuratedFieldResponse = {
+  ...CURATED_GMV_DRAFT,
+  published: true,
 };
