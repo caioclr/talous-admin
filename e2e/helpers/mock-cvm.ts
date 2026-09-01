@@ -55,7 +55,7 @@ interface MockMethodOptions {
 
 export function mockMethod(
   page: Page,
-  method: "POST" | "PATCH" | "DELETE",
+  method: "POST" | "PUT" | "PATCH" | "DELETE",
   urlPattern: RegExp,
   options: MockMethodOptions = {},
 ) {
@@ -98,6 +98,13 @@ export const CvmRoutes = {
   ipeByCompany: /\/api\/v1\/admin\/cvm\/ipe\/disclosures\/by-company\/\d+(\?.*)?$/,
   // S16 — releases de resultados extraidos. by-company e detalhe por id.
   ipeReleasesByCompany: /\/api\/v1\/admin\/cvm\/ipe\/releases\/by-company\/\d+(\?.*)?$/,
+  // Conteudo curado. Os tres padroes sao disjuntos de proposito: `publish`
+  // termina em /publish, o campo tem dois segmentos apos /companies/, e a lista
+  // tem um so. Sem isso o PUT do campo casaria com a rota da lista.
+  curatedCatalog: /\/api\/v1\/admin\/curated-fields\/catalog$/,
+  curatedByCompany: /\/api\/v1\/admin\/curated-fields\/companies\/[^/?]+$/,
+  curatedField: /\/api\/v1\/admin\/curated-fields\/companies\/[^/]+\/[^/?]+$/,
+  curatedPublish: /\/api\/v1\/admin\/curated-fields\/companies\/[^/]+\/[^/]+\/publish(\?.*)?$/,
   ipeReleaseById: /\/api\/v1\/admin\/cvm\/ipe\/releases\/[^/?]+$/,
   ipeSyncStatus: /\/api\/v1\/admin\/cvm\/ipe\/sync-status$/,
   ipeSync: /\/api\/v1\/admin\/cvm\/ipe\/sync(\?.*)?$/,
