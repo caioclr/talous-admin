@@ -119,9 +119,33 @@ export const COMPANY_VALE: AdminCompanySummary = {
   cvm_last_synced_at: "2026-04-29T08:00:00Z",
 };
 
+/**
+ * Empresa COM subsetor, para exercitar o caminho de limpar o subsetor na arvore.
+ * As outras duas do fixture estao ambas sem subsetor — sem esta, o teste de
+ * `subsector_id: null` nao teria como provar a MUDANCA (o editor so habilita
+ * Salvar quando algo muda).
+ */
+export const COMPANY_REFINARIA: AdminCompanySummary = {
+  id: "33333333-3333-3333-3333-333333333333",
+  cd_cvm: 4321,
+  name: "Refinaria Exemplo S.A.",
+  cnpj: "11222333000144",
+  sector_slug: "energia",
+  sector_name: "Energia",
+  subsector_slug: "refino",
+  subsector_name: "Refino",
+  cvm_situation: "ATIVO",
+  cvm_category: "A",
+  cvm_market_type: "BOLSA",
+  is_active: true,
+  primary_ticker: "REFI3",
+  tickers: ["REFI3"],
+  cvm_last_synced_at: "2026-04-29T08:00:00Z",
+};
+
 export const COMPANIES_LIST: AdminPagedResponse<AdminCompanySummary> = {
-  items: [COMPANY_PETROBRAS, COMPANY_VALE],
-  pagination: { page: 1, page_size: 20, total: 2, total_pages: 1 },
+  items: [COMPANY_PETROBRAS, COMPANY_VALE, COMPANY_REFINARIA],
+  pagination: { page: 1, page_size: 20, total: 3, total_pages: 1 },
 };
 
 /**

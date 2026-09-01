@@ -2,6 +2,8 @@ import { apiClient } from "@/lib/services/client";
 import type {
   CompanyAssignmentResponse,
   CompanyReassignRequest,
+  PeerExclusionRequest,
+  PeerExclusionResponse,
   SectorCreateRequest,
   SectorResponse,
   SectorUpdateRequest,
@@ -85,4 +87,40 @@ export function reassignCompany(companyId: string, body: CompanyReassignRequest)
       body: JSON.stringify(body),
     },
   );
+}
+
+
+/**
+ * Devolve a empresa ao controle do job semanal da B3.
+ *
+ * NAO e so soltar o controle: restaura o setor e o subsetor que o job havia
+ * atribuido antes da PRIMEIRA curadoria. `previous_sector_restored: false`
+ * significa que o setor anterior foi apagado desde entao e o ATUAL foi mantido
+ * — a tela precisa dizer isso.
+ */
+export function revertCompanyCuration(companyId: string) {
+  return apiClient<CompanyAssignmentResponse>(
+    `/admin/sectors/companies/${companyId}/curation`,
+    { method: "DELETE" },
+  );
+}
+
+/**
+ * Exclui a empresa das estatisticas de pares de TODO MUNDO.
+ *
+ * Ela continua com pagina propria, pares proprios, lista e ranking. Motivo e
+ * obrigatorio: a tela declara por que a companhia saiu, e um selo sem texto nao
+ * explica nada.
+ */
+export function setCompanyPeerExclusion(companyId: string, body: PeerExclusionRequest) {
+  return apiClient<PeerExclusionResponse>(
+    `/admin/sectors/companies/${companyId}/peer-exclusion`,
+    { method: "PUT", body: JSON.stringify(body) },
+  );
+}
+
+export function clearCompanyPeerExclusion(companyId: string) {
+  return apiClient<void>(`/admin/sectors/companies/${companyId}/peer-exclusion`, {
+    method: "DELETE",
+  });
 }

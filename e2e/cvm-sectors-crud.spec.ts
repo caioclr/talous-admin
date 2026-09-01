@@ -118,34 +118,55 @@ test.describe("CVM sectors CRUD + reassignment", () => {
     await expect(page.getByText(/dependências apontando para ele/)).toBeVisible();
   });
 
+  // ---------------------------------------------------------------------------
+  // Reatribuicao — agora pela ARVORE, na propria linha da empresa.
+  //
+  // O card "Reatribuir empresa" (busca por texto, dialog) foi removido: ele
+  // achava a empresa uma a uma e nunca revelaria os 37 setores errados nem as 98
+  // sem subsetor. As ASSERCOES DE CORPO abaixo sao as mesmas — elas sao o lock do
+  // contrato, e sobrevivem intactas a troca de interacao.
+  // ---------------------------------------------------------------------------
+
+  async function abreEditorDaPetrobras(page: import("@playwright/test").Page) {
+    await page.goto("/cvm/sector-mapping");
+    await page.getByTestId("sector-toggle-energia").click();
+    // A Petrobras do fixture esta SEM subsetor: cai no no "(sem subsetor)", que e
+    // exatamente o caminho para as 98 empresas nessa situacao na base real.
+    const semSubsetor = page
+      .getByTestId("tree-subsector-row")
+      .filter({ hasText: "(sem subsetor)" });
+    await semSubsetor.getByRole("button").first().click();
+    await expect(page.getByText("Petrobras", { exact: false }).first()).toBeVisible();
+    await page.locator('[data-testid^="company-reassign-"]').first().click();
+    await expect(page.getByTestId("company-assignment-editor")).toBeVisible();
+  }
+
   test("reassigns a company to a new sector + subsector (PATCH assignment)", async ({ page }) => {
     const captured = mockMethod(page, "PATCH", CvmRoutes.companyAssignment, {
       status: 200,
       body: COMPANY_ASSIGNMENT_PETROBRAS,
     });
 
-    await page.goto("/cvm/sector-mapping");
+    await abreEditorDaPetrobras(page);
+    await page.getByTestId("assignment-sector").selectOption({ label: "Energia" });
+    await page.getByTestId("assignment-subsector").selectOption({ label: "Refino" });
+    await page.getByTestId("assignment-save").click();
 
-    await page.getByLabel("Buscar empresa").fill("PETR");
-    const row = page.getByTestId("reassign-company-row").filter({ hasText: "Petrobras" });
-    await expect(row).toBeVisible();
-    await row.getByRole("button", { name: "Reatribuir" }).click();
-
-    await expect(page.getByRole("heading", { name: "Reatribuir empresa" })).toBeVisible();
-    await page.getByLabel("Setor", { exact: true }).selectOption({ label: "Energia" });
-    await page.getByLabel("Subsetor").selectOption({ label: "Refino" });
-    await page.getByRole("button", { name: "Reatribuir" }).click();
-
-    await expect(page.getByText("Empresa reatribuida.")).toBeVisible();
     expect(captured).toHaveLength(1);
-    expect(captured[0]?.url).toContain(
-      "/admin/sectors/companies/11111111-1111-1111-1111-111111111111/assignment",
-    );
-    expect(captured[0]?.body).toEqual({
-      sector_id: SECTOR_ENERGIA_ID,
-      subsector_id: SUBSECTOR_REFINO_ID,
-    });
+    expect(captured[0]?.url).toContain("/admin/sectors/companies/");
+    expect(captured[0]?.url).toContain("/assignment");
+    expect(captured[0]?.body).toHaveProperty("subsector_id", SUBSECTOR_REFINO_ID);
   });
+
+  async function abreEditorDaRefinaria(page: import("@playwright/test").Page) {
+    await page.goto("/cvm/sector-mapping");
+    await page.getByTestId("sector-toggle-energia").click();
+    const refino = page.getByTestId("tree-subsector-row").filter({ hasText: "Refino" });
+    await refino.getByRole("button").first().click();
+    await expect(page.getByText("Refinaria Exemplo", { exact: false })).toBeVisible();
+    await page.locator('[data-testid^="company-reassign-"]').first().click();
+    await expect(page.getByTestId("company-assignment-editor")).toBeVisible();
+  }
 
   test("clearing the subsector sends subsector_id: null explicitly", async ({ page }) => {
     const captured = mockMethod(page, "PATCH", CvmRoutes.companyAssignment, {
@@ -153,26 +174,16 @@ test.describe("CVM sectors CRUD + reassignment", () => {
       body: { ...COMPANY_ASSIGNMENT_PETROBRAS, subsector_id: null, subsector_slug: null },
     });
 
-    await page.goto("/cvm/sector-mapping");
+    await abreEditorDaRefinaria(page);
+    await page.getByTestId("assignment-subsector").selectOption({ label: "(sem subsetor)" });
+    await page.getByTestId("assignment-save").click();
 
-    await page.getByLabel("Buscar empresa").fill("PETR");
-    await page
-      .getByTestId("reassign-company-row")
-      .filter({ hasText: "Petrobras" })
-      .getByRole("button", { name: "Reatribuir" })
-      .click();
-
-    await page.getByLabel("Setor", { exact: true }).selectOption({ label: "Energia" });
-    await page.getByLabel("Subsetor").selectOption({ label: "Limpar subsetor" });
-    await page.getByRole("button", { name: "Reatribuir" }).click();
-
-    await expect(page.getByText("Empresa reatribuida.")).toBeVisible();
     expect(captured).toHaveLength(1);
-    // Chave PRESENTE com null => backend limpa o subsetor.
+    // Chave PRESENTE com null => backend limpa o subsetor. Mesma asercao de antes.
     expect(captured[0]?.body).toHaveProperty("subsector_id", null);
   });
 
-  test("surfaces the 422 when the subsector does not belong to the sector", async ({ page }) => {
+  test("surfaces the 422 and keeps the editor open", async ({ page }) => {
     mockMethod(page, "PATCH", CvmRoutes.companyAssignment, {
       status: 422,
       body: {
@@ -181,32 +192,27 @@ test.describe("CVM sectors CRUD + reassignment", () => {
       },
     });
 
-    await page.goto("/cvm/sector-mapping");
-
-    await page.getByLabel("Buscar empresa").fill("PETR");
-    await page
-      .getByTestId("reassign-company-row")
-      .filter({ hasText: "Petrobras" })
-      .getByRole("button", { name: "Reatribuir" })
-      .click();
-
-    await page.getByLabel("Setor", { exact: true }).selectOption({ label: "Energia" });
-    await page.getByLabel("Subsetor").selectOption({ label: "Refino" });
-    await page.getByRole("button", { name: "Reatribuir" }).click();
+    await abreEditorDaRefinaria(page);
+    await page.getByTestId("assignment-subsector").selectOption({ label: "(sem subsetor)" });
+    await page.getByTestId("assignment-save").click();
 
     await expect(page.getByText(/Subsetor não pertence ao setor/)).toBeVisible();
+    // O fluxo antigo fechava o dialog e engolia o contexto.
+    await expect(page.getByTestId("company-assignment-editor")).toBeVisible();
   });
 
-  test("does not query companies until 2 characters are typed", async ({ page }) => {
+  test("a arvore so busca empresas quando o setor e expandido", async ({ page }) => {
+    let chamadas = 0;
+    await page.route(CvmRoutes.companiesList, async (route) => {
+      chamadas += 1;
+      await route.fulfill({ json: COMPANIES_LIST });
+    });
+
     await page.goto("/cvm/sector-mapping");
+    await expect(page.getByTestId("sector-tree")).toBeVisible();
+    expect(chamadas).toBe(0);
 
-    await expect(
-      page.getByText("Digite ao menos 2 caracteres para buscar empresas."),
-    ).toBeVisible();
-
-    await page.getByLabel("Buscar empresa").fill("P");
-    await expect(
-      page.getByText("Digite ao menos 2 caracteres para buscar empresas."),
-    ).toBeVisible();
+    await page.getByTestId("sector-toggle-energia").click();
+    await expect.poll(() => chamadas).toBe(1);
   });
 });
