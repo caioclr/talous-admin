@@ -101,11 +101,17 @@ test.describe("Alertas operacionais — list", () => {
       table.getByRole("link", { name: /Companhia Sem Cadastro/ }),
     ).toHaveCount(0);
 
-    // Origin cross-link points to the source dataset route
-    await expect(table.getByRole("link", { name: "Origem" }).first()).toHaveAttribute(
+    // O link de origem leva a tela JA FILTRADA pela empresa quando o alerta tem
+    // `cd_cvm` — mudanca deliberada, documentada em `alertOrigin`: a seta abre o
+    // contexto da companhia, nao a lista crua do dataset.
+    const origens = table.getByRole("link", { name: "Origem" });
+    await expect(origens.first()).toHaveAttribute(
       "href",
-      "/cvm/fre",
+      "/cvm/companies/detail?cd_cvm=9512",
     );
+    // E sem `cd_cvm` cai no cross-link estatico do dataset. Os dois ramos, porque
+    // so o primeiro estava coberto e foi ele que envelheceu em silencio.
+    await expect(origens.last()).toHaveAttribute("href", "/cvm/fca");
   });
 
   test("opens payload dialog with JsonViewer", async ({ page }) => {

@@ -29,12 +29,16 @@ test.describe("Capital composition — list", () => {
     await page.goto("/cvm/capital-composition");
 
     await expect(page.getByRole("heading", { name: "Composicao de capital" })).toBeVisible();
-    // KPIs
+    // KPIs. Escopo em `main` e texto exato: a sidebar tem "Snapshots cadastrais",
+    // e `text=Snapshots` (substring, sem escopo) casava com o link de navegacao.
+    const main = page.getByRole("main");
     await expect(
-      page.locator("text=Snapshots").first().locator("..").getByText("8"),
+      main.getByText("Snapshots", { exact: true }).locator("..").getByText("8"),
     ).toBeVisible();
     await expect(
-      page.locator("text=Empresas com dado").locator("..").getByText("2", { exact: false }),
+      main.getByText("Empresas com dado", { exact: true }).locator("..").getByText("2", {
+        exact: false,
+      }),
     ).toBeVisible();
     // Tabela
     await expect(page.getByText("Petroleo Brasileiro S.A. - Petrobras").first()).toBeVisible();
