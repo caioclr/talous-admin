@@ -20,7 +20,7 @@ const percentFormat = new Intl.NumberFormat("pt-BR", {
   minimumFractionDigits: 1,
   maximumFractionDigits: 1,
 });
-/** A cota e o `day` sao do fuso de Sao Paulo; a hora da leitura segue o mesmo fuso. */
+/** A hora da leitura e exibida no fuso de Sao Paulo (o `day` da cota e UTC). */
 const checkedAtFormat = new Intl.DateTimeFormat("pt-BR", {
   dateStyle: "short",
   timeStyle: "short",

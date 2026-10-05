@@ -414,10 +414,10 @@ parcial**.
   apresenta o dia anterior como hoje.
 
 Duas armadilhas de fuso, tratadas em `lib/services/admin/ops-provider-quota.ts`:
-`day` é a data de **São Paulo** (não passar por `new Date()`, que recua um dia), e
-`checked_at` chega em **UTC sem sufixo de fuso** (o painel ancora em UTC e exibe
-no fuso de São Paulo). O backend limita **linhas**, não dias: com mais de um
-provedor, `days=30` traz menos de 30 dias de cada. Somente leitura.
+`day` é o **dia da cota do bolsai, que vira à meia-noite UTC** (21h em Brasília;
+backend #245) — formatado sem passar por `new Date()`, que recua um dia — e
+`checked_at` chega em UTC (o painel aceita com e sem sufixo de fuso e exibe no
+fuso de São Paulo). `days` é uma janela de dias (backend #244). Somente leitura.
 
 ### Sino de notificações do operador
 

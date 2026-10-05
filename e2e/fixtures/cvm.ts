@@ -2035,30 +2035,25 @@ export const OPS_JOBS_EMPTY: OpsJobsResponse = {
 
 // ---------------------------------------------------------------------------
 // Operacao — cota diaria do provedor (`GET /admin/ops/provider-quota`).
-// O `day` e a data de Sao Paulo e o cabecalho so diz "Consumo hoje" quando a
-// linha mais recente e de hoje — por isso as datas sao relativas ao relogio.
-// `checked_at` vem em UTC sem fuso, como o backend grava.
+// O `day` e o dia da cota do bolsai, que vira a meia-noite UTC (backend #245),
+// e o cabecalho so diz "Consumo hoje" quando a linha mais recente e de hoje —
+// por isso as datas sao relativas ao relogio.
+// `checked_at` vem em UTC.
 // ---------------------------------------------------------------------------
 
-function saoPauloDay(offsetDays: number): string {
-  const now = new Date(Date.now() - offsetDays * 86_400_000);
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Sao_Paulo",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(now);
+function quotaDay(offsetDays: number): string {
+  return new Date(Date.now() - offsetDays * 86_400_000).toISOString().slice(0, 10);
 }
 
 function quotaRow(offsetDays: number, used: number, over: Partial<ProviderQuotaDay> = {}) {
-  const day = saoPauloDay(offsetDays);
+  const day = quotaDay(offsetDays);
   return {
     provider: "bolsai",
     day,
     tier: "pro",
     used,
     daily_limit: 10000,
-    // 23:55 UTC do proprio dia (20:55 em SP) — leitura das 20h55 do dia.
+    // 23:55 UTC do proprio dia (20:55 em SP) — a ultima leitura antes da virada.
     checked_at: `${day}T23:55:00`,
     ...over,
   } satisfies ProviderQuotaDay;
@@ -2067,7 +2062,7 @@ function quotaRow(offsetDays: number, used: number, over: Partial<ProviderQuotaD
 // Hoje em 6,2% (OK); ontem em 96% (critico) e anteontem em 82% (atencao).
 export const PROVIDER_QUOTA_DEFAULT: ProviderQuotaResponse = {
   days: [
-    quotaRow(0, 616, { checked_at: `${saoPauloDay(0)}T12:55:00` }),
+    quotaRow(0, 616, { checked_at: `${quotaDay(0)}T12:55:00` }),
     quotaRow(1, 9600),
     quotaRow(2, 8200),
     ...Array.from({ length: 12 }, (_, index) => quotaRow(index + 3, 2000 + index * 350)),

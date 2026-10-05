@@ -60,15 +60,12 @@ export function parseProviderQuotaCheckedAt(value: string): Date {
   return new Date(hasZone ? value : `${value}Z`);
 }
 
-/** Data `YYYY-MM-DD` de hoje em Sao Paulo — o fuso em que o backend grava `day`. */
-export function todayInSaoPaulo(now: Date = new Date()): string {
-  // en-CA formata como YYYY-MM-DD.
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Sao_Paulo",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(now);
+/**
+ * Data `YYYY-MM-DD` do dia da cota de hoje. A cota do bolsai vira a meia-noite
+ * UTC (21:00 em Brasilia), e o backend grava `day` nesse dia (backend #245).
+ */
+export function todayQuotaDay(now: Date = new Date()): string {
+  return now.toISOString().slice(0, 10);
 }
 
 /**

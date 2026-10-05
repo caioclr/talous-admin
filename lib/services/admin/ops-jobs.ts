@@ -38,6 +38,23 @@ export const JOB_LABELS: Record<string, string> = {
   "jobs.cvm_sync_vlmo": "Sync VLMO",
   "jobs.cvm_sync_fca": "Sync FCA",
   "jobs.cvm_sync_participantes": "Sync participantes",
+  // Jobs que gravam job_runs no backend e não tinham rótulo (2026-10): a cópia
+  // do bolsai e a manutenção de preços.
+  "jobs.cvm_extract_ipe_releases": "Extração de releases (IPE)",
+  "jobs.cvm_extract_fre_dividend_policy": "Política de dividendos (FRE)",
+  "jobs.ingest_daily_prices_all_tickers": "Fechamento diário (bolsai)",
+  "jobs.append_daily_price_history": "Histórico de preços (append)",
+  "jobs.reconcile_price_adjustment": "Reajuste de preços por evento",
+  "jobs.backfill_price_history": "Backfill de histórico de preços",
+  "jobs.recompute_ticker_multiples": "Múltiplos por classe",
+  "jobs.sync_bolsai_statements": "Sync demonstrações (bolsai)",
+  "jobs.project_governance": "Projeção de governança",
+  "jobs.ingest_dividends": "Proventos e eventos (bolsai)",
+  "jobs.ingest_ticker_stats": "Estatísticas do pregão (bolsai)",
+  "jobs.sync_bolsai_registry": "Cadastro e tickers (bolsai)",
+  "jobs.sync_macro": "Séries macro (bolsai)",
+  "jobs.record_provider_quota": "Cota do provedor",
+  "jobs.backfill_financial_lines": "Linhas de conta (bolsai)",
 };
 
 /** Nota de contexto por job (linha auxiliar). Vazia se nao houver. */

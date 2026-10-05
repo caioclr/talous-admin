@@ -7,7 +7,7 @@ import {
   quotaLevel,
   quotaRatio,
   quotaRemaining,
-  todayInSaoPaulo,
+  todayQuotaDay,
 } from "@/lib/services/admin/ops-provider-quota";
 import type { ProviderQuotaDay } from "@/lib/services/admin/types";
 import { setAccessToken } from "@/lib/services/client";
@@ -111,8 +111,9 @@ describe("quota dates", () => {
 
   it("derives today in Sao Paulo, not in UTC", () => {
     // 02:30 UTC de 06/10 ainda e 05/10 em Sao Paulo (UTC-3).
-    expect(todayInSaoPaulo(new Date("2026-10-06T02:30:00Z"))).toBe("2026-10-05");
-    expect(todayInSaoPaulo(new Date("2026-10-06T03:30:00Z"))).toBe("2026-10-06");
+    // A cota vira a meia-noite UTC: 21:30 em Brasilia de 05/10 ja e o dia 06.
+    expect(todayQuotaDay(new Date("2026-10-06T00:30:00Z"))).toBe("2026-10-06");
+    expect(todayQuotaDay(new Date("2026-10-05T23:30:00Z"))).toBe("2026-10-05");
   });
 });
 
