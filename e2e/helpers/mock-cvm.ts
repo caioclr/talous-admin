@@ -165,6 +165,7 @@ export const CvmRoutes = {
   alertsSummary: /\/api\/v1\/admin\/cvm\/alerts\/summary$/,
   // S12 — Operacao / status do pipeline. Sob `/admin/ops`, NAO `/admin/cvm`.
   opsJobs: /\/api\/v1\/admin\/ops\/jobs(\?.*)?$/,
+  providerQuota: /\/api\/v1\/admin\/ops\/provider-quota(\?.*)?$/,
   // Taxonomia setor/subsetor (S10 T02) — sob `/admin/sectors`, NAO `/admin/cvm`.
   // Ordem importa: registre os mais especificos por ultimo (vencem o match).
   sectorsList: /\/api\/v1\/admin\/sectors$/,

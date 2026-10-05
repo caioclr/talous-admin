@@ -130,10 +130,12 @@ glossário via `components/cvm-acronym.tsx` + `lib/cvm-glossary.ts`.
 | `/cvm/participantes/intermediarios` (+ `detail?cnpj=`, `validate?id=&tipo_participante=&situacao=`) | Cadastro de intermediários | `cvm-participantes` |
 | `/cvm/participantes/adm-carteira` (+ `validate?id=&categoria_registro=&situacao=`) | Administradores de carteira | `cvm-participantes` |
 | `/cvm/jobs` | **Jobs / Sync** — estado e histórico dos jobs Celery + painel de workers (§10) | `ops-jobs` |
+| `/cvm/provider-quota` | **Cota do provedor** — consumo diário da cota do bolsai contra o limite, últimos 30 dias (§10) | `ops-provider-quota` |
 
 > Nem todo endpoint admin consumido está sob `/admin/cvm`: a taxonomia de setores
-> usa `/admin/sectors*`, o painel de operação usa `/admin/ops/jobs` e
-> `/admin/ops/workers`, e o sino usa `/admin/notifications*`.
+> usa `/admin/sectors*`, o painel de operação usa `/admin/ops/jobs`,
+> `/admin/ops/workers` e `/admin/ops/provider-quota`, e o sino usa
+> `/admin/notifications*`.
 
 ---
 
@@ -378,7 +380,7 @@ Dos 35 `detail=` dos endpoints admin do backend, **32 estão em inglês**
 
 ---
 
-## 10. Operação: Jobs, workers e notificações
+## 10. Operação: Jobs, workers, cota do provedor e notificações
 
 ### `/cvm/jobs` — painel de workers Celery
 
@@ -391,6 +393,31 @@ tem um card **"Workers Celery"** alimentado por `GET /admin/ops/workers`
 Tiles de resumo: **Rodando**, **Em falha**, **Atrasados (stale)**. `status`,
 `duration` e o sinal `stale` são **calculados no backend** — o painel não deriva
 nenhum deles. A tela é **somente leitura**: não dispara nem faz retry de job.
+
+### `/cvm/provider-quota` — cota do provedor de dados
+
+Item **"Cota do provedor"** do grupo Operação. Consome
+`GET /admin/ops/provider-quota?days=30` (`getProviderQuota`), que lê
+`provider_quota_usage`: o job `jobs.record_provider_quota` grava o
+`/keys/usage` do bolsai de hora em hora (minuto 55), uma linha por provedor e dia
+— a leitura mais recente do dia substitui a anterior, então **o dia de hoje é
+parcial**.
+
+- **Cabeçalho**: consumo / limite diário, % do limite, restante (ou "Excedido
+  em N"), plano (`tier`) e hora da última leitura. Faixas de apresentação:
+  **Atenção** a partir de 80% e **Crítico** a partir de 95% do limite (badges
+  `warning`/`destructive`). Sem `daily_limit`, mostra "Sem limite".
+- **Últimos 30 dias**: gráfico de barras (Recharts) com o limite como linha de
+  referência + tabela por dia com barra inline.
+- **Sem leitura hoje**: se a linha mais recente não é de hoje, o cabeçalho diz
+  "Consumo em DD/MM/AAAA" e avisa para conferir o job em Jobs / Sync — não
+  apresenta o dia anterior como hoje.
+
+Duas armadilhas de fuso, tratadas em `lib/services/admin/ops-provider-quota.ts`:
+`day` é a data de **São Paulo** (não passar por `new Date()`, que recua um dia), e
+`checked_at` chega em **UTC sem sufixo de fuso** (o painel ancora em UTC e exibe
+no fuso de São Paulo). O backend limita **linhas**, não dias: com mais de um
+provedor, `days=30` traz menos de 30 dias de cada. Somente leitura.
 
 ### Sino de notificações do operador
 

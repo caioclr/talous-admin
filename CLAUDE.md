@@ -32,7 +32,8 @@ Inventário completo e atualizado das telas: [`docs/admin-panel.md`](docs/admin-
   (desabilitar carimba `delisted_at`; reabilitar zera)
 - **Moderação genérica** por `(report_type, ref)` via
   `/admin/cvm/validations/{validate,invalidate}`
-- **Operação**: `/cvm/jobs` (jobs Celery + painel de workers, somente leitura) e
+- **Operação**: `/cvm/jobs` (jobs Celery + painel de workers, somente leitura),
+  `/cvm/provider-quota` (cota diária do provedor de dados, somente leitura) e
   sino de notificações do operador na topbar
 
 ### Planejado — **sem tela hoje** (não descrever como existente)

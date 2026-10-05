@@ -12,6 +12,7 @@ import {
   FileSpreadsheet,
   FileStack,
   FileText,
+  Gauge,
   History,
   LayoutDashboard,
   LogOut,
@@ -116,7 +117,10 @@ const navigation: NavGroup[] = [
   },
   {
     label: "Operacao",
-    items: [{ label: "Jobs / Sync", href: "/cvm/jobs", icon: Cog, status: "available" }],
+    items: [
+      { label: "Jobs / Sync", href: "/cvm/jobs", icon: Cog, status: "available" },
+      { label: "Cota do provedor", href: "/cvm/provider-quota", icon: Gauge, status: "available" },
+    ],
   },
 ];
 

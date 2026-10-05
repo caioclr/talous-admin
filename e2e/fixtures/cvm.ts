@@ -1,4 +1,6 @@
 import type {
+  ProviderQuotaDay,
+  ProviderQuotaResponse,
   AdmCarteiraRegistrySummary,
   AdminCompanyDetail,
   AdminCompanySummary,
@@ -2030,6 +2032,64 @@ export const OPS_JOBS_EMPTY: OpsJobsResponse = {
   jobs: [],
   history: [],
 };
+
+// ---------------------------------------------------------------------------
+// Operacao — cota diaria do provedor (`GET /admin/ops/provider-quota`).
+// O `day` e a data de Sao Paulo e o cabecalho so diz "Consumo hoje" quando a
+// linha mais recente e de hoje — por isso as datas sao relativas ao relogio.
+// `checked_at` vem em UTC sem fuso, como o backend grava.
+// ---------------------------------------------------------------------------
+
+function saoPauloDay(offsetDays: number): string {
+  const now = new Date(Date.now() - offsetDays * 86_400_000);
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now);
+}
+
+function quotaRow(offsetDays: number, used: number, over: Partial<ProviderQuotaDay> = {}) {
+  const day = saoPauloDay(offsetDays);
+  return {
+    provider: "bolsai",
+    day,
+    tier: "pro",
+    used,
+    daily_limit: 10000,
+    // 23:55 UTC do proprio dia (20:55 em SP) — leitura das 20h55 do dia.
+    checked_at: `${day}T23:55:00`,
+    ...over,
+  } satisfies ProviderQuotaDay;
+}
+
+// Hoje em 6,2% (OK); ontem em 96% (critico) e anteontem em 82% (atencao).
+export const PROVIDER_QUOTA_DEFAULT: ProviderQuotaResponse = {
+  days: [
+    quotaRow(0, 616, { checked_at: `${saoPauloDay(0)}T12:55:00` }),
+    quotaRow(1, 9600),
+    quotaRow(2, 8200),
+    ...Array.from({ length: 12 }, (_, index) => quotaRow(index + 3, 2000 + index * 350)),
+  ],
+};
+
+// Hoje ja em 97,3% do limite.
+export const PROVIDER_QUOTA_CRITICAL: ProviderQuotaResponse = {
+  days: [quotaRow(0, 9730), quotaRow(1, 4100)],
+};
+
+// Hoje em 85% do limite.
+export const PROVIDER_QUOTA_WARNING: ProviderQuotaResponse = {
+  days: [quotaRow(0, 8500), quotaRow(1, 4100)],
+};
+
+// Job parado: a ultima leitura e de tres dias atras.
+export const PROVIDER_QUOTA_STALE: ProviderQuotaResponse = {
+  days: [quotaRow(3, 4321), quotaRow(4, 3900)],
+};
+
+export const PROVIDER_QUOTA_EMPTY: ProviderQuotaResponse = { days: [] };
 
 // ---------------------------------------------------------------------------
 // Conteudo curado — o catalogo, a lista por empresa e o release que serve de
