@@ -52,7 +52,8 @@ describe("ops-jobs service", () => {
   });
 
   it("maps every instrumented job_name to a PT-BR label", () => {
-    // Mesma taxonomia do backend (handoff S12): 5 principais + 10 cvm_sync_*.
+    // Todo job que grava job_runs no backend (`track_job_run("…")`), conferido
+    // em 2026-10-05: 5 principais + 10 cvm_sync_* + 15 de dados e manutenção.
     const backendJobs = [
       "jobs.run_eod_pipeline",
       "jobs.update_intraday_prices",
@@ -69,6 +70,21 @@ describe("ops-jobs service", () => {
       "jobs.cvm_sync_vlmo",
       "jobs.cvm_sync_fca",
       "jobs.cvm_sync_participantes",
+      "jobs.cvm_extract_ipe_releases",
+      "jobs.cvm_extract_fre_dividend_policy",
+      "jobs.ingest_daily_prices_all_tickers",
+      "jobs.append_daily_price_history",
+      "jobs.reconcile_price_adjustment",
+      "jobs.backfill_price_history",
+      "jobs.recompute_ticker_multiples",
+      "jobs.sync_bolsai_statements",
+      "jobs.project_governance",
+      "jobs.ingest_dividends",
+      "jobs.ingest_ticker_stats",
+      "jobs.sync_bolsai_registry",
+      "jobs.sync_macro",
+      "jobs.record_provider_quota",
+      "jobs.backfill_financial_lines",
     ];
     for (const name of backendJobs) {
       expect(JOB_LABELS).toHaveProperty(name);

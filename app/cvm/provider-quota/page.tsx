@@ -22,7 +22,7 @@ import {
   groupProviderQuota,
   quotaLevel,
   quotaRatio,
-  todayInSaoPaulo,
+  todayQuotaDay,
 } from "@/lib/services/admin/ops-provider-quota";
 import type { ProviderQuotaDay } from "@/lib/services/admin/types";
 import { cn } from "@/lib/utils";
@@ -108,7 +108,7 @@ export default function ProviderQuotaPage() {
     () => groupProviderQuota(quotaQuery.data?.days ?? []),
     [quotaQuery.data],
   );
-  const today = todayInSaoPaulo();
+  const today = todayQuotaDay();
 
   return (
     <div className="flex flex-col gap-4">
@@ -121,8 +121,8 @@ export default function ProviderQuotaPage() {
             <h2 className="text-2xl font-semibold text-foreground">Cota do provedor</h2>
             <p className="max-w-3xl text-sm text-muted-foreground">
               Consumo diário da cota de requisições do provedor de dados, lido de hora em hora pelo
-              job <span className="font-mono">jobs.record_provider_quota</span>. O dia segue o fuso
-              de São Paulo, como a cota do provedor. Apenas leitura.
+              job <span className="font-mono">jobs.record_provider_quota</span>. O dia é o da cota do
+              provedor, que vira à meia-noite UTC (21h em Brasília). Apenas leitura.
             </p>
           </div>
 
