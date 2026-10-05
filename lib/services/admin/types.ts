@@ -1370,6 +1370,43 @@ export interface ListOpsJobsParams {
   history_limit?: number;
 }
 
+// ----------------------------------------------------------------------------
+// Operacao — cota diaria do provedor de dados (bolsai `/keys/usage`)
+// `GET /admin/ops/provider-quota?days=` => { days }. APENAS LEITURA.
+// Schema canonico: `ProviderQuotaResponse`/`ProviderQuotaDay` em
+// talous-backend/docs/Architecture/openapi-admin.json.
+// ----------------------------------------------------------------------------
+
+/**
+ * Consumo de um provedor num dia (uma linha por provedor e dia).
+ *
+ * - `day`: data `YYYY-MM-DD` no fuso de Sao Paulo (o mesmo da cota do provedor).
+ *   NAO passar por `new Date()` — vira meia-noite UTC e recua um dia no Brasil.
+ * - `used`: consumo da ULTIMA leitura do dia (o job le de hora em hora e a
+ *   leitura mais recente substitui a anterior), entao o dia de hoje e parcial.
+ * - `checked_at`: instante da leitura, em UTC SEM sufixo de fuso
+ *   (`2026-10-05T12:55:00`). Ver `parseProviderQuotaCheckedAt`.
+ * - `tier`/`daily_limit`: `null` quando o provedor nao informa.
+ */
+export interface ProviderQuotaDay {
+  provider: string;
+  day: string;
+  tier: string | null;
+  used: number;
+  daily_limit: number | null;
+  checked_at: string;
+}
+
+/** Resposta de `GET /admin/ops/provider-quota` — mais recente primeiro. */
+export interface ProviderQuotaResponse {
+  days: ProviderQuotaDay[];
+}
+
+/** Params de `GET /admin/ops/provider-quota`. `days` 1–365 (default 30). */
+export interface ProviderQuotaParams {
+  days?: number;
+}
+
 
 // ---------------------------------------------------------------------------
 // Conteudo curado por empresa — o que o admin escreve e o app do usuario le.
